@@ -43,38 +43,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               Text(user?.roleName ?? ''),
               const SizedBox(height: 16),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.6,
-                children: [
-                  _StatTile(
-                    'Total members',
-                    stats.total,
-                    Icons.groups,
-                    highlight: true,
-                  ),
-                  _StatTile(
-                    'Active',
-                    stats.count(MemberStatus.active),
-                    Icons.check_circle_outline,
-                  ),
-                  _StatTile(
-                    'Inactive / suspended',
-                    stats.count(MemberStatus.inactive) +
-                        stats.count(MemberStatus.suspended),
-                    Icons.pause_circle_outline,
-                  ),
-                  _StatTile(
-                    'Deceased',
-                    stats.count(MemberStatus.deceased),
-                    Icons.local_florist_outlined,
-                  ),
-                ],
-              ),
+              // Rows that size to their content, so larger phone text
+              // settings never overflow the tiles.
+              _TileRow([
+                _StatTile(
+                  'Total members',
+                  stats.total,
+                  Icons.groups,
+                  highlight: true,
+                ),
+                _StatTile(
+                  'Active',
+                  stats.count(MemberStatus.active),
+                  Icons.check_circle_outline,
+                ),
+              ]),
+              const SizedBox(height: 12),
+              _TileRow([
+                _StatTile(
+                  'Inactive / suspended',
+                  stats.count(MemberStatus.inactive) +
+                      stats.count(MemberStatus.suspended),
+                  Icons.pause_circle_outline,
+                ),
+                _StatTile(
+                  'Deceased',
+                  stats.count(MemberStatus.deceased),
+                  Icons.local_florist_outlined,
+                ),
+              ]),
               const SizedBox(height: 24),
               Text(
                 'Active members by zone',
@@ -154,6 +151,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+class _TileRow extends StatelessWidget {
+  const _TileRow(this.tiles);
+  final List<Widget> tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: tiles[0]),
+          const SizedBox(width: 12),
+          Expanded(child: tiles[1]),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatTile extends StatelessWidget {
   const _StatTile(this.label, this.value, this.icon, {this.highlight = false});
 
@@ -169,12 +185,13 @@ class _StatTile extends StatelessWidget {
     return Card(
       color: highlight ? scheme.primary : null,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: highlight ? scheme.secondary : null),
+            const SizedBox(height: 8),
             Text(
               '$value',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -185,7 +202,7 @@ class _StatTile extends StatelessWidget {
             Text(
               label,
               style: TextStyle(color: fg),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],

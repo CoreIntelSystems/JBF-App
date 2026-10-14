@@ -10,6 +10,10 @@ class OrgDefaults {
   static const currency = 'GHS';
   static const poweredBy = 'CoreIntel Systems';
 
+  /// JBF green and gold.
+  static const primaryColor = 0xFF0B6B3A;
+  static const accentColor = 0xFFC9A227;
+
   /// Bundled logo, used until an organisation sets its own in settings.
   static const logoAsset = 'assets/branding/logo_shield.png';
 

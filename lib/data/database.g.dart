@@ -96,6 +96,30 @@ class $OrgSettingsTable extends OrgSettings
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _primaryColorMeta = const VerificationMeta(
+    'primaryColor',
+  );
+  @override
+  late final GeneratedColumn<int> primaryColor = GeneratedColumn<int>(
+    'primary_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(OrgDefaults.primaryColor),
+  );
+  static const VerificationMeta _accentColorMeta = const VerificationMeta(
+    'accentColor',
+  );
+  @override
+  late final GeneratedColumn<int> accentColor = GeneratedColumn<int>(
+    'accent_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(OrgDefaults.accentColor),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -106,6 +130,8 @@ class $OrgSettingsTable extends OrgSettings
     currency,
     poweredBy,
     logoPath,
+    primaryColor,
+    accentColor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -176,6 +202,24 @@ class $OrgSettingsTable extends OrgSettings
         logoPath.isAcceptableOrUnknown(data['logo_path']!, _logoPathMeta),
       );
     }
+    if (data.containsKey('primary_color')) {
+      context.handle(
+        _primaryColorMeta,
+        primaryColor.isAcceptableOrUnknown(
+          data['primary_color']!,
+          _primaryColorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('accent_color')) {
+      context.handle(
+        _accentColorMeta,
+        accentColor.isAcceptableOrUnknown(
+          data['accent_color']!,
+          _accentColorMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -217,6 +261,14 @@ class $OrgSettingsTable extends OrgSettings
         DriftSqlType.string,
         data['${effectivePrefix}logo_path'],
       ),
+      primaryColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}primary_color'],
+      )!,
+      accentColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}accent_color'],
+      )!,
     );
   }
 
@@ -235,6 +287,10 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
   final String currency;
   final String? poweredBy;
   final String? logoPath;
+
+  /// Brand colours as ARGB integers, so each organisation can use its own.
+  final int primaryColor;
+  final int accentColor;
   const OrgSetting({
     required this.id,
     required this.name,
@@ -244,6 +300,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     required this.currency,
     this.poweredBy,
     this.logoPath,
+    required this.primaryColor,
+    required this.accentColor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -260,6 +318,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     if (!nullToAbsent || logoPath != null) {
       map['logo_path'] = Variable<String>(logoPath);
     }
+    map['primary_color'] = Variable<int>(primaryColor);
+    map['accent_color'] = Variable<int>(accentColor);
     return map;
   }
 
@@ -277,6 +337,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       logoPath: logoPath == null && nullToAbsent
           ? const Value.absent()
           : Value(logoPath),
+      primaryColor: Value(primaryColor),
+      accentColor: Value(accentColor),
     );
   }
 
@@ -294,6 +356,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       currency: serializer.fromJson<String>(json['currency']),
       poweredBy: serializer.fromJson<String?>(json['poweredBy']),
       logoPath: serializer.fromJson<String?>(json['logoPath']),
+      primaryColor: serializer.fromJson<int>(json['primaryColor']),
+      accentColor: serializer.fromJson<int>(json['accentColor']),
     );
   }
   @override
@@ -308,6 +372,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       'currency': serializer.toJson<String>(currency),
       'poweredBy': serializer.toJson<String?>(poweredBy),
       'logoPath': serializer.toJson<String?>(logoPath),
+      'primaryColor': serializer.toJson<int>(primaryColor),
+      'accentColor': serializer.toJson<int>(accentColor),
     };
   }
 
@@ -320,6 +386,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     String? currency,
     Value<String?> poweredBy = const Value.absent(),
     Value<String?> logoPath = const Value.absent(),
+    int? primaryColor,
+    int? accentColor,
   }) => OrgSetting(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -329,6 +397,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     currency: currency ?? this.currency,
     poweredBy: poweredBy.present ? poweredBy.value : this.poweredBy,
     logoPath: logoPath.present ? logoPath.value : this.logoPath,
+    primaryColor: primaryColor ?? this.primaryColor,
+    accentColor: accentColor ?? this.accentColor,
   );
   OrgSetting copyWithCompanion(OrgSettingsCompanion data) {
     return OrgSetting(
@@ -344,6 +414,12 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       currency: data.currency.present ? data.currency.value : this.currency,
       poweredBy: data.poweredBy.present ? data.poweredBy.value : this.poweredBy,
       logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
+      primaryColor: data.primaryColor.present
+          ? data.primaryColor.value
+          : this.primaryColor,
+      accentColor: data.accentColor.present
+          ? data.accentColor.value
+          : this.accentColor,
     );
   }
 
@@ -357,7 +433,9 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
           ..write('nextMemberNo: $nextMemberNo, ')
           ..write('currency: $currency, ')
           ..write('poweredBy: $poweredBy, ')
-          ..write('logoPath: $logoPath')
+          ..write('logoPath: $logoPath, ')
+          ..write('primaryColor: $primaryColor, ')
+          ..write('accentColor: $accentColor')
           ..write(')'))
         .toString();
   }
@@ -372,6 +450,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     currency,
     poweredBy,
     logoPath,
+    primaryColor,
+    accentColor,
   );
   @override
   bool operator ==(Object other) =>
@@ -384,7 +464,9 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
           other.nextMemberNo == this.nextMemberNo &&
           other.currency == this.currency &&
           other.poweredBy == this.poweredBy &&
-          other.logoPath == this.logoPath);
+          other.logoPath == this.logoPath &&
+          other.primaryColor == this.primaryColor &&
+          other.accentColor == this.accentColor);
 }
 
 class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
@@ -396,6 +478,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
   final Value<String> currency;
   final Value<String?> poweredBy;
   final Value<String?> logoPath;
+  final Value<int> primaryColor;
+  final Value<int> accentColor;
   const OrgSettingsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -405,6 +489,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     this.currency = const Value.absent(),
     this.poweredBy = const Value.absent(),
     this.logoPath = const Value.absent(),
+    this.primaryColor = const Value.absent(),
+    this.accentColor = const Value.absent(),
   });
   OrgSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -415,6 +501,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     this.currency = const Value.absent(),
     this.poweredBy = const Value.absent(),
     this.logoPath = const Value.absent(),
+    this.primaryColor = const Value.absent(),
+    this.accentColor = const Value.absent(),
   }) : name = Value(name),
        shortName = Value(shortName),
        memberIdPrefix = Value(memberIdPrefix);
@@ -427,6 +515,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     Expression<String>? currency,
     Expression<String>? poweredBy,
     Expression<String>? logoPath,
+    Expression<int>? primaryColor,
+    Expression<int>? accentColor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -437,6 +527,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
       if (currency != null) 'currency': currency,
       if (poweredBy != null) 'powered_by': poweredBy,
       if (logoPath != null) 'logo_path': logoPath,
+      if (primaryColor != null) 'primary_color': primaryColor,
+      if (accentColor != null) 'accent_color': accentColor,
     });
   }
 
@@ -449,6 +541,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     Value<String>? currency,
     Value<String?>? poweredBy,
     Value<String?>? logoPath,
+    Value<int>? primaryColor,
+    Value<int>? accentColor,
   }) {
     return OrgSettingsCompanion(
       id: id ?? this.id,
@@ -459,6 +553,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
       currency: currency ?? this.currency,
       poweredBy: poweredBy ?? this.poweredBy,
       logoPath: logoPath ?? this.logoPath,
+      primaryColor: primaryColor ?? this.primaryColor,
+      accentColor: accentColor ?? this.accentColor,
     );
   }
 
@@ -489,6 +585,12 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     if (logoPath.present) {
       map['logo_path'] = Variable<String>(logoPath.value);
     }
+    if (primaryColor.present) {
+      map['primary_color'] = Variable<int>(primaryColor.value);
+    }
+    if (accentColor.present) {
+      map['accent_color'] = Variable<int>(accentColor.value);
+    }
     return map;
   }
 
@@ -502,7 +604,9 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
           ..write('nextMemberNo: $nextMemberNo, ')
           ..write('currency: $currency, ')
           ..write('poweredBy: $poweredBy, ')
-          ..write('logoPath: $logoPath')
+          ..write('logoPath: $logoPath, ')
+          ..write('primaryColor: $primaryColor, ')
+          ..write('accentColor: $accentColor')
           ..write(')'))
         .toString();
   }
@@ -5611,6 +5715,8 @@ typedef $$OrgSettingsTableCreateCompanionBuilder =
       Value<String> currency,
       Value<String?> poweredBy,
       Value<String?> logoPath,
+      Value<int> primaryColor,
+      Value<int> accentColor,
     });
 typedef $$OrgSettingsTableUpdateCompanionBuilder =
     OrgSettingsCompanion Function({
@@ -5622,6 +5728,8 @@ typedef $$OrgSettingsTableUpdateCompanionBuilder =
       Value<String> currency,
       Value<String?> poweredBy,
       Value<String?> logoPath,
+      Value<int> primaryColor,
+      Value<int> accentColor,
     });
 
 class $$OrgSettingsTableFilterComposer
@@ -5670,6 +5778,16 @@ class $$OrgSettingsTableFilterComposer
 
   ColumnFilters<String> get logoPath => $composableBuilder(
     column: $table.logoPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get primaryColor => $composableBuilder(
+    column: $table.primaryColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get accentColor => $composableBuilder(
+    column: $table.accentColor,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -5722,6 +5840,16 @@ class $$OrgSettingsTableOrderingComposer
     column: $table.logoPath,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get primaryColor => $composableBuilder(
+    column: $table.primaryColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get accentColor => $composableBuilder(
+    column: $table.accentColor,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$OrgSettingsTableAnnotationComposer
@@ -5760,6 +5888,16 @@ class $$OrgSettingsTableAnnotationComposer
 
   GeneratedColumn<String> get logoPath =>
       $composableBuilder(column: $table.logoPath, builder: (column) => column);
+
+  GeneratedColumn<int> get primaryColor => $composableBuilder(
+    column: $table.primaryColor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get accentColor => $composableBuilder(
+    column: $table.accentColor,
+    builder: (column) => column,
+  );
 }
 
 class $$OrgSettingsTableTableManager
@@ -5801,6 +5939,8 @@ class $$OrgSettingsTableTableManager
                 Value<String> currency = const Value.absent(),
                 Value<String?> poweredBy = const Value.absent(),
                 Value<String?> logoPath = const Value.absent(),
+                Value<int> primaryColor = const Value.absent(),
+                Value<int> accentColor = const Value.absent(),
               }) => OrgSettingsCompanion(
                 id: id,
                 name: name,
@@ -5810,6 +5950,8 @@ class $$OrgSettingsTableTableManager
                 currency: currency,
                 poweredBy: poweredBy,
                 logoPath: logoPath,
+                primaryColor: primaryColor,
+                accentColor: accentColor,
               ),
           createCompanionCallback:
               ({
@@ -5821,6 +5963,8 @@ class $$OrgSettingsTableTableManager
                 Value<String> currency = const Value.absent(),
                 Value<String?> poweredBy = const Value.absent(),
                 Value<String?> logoPath = const Value.absent(),
+                Value<int> primaryColor = const Value.absent(),
+                Value<int> accentColor = const Value.absent(),
               }) => OrgSettingsCompanion.insert(
                 id: id,
                 name: name,
@@ -5830,6 +5974,8 @@ class $$OrgSettingsTableTableManager
                 currency: currency,
                 poweredBy: poweredBy,
                 logoPath: logoPath,
+                primaryColor: primaryColor,
+                accentColor: accentColor,
               ),
           withReferenceMapper: (p0) => p0
               .map(

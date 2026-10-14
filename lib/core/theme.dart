@@ -1,28 +1,43 @@
 import 'package:flutter/material.dart';
 
-/// JBF brand colours: green, gold and white.
-abstract final class BrandColors {
-  static const green = Color(0xFF0B6B3A);
-  static const greenDark = Color(0xFF064A27);
-  static const gold = Color(0xFFC9A227);
-  static const goldLight = Color(0xFFF3E3A6);
-  static const white = Color(0xFFFFFFFF);
+import 'org_config.dart';
+
+/// An organisation's brand colours, loaded from `org_settings`.
+/// JBF uses green and gold on white.
+class BrandPalette {
+  const BrandPalette({
+    this.primary = const Color(OrgDefaults.primaryColor),
+    this.accent = const Color(OrgDefaults.accentColor),
+  });
+
+  final Color primary;
+  final Color accent;
+
+  /// A lighter primary that stays readable on dark backgrounds.
+  Color get primaryOnDark {
+    final hsl = HSLColor.fromColor(primary);
+    return hsl.withLightness((hsl.lightness + 0.35).clamp(0.0, 0.75)).toColor();
+  }
 }
 
-ThemeData buildTheme(Brightness brightness) {
+ThemeData buildTheme(
+  Brightness brightness, [
+  BrandPalette palette = const BrandPalette(),
+]) {
   final dark = brightness == Brightness.dark;
   final scheme = ColorScheme.fromSeed(
-    seedColor: BrandColors.green,
+    seedColor: palette.primary,
     brightness: brightness,
-    primary: dark ? const Color(0xFF6FD39A) : BrandColors.green,
-    secondary: BrandColors.gold,
+    primary: dark ? palette.primaryOnDark : palette.primary,
+    onPrimary: dark ? Colors.black : Colors.white,
+    secondary: palette.accent,
     onSecondary: Colors.black,
-    surface: dark ? const Color(0xFF111714) : BrandColors.white,
+    surface: dark ? const Color(0xFF111714) : Colors.white,
   );
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
   return base.copyWith(
     appBarTheme: AppBarTheme(
-      backgroundColor: dark ? const Color(0xFF0E1A13) : BrandColors.green,
+      backgroundColor: dark ? const Color(0xFF0E1A13) : palette.primary,
       foregroundColor: Colors.white,
       centerTitle: false,
     ),
@@ -40,8 +55,8 @@ ThemeData buildTheme(Brightness brightness) {
       border: OutlineInputBorder(),
       isDense: false,
     ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: BrandColors.gold,
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: palette.accent,
       foregroundColor: Colors.black,
     ),
     cardTheme: const CardThemeData(margin: EdgeInsets.zero),

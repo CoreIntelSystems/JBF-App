@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app_services.dart';
 import '../../core/format.dart';
-import '../../core/theme.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dashboard_repository.dart';
 import '../../data/repositories/member_repository.dart';
@@ -165,16 +164,17 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = highlight ? Colors.white : null;
+    final scheme = Theme.of(context).colorScheme;
+    final fg = highlight ? scheme.onPrimary : null;
     return Card(
-      color: highlight ? BrandColors.green : null,
+      color: highlight ? scheme.primary : null,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, color: highlight ? BrandColors.gold : null),
+            Icon(icon, color: highlight ? scheme.secondary : null),
             Text(
               '$value',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(

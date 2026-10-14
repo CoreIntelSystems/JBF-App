@@ -25,11 +25,13 @@ class JbfApp extends StatelessWidget {
     super.key,
     required this.services,
     this.initialThemeMode = ThemeMode.system,
+    this.palette = const BrandPalette(),
     this.biometrics,
   });
 
   final AppServices services;
   final ThemeMode initialThemeMode;
+  final BrandPalette palette;
   final Biometrics? biometrics;
 
   @override
@@ -50,8 +52,8 @@ class JbfApp extends StatelessWidget {
           builder: (context, mode) => MaterialApp(
             title: OrgDefaults.name,
             debugShowCheckedModeBanner: false,
-            theme: buildTheme(Brightness.light),
-            darkTheme: buildTheme(Brightness.dark),
+            theme: buildTheme(Brightness.light, palette),
+            darkTheme: buildTheme(Brightness.dark, palette),
             themeMode: mode,
             home: BlocBuilder<AuthCubit, AuthState>(
               builder: (context, state) => switch (state) {

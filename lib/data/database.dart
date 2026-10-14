@@ -33,6 +33,12 @@ class OrgSettings extends Table {
   TextColumn get poweredBy => text().nullable()();
   TextColumn get logoPath => text().nullable()();
 
+  /// Brand colours as ARGB integers, so each organisation can use its own.
+  IntColumn get primaryColor =>
+      integer().withDefault(const Constant(OrgDefaults.primaryColor))();
+  IntColumn get accentColor =>
+      integer().withDefault(const Constant(OrgDefaults.accentColor))();
+
   @override
   Set<Column> get primaryKey => {id};
 }

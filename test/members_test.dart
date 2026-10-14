@@ -22,6 +22,12 @@ void main() {
     expect(zones.first.nickname, 'Legends');
   });
 
+  test('seeds JBF green and gold as configurable brand colours', () async {
+    final org = await env.db.select(env.db.orgSettings).getSingle();
+    expect(org.primaryColor, 0xFF0B6B3A);
+    expect(org.accentColor, 0xFFC9A227);
+  });
+
   test('allocates sequential member IDs', () async {
     final a = await env.members.create(
       env.draft('Ama', [zone[1]!]),

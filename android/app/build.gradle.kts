@@ -28,11 +28,23 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        // Shared key for TEST builds only, so every CI build can install over
+        // the previous one. Store releases need their own key kept in secrets.
+        create("testBuilds") {
+            storeFile = file("test-builds.jks")
+            storePassword = "jbftest123"
+            keyAlias = "jbftest"
+            keyPassword = "jbftest123"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("testBuilds")
+        }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("testBuilds")
         }
     }
 }

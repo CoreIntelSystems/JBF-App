@@ -37,7 +37,11 @@ phases (see the build plan).
 Every push runs the **Android build** workflow. When it passes it publishes a
 pre-release named **Test build N** on the Releases page with a plain `.apk`:
 open it on the phone, tap the `.apk` to download, then install. The same APK is
-also attached to the run as the `jbf-app-debug-apk` artifact (a zip).
+also attached to the run as the `jbf-app-test-apk` artifact (a zip).
+
+Test builds are release-mode APKs signed with a shared test key
+(`android/app/test-builds.jks`), so each one installs over the last. Builds for
+the Play Store must use a separate key kept in repository secrets.
 
 ## Development
 

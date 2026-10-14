@@ -43,6 +43,9 @@ class OrgSettings extends Table {
   TextColumn get receiptPrefix => text().withDefault(const Constant('RCP'))();
   IntColumn get nextReceiptNo => integer().withDefault(const Constant(1))();
 
+  /// Welfare case numbers look like `WEL-2026-0007`.
+  IntColumn get nextWelfareCaseNo => integer().withDefault(const Constant(1))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -232,6 +235,78 @@ class Payments extends Table with SyncColumns {
   DateTimeColumn get voidedAt => dateTime().nullable()();
 }
 
+/// Kinds of welfare support, each with a fixed benefit amount. The
+/// Treasurer proposes the amount; the Welfare Chairman (or the General
+/// Secretary standing in) approves it before it applies to new cases.
+class WelfareCaseTypes extends Table with SyncColumns {
+  TextColumn get name => text()();
+  TextColumn get description => text().nullable()();
+
+  /// The approved amount in pesewas. Null until first approved, in which
+  /// case each case states the amount requested.
+  IntColumn get benefitAmount => integer().nullable()();
+  TextColumn get benefitApprovedBy => text().nullable()();
+  TextColumn get benefitApprovedByName => text().nullable()();
+  DateTimeColumn get benefitApprovedAt => dateTime().nullable()();
+
+  /// A change waiting for approval.
+  IntColumn get proposedAmount => integer().nullable()();
+  TextColumn get proposedBy => text().nullable()();
+  TextColumn get proposedByName => text().nullable()();
+  DateTimeColumn get proposedAt => dateTime().nullable()();
+
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+enum WelfareStatus {
+  pending('Awaiting approval'),
+  approved('Approved, not yet paid'),
+  rejected('Rejected'),
+  paid('Paid');
+
+  const WelfareStatus(this.label);
+  final String label;
+}
+
+/// A request for welfare support for a member. Moves pending -> approved
+/// or rejected, then approved -> paid. Never deleted.
+@TableIndex(name: 'welfare_cases_member', columns: {#memberId})
+@TableIndex(name: 'welfare_cases_status', columns: {#status})
+class WelfareCases extends Table with SyncColumns {
+  TextColumn get caseNo => text().unique()();
+  TextColumn get memberId => text().references(Members, #id)();
+  TextColumn get caseTypeId => text().references(WelfareCaseTypes, #id)();
+
+  /// Who the support is for when it is not the member, e.g. "Mother".
+  TextColumn get beneficiary => text().nullable()();
+  TextColumn get description => text().nullable()();
+  DateTimeColumn get occurredOn => dateTime()();
+  IntColumn get amount => integer()();
+
+  /// True when [amount] came from the case type's approved benefit.
+  BoolColumn get amountIsFixed => boolean().withDefault(const Constant(true))();
+  TextColumn get status => textEnum<WelfareStatus>().withDefault(
+    Constant(WelfareStatus.pending.name),
+  )();
+  TextColumn get preparedByName => text()();
+
+  TextColumn get decidedBy => text().nullable()();
+  TextColumn get decidedByName => text().nullable()();
+
+  /// The approver's role at the time, so a stand-in approval by the
+  /// General Secretary is visible.
+  TextColumn get decidedByRole => text().nullable()();
+  DateTimeColumn get decidedAt => dateTime().nullable()();
+  TextColumn get decisionNote => text().nullable()();
+
+  DateTimeColumn get paidOn => dateTime().nullable()();
+  TextColumn get payMethod => textEnum<PaymentMethod>().nullable()();
+  TextColumn get payReference => text().nullable()();
+  TextColumn get paidBy => text().nullable()();
+  TextColumn get paidByName => text().nullable()();
+}
+
 const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
 
 @DriftDatabase(
@@ -246,13 +321,15 @@ const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
     AuditLogs,
     ContributionTypes,
     Payments,
+    WelfareCaseTypes,
+    WelfareCases,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -262,6 +339,8 @@ class AppDatabase extends _$AppDatabase {
       await _createPaymentGuards();
       await _seed();
       await _seedContributionTypes();
+      await _createWelfareGuards();
+      await _seedWelfareCaseTypes();
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -273,6 +352,20 @@ class AppDatabase extends _$AppDatabase {
         await m.createIndex(paymentsPaidOn);
         await _createPaymentGuards();
         await _seedContributionTypes();
+      }
+      if (from < 3) {
+        await m.addColumn(orgSettings, orgSettings.nextWelfareCaseNo);
+        await m.createTable(welfareCaseTypes);
+        await m.createTable(welfareCases);
+        await m.createIndex(welfareCasesMember);
+        await m.createIndex(welfareCasesStatus);
+        await _createWelfareGuards();
+        await _seedWelfareCaseTypes();
+        await _grantNewPermissions({
+          for (final r in defaultRoles)
+            if (r.permissions.contains(Perm.welfarePay))
+              r.key: {Perm.welfarePay},
+        });
       }
     },
     beforeOpen: (details) async {
@@ -331,6 +424,61 @@ class AppDatabase extends _$AppDatabase {
         OR (OLD.status = 'voided' AND NEW.status = 'valid')
       BEGIN SELECT RAISE(ABORT, 'Payments cannot be edited; void and re-enter'); END
     ''');
+  }
+
+  /// Welfare cases are never deleted, and only move forward:
+  /// pending -> approved/rejected, approved -> paid. The amount is locked
+  /// once a decision is made.
+  Future<void> _createWelfareGuards() async {
+    await customStatement('''
+      CREATE TRIGGER welfare_cases_no_delete BEFORE DELETE ON welfare_cases
+      BEGIN SELECT RAISE(ABORT, 'Welfare cases cannot be deleted'); END
+    ''');
+    await customStatement('''
+      CREATE TRIGGER welfare_cases_flow BEFORE UPDATE ON welfare_cases
+      WHEN (NEW.amount IS NOT OLD.amount AND OLD.status <> 'pending')
+        OR NEW.member_id IS NOT OLD.member_id
+        OR NEW.case_no IS NOT OLD.case_no
+        OR NOT (
+          NEW.status = OLD.status
+          OR (OLD.status = 'pending' AND NEW.status IN ('approved', 'rejected'))
+          OR (OLD.status = 'approved' AND NEW.status = 'paid')
+        )
+      BEGIN SELECT RAISE(ABORT, 'This welfare case can no longer be changed'); END
+    ''');
+  }
+
+  Future<void> _seedWelfareCaseTypes() async {
+    await batch((b) {
+      var order = 0;
+      for (final (name, description) in OrgDefaults.welfareCaseTypes) {
+        b.insert(
+          welfareCaseTypes,
+          WelfareCaseTypesCompanion.insert(
+            name: name,
+            description: Value(description),
+            sortOrder: Value(order++),
+          ),
+        );
+      }
+    });
+  }
+
+  /// Adds permissions introduced after a database was created to the
+  /// matching seeded roles, leaving any customised roles otherwise intact.
+  Future<void> _grantNewPermissions(Map<String, Set<String>> byRoleKey) async {
+    for (final MapEntry(key: roleKey, value: perms) in byRoleKey.entries) {
+      final role = await (select(
+        roles,
+      )..where((r) => r.key.equals(roleKey))).getSingleOrNull();
+      if (role == null) continue;
+      await batch((b) {
+        b.insertAll(rolePermissions, [
+          for (final p in perms)
+            RolePermissionsCompanion.insert(roleId: role.id, permission: p),
+        ], mode: InsertMode.insertOrIgnore);
+      });
+    }
   }
 
   Future<void> _seedContributionTypes() async {

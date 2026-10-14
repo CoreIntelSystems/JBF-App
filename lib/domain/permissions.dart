@@ -27,6 +27,9 @@ abstract final class Perm {
   /// Approve welfare cases and benefit amounts (Welfare Chairman, with the
   /// General Secretary standing in when the Chairman is away).
   static const welfareApprove = 'welfare.approve';
+
+  /// Pay out approved welfare cases.
+  static const welfarePay = 'welfare.pay';
   static const financeView = 'finance.view';
   static const reportsExport = 'reports.export';
   static const eventsManage = 'events.manage';
@@ -50,6 +53,7 @@ abstract final class Perm {
     welfarePrepare,
     welfareSetBenefits,
     welfareApprove,
+    welfarePay,
     financeView,
     reportsExport,
     eventsManage,
@@ -110,6 +114,7 @@ final defaultRoles = <RoleSeed>[
     Perm.paymentsVoid,
     Perm.duesManage,
     Perm.welfareSetBenefits,
+    Perm.welfarePay,
     Perm.financeView,
     Perm.reportsExport,
     Perm.backupManage,

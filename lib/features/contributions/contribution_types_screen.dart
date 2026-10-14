@@ -191,6 +191,7 @@ class _ContributionTypeFormState extends State<ContributionTypeForm> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<ContributionCategory>(
+              isExpanded: true,
               initialValue: _category,
               decoration: const InputDecoration(labelText: 'Category'),
               items: [
@@ -201,6 +202,7 @@ class _ContributionTypeFormState extends State<ContributionTypeForm> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<ContributionFrequency>(
+              isExpanded: true,
               initialValue: _frequency,
               decoration: const InputDecoration(labelText: 'How often'),
               items: [

@@ -8,6 +8,8 @@ import '../audit/audit_log_screen.dart';
 import '../auth/auth_cubit.dart';
 import '../contributions/contribution_types_screen.dart';
 import '../users/users_screen.dart';
+import '../welfare/welfare_common.dart';
+import '../welfare/welfare_screen.dart';
 import 'account_screen.dart';
 
 class MoreScreen extends StatelessWidget {
@@ -37,6 +39,13 @@ class MoreScreen extends StatelessWidget {
             subtitle: const Text('Password, PIN and fingerprint'),
             onTap: () => open(const AccountScreen()),
           ),
+          if (user?.canViewWelfare ?? false)
+            ListTile(
+              leading: const Icon(Icons.volunteer_activism),
+              title: const Text('Welfare'),
+              subtitle: const Text('Cases, approvals, payouts and the fund'),
+              onTap: () => open(const WelfareScreen()),
+            ),
           ListTile(
             leading: const Icon(Icons.price_change_outlined),
             title: const Text('Contribution types'),
@@ -82,7 +91,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.2.0 (Phase 2 preview)',
+              applicationVersion: '0.3.0 (Phase 2 preview)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'All data stays on this device in an encrypted database.',

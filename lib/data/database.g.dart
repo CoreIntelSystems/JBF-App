@@ -144,6 +144,18 @@ class $OrgSettingsTable extends OrgSettings
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _nextWelfareCaseNoMeta = const VerificationMeta(
+    'nextWelfareCaseNo',
+  );
+  @override
+  late final GeneratedColumn<int> nextWelfareCaseNo = GeneratedColumn<int>(
+    'next_welfare_case_no',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -158,6 +170,7 @@ class $OrgSettingsTable extends OrgSettings
     accentColor,
     receiptPrefix,
     nextReceiptNo,
+    nextWelfareCaseNo,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -264,6 +277,15 @@ class $OrgSettingsTable extends OrgSettings
         ),
       );
     }
+    if (data.containsKey('next_welfare_case_no')) {
+      context.handle(
+        _nextWelfareCaseNoMeta,
+        nextWelfareCaseNo.isAcceptableOrUnknown(
+          data['next_welfare_case_no']!,
+          _nextWelfareCaseNoMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -321,6 +343,10 @@ class $OrgSettingsTable extends OrgSettings
         DriftSqlType.int,
         data['${effectivePrefix}next_receipt_no'],
       )!,
+      nextWelfareCaseNo: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_welfare_case_no'],
+      )!,
     );
   }
 
@@ -347,6 +373,9 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
   /// Receipt numbers look like `RCP-2026-000045`.
   final String receiptPrefix;
   final int nextReceiptNo;
+
+  /// Welfare case numbers look like `WEL-2026-0007`.
+  final int nextWelfareCaseNo;
   const OrgSetting({
     required this.id,
     required this.name,
@@ -360,6 +389,7 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     required this.accentColor,
     required this.receiptPrefix,
     required this.nextReceiptNo,
+    required this.nextWelfareCaseNo,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -380,6 +410,7 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     map['accent_color'] = Variable<int>(accentColor);
     map['receipt_prefix'] = Variable<String>(receiptPrefix);
     map['next_receipt_no'] = Variable<int>(nextReceiptNo);
+    map['next_welfare_case_no'] = Variable<int>(nextWelfareCaseNo);
     return map;
   }
 
@@ -401,6 +432,7 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       accentColor: Value(accentColor),
       receiptPrefix: Value(receiptPrefix),
       nextReceiptNo: Value(nextReceiptNo),
+      nextWelfareCaseNo: Value(nextWelfareCaseNo),
     );
   }
 
@@ -422,6 +454,7 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       accentColor: serializer.fromJson<int>(json['accentColor']),
       receiptPrefix: serializer.fromJson<String>(json['receiptPrefix']),
       nextReceiptNo: serializer.fromJson<int>(json['nextReceiptNo']),
+      nextWelfareCaseNo: serializer.fromJson<int>(json['nextWelfareCaseNo']),
     );
   }
   @override
@@ -440,6 +473,7 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       'accentColor': serializer.toJson<int>(accentColor),
       'receiptPrefix': serializer.toJson<String>(receiptPrefix),
       'nextReceiptNo': serializer.toJson<int>(nextReceiptNo),
+      'nextWelfareCaseNo': serializer.toJson<int>(nextWelfareCaseNo),
     };
   }
 
@@ -456,6 +490,7 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     int? accentColor,
     String? receiptPrefix,
     int? nextReceiptNo,
+    int? nextWelfareCaseNo,
   }) => OrgSetting(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -469,6 +504,7 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     accentColor: accentColor ?? this.accentColor,
     receiptPrefix: receiptPrefix ?? this.receiptPrefix,
     nextReceiptNo: nextReceiptNo ?? this.nextReceiptNo,
+    nextWelfareCaseNo: nextWelfareCaseNo ?? this.nextWelfareCaseNo,
   );
   OrgSetting copyWithCompanion(OrgSettingsCompanion data) {
     return OrgSetting(
@@ -496,6 +532,9 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       nextReceiptNo: data.nextReceiptNo.present
           ? data.nextReceiptNo.value
           : this.nextReceiptNo,
+      nextWelfareCaseNo: data.nextWelfareCaseNo.present
+          ? data.nextWelfareCaseNo.value
+          : this.nextWelfareCaseNo,
     );
   }
 
@@ -513,7 +552,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
           ..write('primaryColor: $primaryColor, ')
           ..write('accentColor: $accentColor, ')
           ..write('receiptPrefix: $receiptPrefix, ')
-          ..write('nextReceiptNo: $nextReceiptNo')
+          ..write('nextReceiptNo: $nextReceiptNo, ')
+          ..write('nextWelfareCaseNo: $nextWelfareCaseNo')
           ..write(')'))
         .toString();
   }
@@ -532,6 +572,7 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     accentColor,
     receiptPrefix,
     nextReceiptNo,
+    nextWelfareCaseNo,
   );
   @override
   bool operator ==(Object other) =>
@@ -548,7 +589,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
           other.primaryColor == this.primaryColor &&
           other.accentColor == this.accentColor &&
           other.receiptPrefix == this.receiptPrefix &&
-          other.nextReceiptNo == this.nextReceiptNo);
+          other.nextReceiptNo == this.nextReceiptNo &&
+          other.nextWelfareCaseNo == this.nextWelfareCaseNo);
 }
 
 class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
@@ -564,6 +606,7 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
   final Value<int> accentColor;
   final Value<String> receiptPrefix;
   final Value<int> nextReceiptNo;
+  final Value<int> nextWelfareCaseNo;
   const OrgSettingsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -577,6 +620,7 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     this.accentColor = const Value.absent(),
     this.receiptPrefix = const Value.absent(),
     this.nextReceiptNo = const Value.absent(),
+    this.nextWelfareCaseNo = const Value.absent(),
   });
   OrgSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -591,6 +635,7 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     this.accentColor = const Value.absent(),
     this.receiptPrefix = const Value.absent(),
     this.nextReceiptNo = const Value.absent(),
+    this.nextWelfareCaseNo = const Value.absent(),
   }) : name = Value(name),
        shortName = Value(shortName),
        memberIdPrefix = Value(memberIdPrefix);
@@ -607,6 +652,7 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     Expression<int>? accentColor,
     Expression<String>? receiptPrefix,
     Expression<int>? nextReceiptNo,
+    Expression<int>? nextWelfareCaseNo,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -621,6 +667,7 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
       if (accentColor != null) 'accent_color': accentColor,
       if (receiptPrefix != null) 'receipt_prefix': receiptPrefix,
       if (nextReceiptNo != null) 'next_receipt_no': nextReceiptNo,
+      if (nextWelfareCaseNo != null) 'next_welfare_case_no': nextWelfareCaseNo,
     });
   }
 
@@ -637,6 +684,7 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     Value<int>? accentColor,
     Value<String>? receiptPrefix,
     Value<int>? nextReceiptNo,
+    Value<int>? nextWelfareCaseNo,
   }) {
     return OrgSettingsCompanion(
       id: id ?? this.id,
@@ -651,6 +699,7 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
       accentColor: accentColor ?? this.accentColor,
       receiptPrefix: receiptPrefix ?? this.receiptPrefix,
       nextReceiptNo: nextReceiptNo ?? this.nextReceiptNo,
+      nextWelfareCaseNo: nextWelfareCaseNo ?? this.nextWelfareCaseNo,
     );
   }
 
@@ -693,6 +742,9 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     if (nextReceiptNo.present) {
       map['next_receipt_no'] = Variable<int>(nextReceiptNo.value);
     }
+    if (nextWelfareCaseNo.present) {
+      map['next_welfare_case_no'] = Variable<int>(nextWelfareCaseNo.value);
+    }
     return map;
   }
 
@@ -710,7 +762,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
           ..write('primaryColor: $primaryColor, ')
           ..write('accentColor: $accentColor, ')
           ..write('receiptPrefix: $receiptPrefix, ')
-          ..write('nextReceiptNo: $nextReceiptNo')
+          ..write('nextReceiptNo: $nextReceiptNo, ')
+          ..write('nextWelfareCaseNo: $nextWelfareCaseNo')
           ..write(')'))
         .toString();
   }
@@ -7804,6 +7857,2530 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
   }
 }
 
+class $WelfareCaseTypesTable extends WelfareCaseTypes
+    with TableInfo<$WelfareCaseTypesTable, WelfareCaseType> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WelfareCaseTypesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: newId,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _benefitAmountMeta = const VerificationMeta(
+    'benefitAmount',
+  );
+  @override
+  late final GeneratedColumn<int> benefitAmount = GeneratedColumn<int>(
+    'benefit_amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _benefitApprovedByMeta = const VerificationMeta(
+    'benefitApprovedBy',
+  );
+  @override
+  late final GeneratedColumn<String> benefitApprovedBy =
+      GeneratedColumn<String>(
+        'benefit_approved_by',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _benefitApprovedByNameMeta =
+      const VerificationMeta('benefitApprovedByName');
+  @override
+  late final GeneratedColumn<String> benefitApprovedByName =
+      GeneratedColumn<String>(
+        'benefit_approved_by_name',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _benefitApprovedAtMeta = const VerificationMeta(
+    'benefitApprovedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> benefitApprovedAt =
+      GeneratedColumn<DateTime>(
+        'benefit_approved_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _proposedAmountMeta = const VerificationMeta(
+    'proposedAmount',
+  );
+  @override
+  late final GeneratedColumn<int> proposedAmount = GeneratedColumn<int>(
+    'proposed_amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _proposedByMeta = const VerificationMeta(
+    'proposedBy',
+  );
+  @override
+  late final GeneratedColumn<String> proposedBy = GeneratedColumn<String>(
+    'proposed_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _proposedByNameMeta = const VerificationMeta(
+    'proposedByName',
+  );
+  @override
+  late final GeneratedColumn<String> proposedByName = GeneratedColumn<String>(
+    'proposed_by_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _proposedAtMeta = const VerificationMeta(
+    'proposedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> proposedAt = GeneratedColumn<DateTime>(
+    'proposed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    updatedAt,
+    createdBy,
+    deviceId,
+    deletedAt,
+    name,
+    description,
+    benefitAmount,
+    benefitApprovedBy,
+    benefitApprovedByName,
+    benefitApprovedAt,
+    proposedAmount,
+    proposedBy,
+    proposedByName,
+    proposedAt,
+    isActive,
+    sortOrder,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'welfare_case_types';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WelfareCaseType> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('benefit_amount')) {
+      context.handle(
+        _benefitAmountMeta,
+        benefitAmount.isAcceptableOrUnknown(
+          data['benefit_amount']!,
+          _benefitAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('benefit_approved_by')) {
+      context.handle(
+        _benefitApprovedByMeta,
+        benefitApprovedBy.isAcceptableOrUnknown(
+          data['benefit_approved_by']!,
+          _benefitApprovedByMeta,
+        ),
+      );
+    }
+    if (data.containsKey('benefit_approved_by_name')) {
+      context.handle(
+        _benefitApprovedByNameMeta,
+        benefitApprovedByName.isAcceptableOrUnknown(
+          data['benefit_approved_by_name']!,
+          _benefitApprovedByNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('benefit_approved_at')) {
+      context.handle(
+        _benefitApprovedAtMeta,
+        benefitApprovedAt.isAcceptableOrUnknown(
+          data['benefit_approved_at']!,
+          _benefitApprovedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('proposed_amount')) {
+      context.handle(
+        _proposedAmountMeta,
+        proposedAmount.isAcceptableOrUnknown(
+          data['proposed_amount']!,
+          _proposedAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('proposed_by')) {
+      context.handle(
+        _proposedByMeta,
+        proposedBy.isAcceptableOrUnknown(data['proposed_by']!, _proposedByMeta),
+      );
+    }
+    if (data.containsKey('proposed_by_name')) {
+      context.handle(
+        _proposedByNameMeta,
+        proposedByName.isAcceptableOrUnknown(
+          data['proposed_by_name']!,
+          _proposedByNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('proposed_at')) {
+      context.handle(
+        _proposedAtMeta,
+        proposedAt.isAcceptableOrUnknown(data['proposed_at']!, _proposedAtMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WelfareCaseType map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WelfareCaseType(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      ),
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      benefitAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}benefit_amount'],
+      ),
+      benefitApprovedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}benefit_approved_by'],
+      ),
+      benefitApprovedByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}benefit_approved_by_name'],
+      ),
+      benefitApprovedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}benefit_approved_at'],
+      ),
+      proposedAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}proposed_amount'],
+      ),
+      proposedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}proposed_by'],
+      ),
+      proposedByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}proposed_by_name'],
+      ),
+      proposedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}proposed_at'],
+      ),
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+    );
+  }
+
+  @override
+  $WelfareCaseTypesTable createAlias(String alias) {
+    return $WelfareCaseTypesTable(attachedDatabase, alias);
+  }
+}
+
+class WelfareCaseType extends DataClass implements Insertable<WelfareCaseType> {
+  final String id;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? createdBy;
+  final String? deviceId;
+  final DateTime? deletedAt;
+  final String name;
+  final String? description;
+
+  /// The approved amount in pesewas. Null until first approved, in which
+  /// case each case states the amount requested.
+  final int? benefitAmount;
+  final String? benefitApprovedBy;
+  final String? benefitApprovedByName;
+  final DateTime? benefitApprovedAt;
+
+  /// A change waiting for approval.
+  final int? proposedAmount;
+  final String? proposedBy;
+  final String? proposedByName;
+  final DateTime? proposedAt;
+  final bool isActive;
+  final int sortOrder;
+  const WelfareCaseType({
+    required this.id,
+    required this.createdAt,
+    required this.updatedAt,
+    this.createdBy,
+    this.deviceId,
+    this.deletedAt,
+    required this.name,
+    this.description,
+    this.benefitAmount,
+    this.benefitApprovedBy,
+    this.benefitApprovedByName,
+    this.benefitApprovedAt,
+    this.proposedAmount,
+    this.proposedBy,
+    this.proposedByName,
+    this.proposedAt,
+    required this.isActive,
+    required this.sortOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
+    if (!nullToAbsent || deviceId != null) {
+      map['device_id'] = Variable<String>(deviceId);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    if (!nullToAbsent || benefitAmount != null) {
+      map['benefit_amount'] = Variable<int>(benefitAmount);
+    }
+    if (!nullToAbsent || benefitApprovedBy != null) {
+      map['benefit_approved_by'] = Variable<String>(benefitApprovedBy);
+    }
+    if (!nullToAbsent || benefitApprovedByName != null) {
+      map['benefit_approved_by_name'] = Variable<String>(benefitApprovedByName);
+    }
+    if (!nullToAbsent || benefitApprovedAt != null) {
+      map['benefit_approved_at'] = Variable<DateTime>(benefitApprovedAt);
+    }
+    if (!nullToAbsent || proposedAmount != null) {
+      map['proposed_amount'] = Variable<int>(proposedAmount);
+    }
+    if (!nullToAbsent || proposedBy != null) {
+      map['proposed_by'] = Variable<String>(proposedBy);
+    }
+    if (!nullToAbsent || proposedByName != null) {
+      map['proposed_by_name'] = Variable<String>(proposedByName);
+    }
+    if (!nullToAbsent || proposedAt != null) {
+      map['proposed_at'] = Variable<DateTime>(proposedAt);
+    }
+    map['is_active'] = Variable<bool>(isActive);
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  WelfareCaseTypesCompanion toCompanion(bool nullToAbsent) {
+    return WelfareCaseTypesCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
+      deviceId: deviceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deviceId),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      name: Value(name),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      benefitAmount: benefitAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(benefitAmount),
+      benefitApprovedBy: benefitApprovedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(benefitApprovedBy),
+      benefitApprovedByName: benefitApprovedByName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(benefitApprovedByName),
+      benefitApprovedAt: benefitApprovedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(benefitApprovedAt),
+      proposedAmount: proposedAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(proposedAmount),
+      proposedBy: proposedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(proposedBy),
+      proposedByName: proposedByName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(proposedByName),
+      proposedAt: proposedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(proposedAt),
+      isActive: Value(isActive),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory WelfareCaseType.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WelfareCaseType(
+      id: serializer.fromJson<String>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
+      deviceId: serializer.fromJson<String?>(json['deviceId']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      name: serializer.fromJson<String>(json['name']),
+      description: serializer.fromJson<String?>(json['description']),
+      benefitAmount: serializer.fromJson<int?>(json['benefitAmount']),
+      benefitApprovedBy: serializer.fromJson<String?>(
+        json['benefitApprovedBy'],
+      ),
+      benefitApprovedByName: serializer.fromJson<String?>(
+        json['benefitApprovedByName'],
+      ),
+      benefitApprovedAt: serializer.fromJson<DateTime?>(
+        json['benefitApprovedAt'],
+      ),
+      proposedAmount: serializer.fromJson<int?>(json['proposedAmount']),
+      proposedBy: serializer.fromJson<String?>(json['proposedBy']),
+      proposedByName: serializer.fromJson<String?>(json['proposedByName']),
+      proposedAt: serializer.fromJson<DateTime?>(json['proposedAt']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'createdBy': serializer.toJson<String?>(createdBy),
+      'deviceId': serializer.toJson<String?>(deviceId),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'name': serializer.toJson<String>(name),
+      'description': serializer.toJson<String?>(description),
+      'benefitAmount': serializer.toJson<int?>(benefitAmount),
+      'benefitApprovedBy': serializer.toJson<String?>(benefitApprovedBy),
+      'benefitApprovedByName': serializer.toJson<String?>(
+        benefitApprovedByName,
+      ),
+      'benefitApprovedAt': serializer.toJson<DateTime?>(benefitApprovedAt),
+      'proposedAmount': serializer.toJson<int?>(proposedAmount),
+      'proposedBy': serializer.toJson<String?>(proposedBy),
+      'proposedByName': serializer.toJson<String?>(proposedByName),
+      'proposedAt': serializer.toJson<DateTime?>(proposedAt),
+      'isActive': serializer.toJson<bool>(isActive),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  WelfareCaseType copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<String?> createdBy = const Value.absent(),
+    Value<String?> deviceId = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? name,
+    Value<String?> description = const Value.absent(),
+    Value<int?> benefitAmount = const Value.absent(),
+    Value<String?> benefitApprovedBy = const Value.absent(),
+    Value<String?> benefitApprovedByName = const Value.absent(),
+    Value<DateTime?> benefitApprovedAt = const Value.absent(),
+    Value<int?> proposedAmount = const Value.absent(),
+    Value<String?> proposedBy = const Value.absent(),
+    Value<String?> proposedByName = const Value.absent(),
+    Value<DateTime?> proposedAt = const Value.absent(),
+    bool? isActive,
+    int? sortOrder,
+  }) => WelfareCaseType(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    createdBy: createdBy.present ? createdBy.value : this.createdBy,
+    deviceId: deviceId.present ? deviceId.value : this.deviceId,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    name: name ?? this.name,
+    description: description.present ? description.value : this.description,
+    benefitAmount: benefitAmount.present
+        ? benefitAmount.value
+        : this.benefitAmount,
+    benefitApprovedBy: benefitApprovedBy.present
+        ? benefitApprovedBy.value
+        : this.benefitApprovedBy,
+    benefitApprovedByName: benefitApprovedByName.present
+        ? benefitApprovedByName.value
+        : this.benefitApprovedByName,
+    benefitApprovedAt: benefitApprovedAt.present
+        ? benefitApprovedAt.value
+        : this.benefitApprovedAt,
+    proposedAmount: proposedAmount.present
+        ? proposedAmount.value
+        : this.proposedAmount,
+    proposedBy: proposedBy.present ? proposedBy.value : this.proposedBy,
+    proposedByName: proposedByName.present
+        ? proposedByName.value
+        : this.proposedByName,
+    proposedAt: proposedAt.present ? proposedAt.value : this.proposedAt,
+    isActive: isActive ?? this.isActive,
+    sortOrder: sortOrder ?? this.sortOrder,
+  );
+  WelfareCaseType copyWithCompanion(WelfareCaseTypesCompanion data) {
+    return WelfareCaseType(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      name: data.name.present ? data.name.value : this.name,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      benefitAmount: data.benefitAmount.present
+          ? data.benefitAmount.value
+          : this.benefitAmount,
+      benefitApprovedBy: data.benefitApprovedBy.present
+          ? data.benefitApprovedBy.value
+          : this.benefitApprovedBy,
+      benefitApprovedByName: data.benefitApprovedByName.present
+          ? data.benefitApprovedByName.value
+          : this.benefitApprovedByName,
+      benefitApprovedAt: data.benefitApprovedAt.present
+          ? data.benefitApprovedAt.value
+          : this.benefitApprovedAt,
+      proposedAmount: data.proposedAmount.present
+          ? data.proposedAmount.value
+          : this.proposedAmount,
+      proposedBy: data.proposedBy.present
+          ? data.proposedBy.value
+          : this.proposedBy,
+      proposedByName: data.proposedByName.present
+          ? data.proposedByName.value
+          : this.proposedByName,
+      proposedAt: data.proposedAt.present
+          ? data.proposedAt.value
+          : this.proposedAt,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WelfareCaseType(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('name: $name, ')
+          ..write('description: $description, ')
+          ..write('benefitAmount: $benefitAmount, ')
+          ..write('benefitApprovedBy: $benefitApprovedBy, ')
+          ..write('benefitApprovedByName: $benefitApprovedByName, ')
+          ..write('benefitApprovedAt: $benefitApprovedAt, ')
+          ..write('proposedAmount: $proposedAmount, ')
+          ..write('proposedBy: $proposedBy, ')
+          ..write('proposedByName: $proposedByName, ')
+          ..write('proposedAt: $proposedAt, ')
+          ..write('isActive: $isActive, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    createdAt,
+    updatedAt,
+    createdBy,
+    deviceId,
+    deletedAt,
+    name,
+    description,
+    benefitAmount,
+    benefitApprovedBy,
+    benefitApprovedByName,
+    benefitApprovedAt,
+    proposedAmount,
+    proposedBy,
+    proposedByName,
+    proposedAt,
+    isActive,
+    sortOrder,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WelfareCaseType &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.createdBy == this.createdBy &&
+          other.deviceId == this.deviceId &&
+          other.deletedAt == this.deletedAt &&
+          other.name == this.name &&
+          other.description == this.description &&
+          other.benefitAmount == this.benefitAmount &&
+          other.benefitApprovedBy == this.benefitApprovedBy &&
+          other.benefitApprovedByName == this.benefitApprovedByName &&
+          other.benefitApprovedAt == this.benefitApprovedAt &&
+          other.proposedAmount == this.proposedAmount &&
+          other.proposedBy == this.proposedBy &&
+          other.proposedByName == this.proposedByName &&
+          other.proposedAt == this.proposedAt &&
+          other.isActive == this.isActive &&
+          other.sortOrder == this.sortOrder);
+}
+
+class WelfareCaseTypesCompanion extends UpdateCompanion<WelfareCaseType> {
+  final Value<String> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<String?> createdBy;
+  final Value<String?> deviceId;
+  final Value<DateTime?> deletedAt;
+  final Value<String> name;
+  final Value<String?> description;
+  final Value<int?> benefitAmount;
+  final Value<String?> benefitApprovedBy;
+  final Value<String?> benefitApprovedByName;
+  final Value<DateTime?> benefitApprovedAt;
+  final Value<int?> proposedAmount;
+  final Value<String?> proposedBy;
+  final Value<String?> proposedByName;
+  final Value<DateTime?> proposedAt;
+  final Value<bool> isActive;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const WelfareCaseTypesCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.name = const Value.absent(),
+    this.description = const Value.absent(),
+    this.benefitAmount = const Value.absent(),
+    this.benefitApprovedBy = const Value.absent(),
+    this.benefitApprovedByName = const Value.absent(),
+    this.benefitApprovedAt = const Value.absent(),
+    this.proposedAmount = const Value.absent(),
+    this.proposedBy = const Value.absent(),
+    this.proposedByName = const Value.absent(),
+    this.proposedAt = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WelfareCaseTypesCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    required String name,
+    this.description = const Value.absent(),
+    this.benefitAmount = const Value.absent(),
+    this.benefitApprovedBy = const Value.absent(),
+    this.benefitApprovedByName = const Value.absent(),
+    this.benefitApprovedAt = const Value.absent(),
+    this.proposedAmount = const Value.absent(),
+    this.proposedBy = const Value.absent(),
+    this.proposedByName = const Value.absent(),
+    this.proposedAt = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<WelfareCaseType> custom({
+    Expression<String>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? createdBy,
+    Expression<String>? deviceId,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? name,
+    Expression<String>? description,
+    Expression<int>? benefitAmount,
+    Expression<String>? benefitApprovedBy,
+    Expression<String>? benefitApprovedByName,
+    Expression<DateTime>? benefitApprovedAt,
+    Expression<int>? proposedAmount,
+    Expression<String>? proposedBy,
+    Expression<String>? proposedByName,
+    Expression<DateTime>? proposedAt,
+    Expression<bool>? isActive,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdBy != null) 'created_by': createdBy,
+      if (deviceId != null) 'device_id': deviceId,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (name != null) 'name': name,
+      if (description != null) 'description': description,
+      if (benefitAmount != null) 'benefit_amount': benefitAmount,
+      if (benefitApprovedBy != null) 'benefit_approved_by': benefitApprovedBy,
+      if (benefitApprovedByName != null)
+        'benefit_approved_by_name': benefitApprovedByName,
+      if (benefitApprovedAt != null) 'benefit_approved_at': benefitApprovedAt,
+      if (proposedAmount != null) 'proposed_amount': proposedAmount,
+      if (proposedBy != null) 'proposed_by': proposedBy,
+      if (proposedByName != null) 'proposed_by_name': proposedByName,
+      if (proposedAt != null) 'proposed_at': proposedAt,
+      if (isActive != null) 'is_active': isActive,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WelfareCaseTypesCompanion copyWith({
+    Value<String>? id,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<String?>? createdBy,
+    Value<String?>? deviceId,
+    Value<DateTime?>? deletedAt,
+    Value<String>? name,
+    Value<String?>? description,
+    Value<int?>? benefitAmount,
+    Value<String?>? benefitApprovedBy,
+    Value<String?>? benefitApprovedByName,
+    Value<DateTime?>? benefitApprovedAt,
+    Value<int?>? proposedAmount,
+    Value<String?>? proposedBy,
+    Value<String?>? proposedByName,
+    Value<DateTime?>? proposedAt,
+    Value<bool>? isActive,
+    Value<int>? sortOrder,
+    Value<int>? rowid,
+  }) {
+    return WelfareCaseTypesCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdBy: createdBy ?? this.createdBy,
+      deviceId: deviceId ?? this.deviceId,
+      deletedAt: deletedAt ?? this.deletedAt,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      benefitAmount: benefitAmount ?? this.benefitAmount,
+      benefitApprovedBy: benefitApprovedBy ?? this.benefitApprovedBy,
+      benefitApprovedByName:
+          benefitApprovedByName ?? this.benefitApprovedByName,
+      benefitApprovedAt: benefitApprovedAt ?? this.benefitApprovedAt,
+      proposedAmount: proposedAmount ?? this.proposedAmount,
+      proposedBy: proposedBy ?? this.proposedBy,
+      proposedByName: proposedByName ?? this.proposedByName,
+      proposedAt: proposedAt ?? this.proposedAt,
+      isActive: isActive ?? this.isActive,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (benefitAmount.present) {
+      map['benefit_amount'] = Variable<int>(benefitAmount.value);
+    }
+    if (benefitApprovedBy.present) {
+      map['benefit_approved_by'] = Variable<String>(benefitApprovedBy.value);
+    }
+    if (benefitApprovedByName.present) {
+      map['benefit_approved_by_name'] = Variable<String>(
+        benefitApprovedByName.value,
+      );
+    }
+    if (benefitApprovedAt.present) {
+      map['benefit_approved_at'] = Variable<DateTime>(benefitApprovedAt.value);
+    }
+    if (proposedAmount.present) {
+      map['proposed_amount'] = Variable<int>(proposedAmount.value);
+    }
+    if (proposedBy.present) {
+      map['proposed_by'] = Variable<String>(proposedBy.value);
+    }
+    if (proposedByName.present) {
+      map['proposed_by_name'] = Variable<String>(proposedByName.value);
+    }
+    if (proposedAt.present) {
+      map['proposed_at'] = Variable<DateTime>(proposedAt.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WelfareCaseTypesCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('name: $name, ')
+          ..write('description: $description, ')
+          ..write('benefitAmount: $benefitAmount, ')
+          ..write('benefitApprovedBy: $benefitApprovedBy, ')
+          ..write('benefitApprovedByName: $benefitApprovedByName, ')
+          ..write('benefitApprovedAt: $benefitApprovedAt, ')
+          ..write('proposedAmount: $proposedAmount, ')
+          ..write('proposedBy: $proposedBy, ')
+          ..write('proposedByName: $proposedByName, ')
+          ..write('proposedAt: $proposedAt, ')
+          ..write('isActive: $isActive, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WelfareCasesTable extends WelfareCases
+    with TableInfo<$WelfareCasesTable, WelfareCase> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WelfareCasesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: newId,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _caseNoMeta = const VerificationMeta('caseNo');
+  @override
+  late final GeneratedColumn<String> caseNo = GeneratedColumn<String>(
+    'case_no',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES members (id)',
+    ),
+  );
+  static const VerificationMeta _caseTypeIdMeta = const VerificationMeta(
+    'caseTypeId',
+  );
+  @override
+  late final GeneratedColumn<String> caseTypeId = GeneratedColumn<String>(
+    'case_type_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES welfare_case_types (id)',
+    ),
+  );
+  static const VerificationMeta _beneficiaryMeta = const VerificationMeta(
+    'beneficiary',
+  );
+  @override
+  late final GeneratedColumn<String> beneficiary = GeneratedColumn<String>(
+    'beneficiary',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _occurredOnMeta = const VerificationMeta(
+    'occurredOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> occurredOn = GeneratedColumn<DateTime>(
+    'occurred_on',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountIsFixedMeta = const VerificationMeta(
+    'amountIsFixed',
+  );
+  @override
+  late final GeneratedColumn<bool> amountIsFixed = GeneratedColumn<bool>(
+    'amount_is_fixed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("amount_is_fixed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<WelfareStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(WelfareStatus.pending.name),
+      ).withConverter<WelfareStatus>($WelfareCasesTable.$converterstatus);
+  static const VerificationMeta _preparedByNameMeta = const VerificationMeta(
+    'preparedByName',
+  );
+  @override
+  late final GeneratedColumn<String> preparedByName = GeneratedColumn<String>(
+    'prepared_by_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _decidedByMeta = const VerificationMeta(
+    'decidedBy',
+  );
+  @override
+  late final GeneratedColumn<String> decidedBy = GeneratedColumn<String>(
+    'decided_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _decidedByNameMeta = const VerificationMeta(
+    'decidedByName',
+  );
+  @override
+  late final GeneratedColumn<String> decidedByName = GeneratedColumn<String>(
+    'decided_by_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _decidedByRoleMeta = const VerificationMeta(
+    'decidedByRole',
+  );
+  @override
+  late final GeneratedColumn<String> decidedByRole = GeneratedColumn<String>(
+    'decided_by_role',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _decidedAtMeta = const VerificationMeta(
+    'decidedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> decidedAt = GeneratedColumn<DateTime>(
+    'decided_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _decisionNoteMeta = const VerificationMeta(
+    'decisionNote',
+  );
+  @override
+  late final GeneratedColumn<String> decisionNote = GeneratedColumn<String>(
+    'decision_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _paidOnMeta = const VerificationMeta('paidOn');
+  @override
+  late final GeneratedColumn<DateTime> paidOn = GeneratedColumn<DateTime>(
+    'paid_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<PaymentMethod?, String>
+  payMethod = GeneratedColumn<String>(
+    'pay_method',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<PaymentMethod?>($WelfareCasesTable.$converterpayMethodn);
+  static const VerificationMeta _payReferenceMeta = const VerificationMeta(
+    'payReference',
+  );
+  @override
+  late final GeneratedColumn<String> payReference = GeneratedColumn<String>(
+    'pay_reference',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _paidByMeta = const VerificationMeta('paidBy');
+  @override
+  late final GeneratedColumn<String> paidBy = GeneratedColumn<String>(
+    'paid_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _paidByNameMeta = const VerificationMeta(
+    'paidByName',
+  );
+  @override
+  late final GeneratedColumn<String> paidByName = GeneratedColumn<String>(
+    'paid_by_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    updatedAt,
+    createdBy,
+    deviceId,
+    deletedAt,
+    caseNo,
+    memberId,
+    caseTypeId,
+    beneficiary,
+    description,
+    occurredOn,
+    amount,
+    amountIsFixed,
+    status,
+    preparedByName,
+    decidedBy,
+    decidedByName,
+    decidedByRole,
+    decidedAt,
+    decisionNote,
+    paidOn,
+    payMethod,
+    payReference,
+    paidBy,
+    paidByName,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'welfare_cases';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WelfareCase> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('case_no')) {
+      context.handle(
+        _caseNoMeta,
+        caseNo.isAcceptableOrUnknown(data['case_no']!, _caseNoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_caseNoMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('case_type_id')) {
+      context.handle(
+        _caseTypeIdMeta,
+        caseTypeId.isAcceptableOrUnknown(
+          data['case_type_id']!,
+          _caseTypeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_caseTypeIdMeta);
+    }
+    if (data.containsKey('beneficiary')) {
+      context.handle(
+        _beneficiaryMeta,
+        beneficiary.isAcceptableOrUnknown(
+          data['beneficiary']!,
+          _beneficiaryMeta,
+        ),
+      );
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('occurred_on')) {
+      context.handle(
+        _occurredOnMeta,
+        occurredOn.isAcceptableOrUnknown(data['occurred_on']!, _occurredOnMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredOnMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('amount_is_fixed')) {
+      context.handle(
+        _amountIsFixedMeta,
+        amountIsFixed.isAcceptableOrUnknown(
+          data['amount_is_fixed']!,
+          _amountIsFixedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('prepared_by_name')) {
+      context.handle(
+        _preparedByNameMeta,
+        preparedByName.isAcceptableOrUnknown(
+          data['prepared_by_name']!,
+          _preparedByNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_preparedByNameMeta);
+    }
+    if (data.containsKey('decided_by')) {
+      context.handle(
+        _decidedByMeta,
+        decidedBy.isAcceptableOrUnknown(data['decided_by']!, _decidedByMeta),
+      );
+    }
+    if (data.containsKey('decided_by_name')) {
+      context.handle(
+        _decidedByNameMeta,
+        decidedByName.isAcceptableOrUnknown(
+          data['decided_by_name']!,
+          _decidedByNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('decided_by_role')) {
+      context.handle(
+        _decidedByRoleMeta,
+        decidedByRole.isAcceptableOrUnknown(
+          data['decided_by_role']!,
+          _decidedByRoleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('decided_at')) {
+      context.handle(
+        _decidedAtMeta,
+        decidedAt.isAcceptableOrUnknown(data['decided_at']!, _decidedAtMeta),
+      );
+    }
+    if (data.containsKey('decision_note')) {
+      context.handle(
+        _decisionNoteMeta,
+        decisionNote.isAcceptableOrUnknown(
+          data['decision_note']!,
+          _decisionNoteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('paid_on')) {
+      context.handle(
+        _paidOnMeta,
+        paidOn.isAcceptableOrUnknown(data['paid_on']!, _paidOnMeta),
+      );
+    }
+    if (data.containsKey('pay_reference')) {
+      context.handle(
+        _payReferenceMeta,
+        payReference.isAcceptableOrUnknown(
+          data['pay_reference']!,
+          _payReferenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('paid_by')) {
+      context.handle(
+        _paidByMeta,
+        paidBy.isAcceptableOrUnknown(data['paid_by']!, _paidByMeta),
+      );
+    }
+    if (data.containsKey('paid_by_name')) {
+      context.handle(
+        _paidByNameMeta,
+        paidByName.isAcceptableOrUnknown(
+          data['paid_by_name']!,
+          _paidByNameMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WelfareCase map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WelfareCase(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      ),
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      caseNo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}case_no'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      caseTypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}case_type_id'],
+      )!,
+      beneficiary: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}beneficiary'],
+      ),
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      occurredOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}occurred_on'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      )!,
+      amountIsFixed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}amount_is_fixed'],
+      )!,
+      status: $WelfareCasesTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      preparedByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}prepared_by_name'],
+      )!,
+      decidedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}decided_by'],
+      ),
+      decidedByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}decided_by_name'],
+      ),
+      decidedByRole: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}decided_by_role'],
+      ),
+      decidedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}decided_at'],
+      ),
+      decisionNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}decision_note'],
+      ),
+      paidOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}paid_on'],
+      ),
+      payMethod: $WelfareCasesTable.$converterpayMethodn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}pay_method'],
+        ),
+      ),
+      payReference: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pay_reference'],
+      ),
+      paidBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}paid_by'],
+      ),
+      paidByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}paid_by_name'],
+      ),
+    );
+  }
+
+  @override
+  $WelfareCasesTable createAlias(String alias) {
+    return $WelfareCasesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<WelfareStatus, String, String> $converterstatus =
+      const EnumNameConverter<WelfareStatus>(WelfareStatus.values);
+  static JsonTypeConverter2<PaymentMethod, String, String> $converterpayMethod =
+      const EnumNameConverter<PaymentMethod>(PaymentMethod.values);
+  static JsonTypeConverter2<PaymentMethod?, String?, String?>
+  $converterpayMethodn = JsonTypeConverter2.asNullable($converterpayMethod);
+}
+
+class WelfareCase extends DataClass implements Insertable<WelfareCase> {
+  final String id;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? createdBy;
+  final String? deviceId;
+  final DateTime? deletedAt;
+  final String caseNo;
+  final String memberId;
+  final String caseTypeId;
+
+  /// Who the support is for when it is not the member, e.g. "Mother".
+  final String? beneficiary;
+  final String? description;
+  final DateTime occurredOn;
+  final int amount;
+
+  /// True when [amount] came from the case type's approved benefit.
+  final bool amountIsFixed;
+  final WelfareStatus status;
+  final String preparedByName;
+  final String? decidedBy;
+  final String? decidedByName;
+
+  /// The approver's role at the time, so a stand-in approval by the
+  /// General Secretary is visible.
+  final String? decidedByRole;
+  final DateTime? decidedAt;
+  final String? decisionNote;
+  final DateTime? paidOn;
+  final PaymentMethod? payMethod;
+  final String? payReference;
+  final String? paidBy;
+  final String? paidByName;
+  const WelfareCase({
+    required this.id,
+    required this.createdAt,
+    required this.updatedAt,
+    this.createdBy,
+    this.deviceId,
+    this.deletedAt,
+    required this.caseNo,
+    required this.memberId,
+    required this.caseTypeId,
+    this.beneficiary,
+    this.description,
+    required this.occurredOn,
+    required this.amount,
+    required this.amountIsFixed,
+    required this.status,
+    required this.preparedByName,
+    this.decidedBy,
+    this.decidedByName,
+    this.decidedByRole,
+    this.decidedAt,
+    this.decisionNote,
+    this.paidOn,
+    this.payMethod,
+    this.payReference,
+    this.paidBy,
+    this.paidByName,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
+    if (!nullToAbsent || deviceId != null) {
+      map['device_id'] = Variable<String>(deviceId);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['case_no'] = Variable<String>(caseNo);
+    map['member_id'] = Variable<String>(memberId);
+    map['case_type_id'] = Variable<String>(caseTypeId);
+    if (!nullToAbsent || beneficiary != null) {
+      map['beneficiary'] = Variable<String>(beneficiary);
+    }
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    map['occurred_on'] = Variable<DateTime>(occurredOn);
+    map['amount'] = Variable<int>(amount);
+    map['amount_is_fixed'] = Variable<bool>(amountIsFixed);
+    {
+      map['status'] = Variable<String>(
+        $WelfareCasesTable.$converterstatus.toSql(status),
+      );
+    }
+    map['prepared_by_name'] = Variable<String>(preparedByName);
+    if (!nullToAbsent || decidedBy != null) {
+      map['decided_by'] = Variable<String>(decidedBy);
+    }
+    if (!nullToAbsent || decidedByName != null) {
+      map['decided_by_name'] = Variable<String>(decidedByName);
+    }
+    if (!nullToAbsent || decidedByRole != null) {
+      map['decided_by_role'] = Variable<String>(decidedByRole);
+    }
+    if (!nullToAbsent || decidedAt != null) {
+      map['decided_at'] = Variable<DateTime>(decidedAt);
+    }
+    if (!nullToAbsent || decisionNote != null) {
+      map['decision_note'] = Variable<String>(decisionNote);
+    }
+    if (!nullToAbsent || paidOn != null) {
+      map['paid_on'] = Variable<DateTime>(paidOn);
+    }
+    if (!nullToAbsent || payMethod != null) {
+      map['pay_method'] = Variable<String>(
+        $WelfareCasesTable.$converterpayMethodn.toSql(payMethod),
+      );
+    }
+    if (!nullToAbsent || payReference != null) {
+      map['pay_reference'] = Variable<String>(payReference);
+    }
+    if (!nullToAbsent || paidBy != null) {
+      map['paid_by'] = Variable<String>(paidBy);
+    }
+    if (!nullToAbsent || paidByName != null) {
+      map['paid_by_name'] = Variable<String>(paidByName);
+    }
+    return map;
+  }
+
+  WelfareCasesCompanion toCompanion(bool nullToAbsent) {
+    return WelfareCasesCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
+      deviceId: deviceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deviceId),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      caseNo: Value(caseNo),
+      memberId: Value(memberId),
+      caseTypeId: Value(caseTypeId),
+      beneficiary: beneficiary == null && nullToAbsent
+          ? const Value.absent()
+          : Value(beneficiary),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      occurredOn: Value(occurredOn),
+      amount: Value(amount),
+      amountIsFixed: Value(amountIsFixed),
+      status: Value(status),
+      preparedByName: Value(preparedByName),
+      decidedBy: decidedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(decidedBy),
+      decidedByName: decidedByName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(decidedByName),
+      decidedByRole: decidedByRole == null && nullToAbsent
+          ? const Value.absent()
+          : Value(decidedByRole),
+      decidedAt: decidedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(decidedAt),
+      decisionNote: decisionNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(decisionNote),
+      paidOn: paidOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paidOn),
+      payMethod: payMethod == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payMethod),
+      payReference: payReference == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payReference),
+      paidBy: paidBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paidBy),
+      paidByName: paidByName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paidByName),
+    );
+  }
+
+  factory WelfareCase.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WelfareCase(
+      id: serializer.fromJson<String>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
+      deviceId: serializer.fromJson<String?>(json['deviceId']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      caseNo: serializer.fromJson<String>(json['caseNo']),
+      memberId: serializer.fromJson<String>(json['memberId']),
+      caseTypeId: serializer.fromJson<String>(json['caseTypeId']),
+      beneficiary: serializer.fromJson<String?>(json['beneficiary']),
+      description: serializer.fromJson<String?>(json['description']),
+      occurredOn: serializer.fromJson<DateTime>(json['occurredOn']),
+      amount: serializer.fromJson<int>(json['amount']),
+      amountIsFixed: serializer.fromJson<bool>(json['amountIsFixed']),
+      status: $WelfareCasesTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      preparedByName: serializer.fromJson<String>(json['preparedByName']),
+      decidedBy: serializer.fromJson<String?>(json['decidedBy']),
+      decidedByName: serializer.fromJson<String?>(json['decidedByName']),
+      decidedByRole: serializer.fromJson<String?>(json['decidedByRole']),
+      decidedAt: serializer.fromJson<DateTime?>(json['decidedAt']),
+      decisionNote: serializer.fromJson<String?>(json['decisionNote']),
+      paidOn: serializer.fromJson<DateTime?>(json['paidOn']),
+      payMethod: $WelfareCasesTable.$converterpayMethodn.fromJson(
+        serializer.fromJson<String?>(json['payMethod']),
+      ),
+      payReference: serializer.fromJson<String?>(json['payReference']),
+      paidBy: serializer.fromJson<String?>(json['paidBy']),
+      paidByName: serializer.fromJson<String?>(json['paidByName']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'createdBy': serializer.toJson<String?>(createdBy),
+      'deviceId': serializer.toJson<String?>(deviceId),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'caseNo': serializer.toJson<String>(caseNo),
+      'memberId': serializer.toJson<String>(memberId),
+      'caseTypeId': serializer.toJson<String>(caseTypeId),
+      'beneficiary': serializer.toJson<String?>(beneficiary),
+      'description': serializer.toJson<String?>(description),
+      'occurredOn': serializer.toJson<DateTime>(occurredOn),
+      'amount': serializer.toJson<int>(amount),
+      'amountIsFixed': serializer.toJson<bool>(amountIsFixed),
+      'status': serializer.toJson<String>(
+        $WelfareCasesTable.$converterstatus.toJson(status),
+      ),
+      'preparedByName': serializer.toJson<String>(preparedByName),
+      'decidedBy': serializer.toJson<String?>(decidedBy),
+      'decidedByName': serializer.toJson<String?>(decidedByName),
+      'decidedByRole': serializer.toJson<String?>(decidedByRole),
+      'decidedAt': serializer.toJson<DateTime?>(decidedAt),
+      'decisionNote': serializer.toJson<String?>(decisionNote),
+      'paidOn': serializer.toJson<DateTime?>(paidOn),
+      'payMethod': serializer.toJson<String?>(
+        $WelfareCasesTable.$converterpayMethodn.toJson(payMethod),
+      ),
+      'payReference': serializer.toJson<String?>(payReference),
+      'paidBy': serializer.toJson<String?>(paidBy),
+      'paidByName': serializer.toJson<String?>(paidByName),
+    };
+  }
+
+  WelfareCase copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<String?> createdBy = const Value.absent(),
+    Value<String?> deviceId = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? caseNo,
+    String? memberId,
+    String? caseTypeId,
+    Value<String?> beneficiary = const Value.absent(),
+    Value<String?> description = const Value.absent(),
+    DateTime? occurredOn,
+    int? amount,
+    bool? amountIsFixed,
+    WelfareStatus? status,
+    String? preparedByName,
+    Value<String?> decidedBy = const Value.absent(),
+    Value<String?> decidedByName = const Value.absent(),
+    Value<String?> decidedByRole = const Value.absent(),
+    Value<DateTime?> decidedAt = const Value.absent(),
+    Value<String?> decisionNote = const Value.absent(),
+    Value<DateTime?> paidOn = const Value.absent(),
+    Value<PaymentMethod?> payMethod = const Value.absent(),
+    Value<String?> payReference = const Value.absent(),
+    Value<String?> paidBy = const Value.absent(),
+    Value<String?> paidByName = const Value.absent(),
+  }) => WelfareCase(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    createdBy: createdBy.present ? createdBy.value : this.createdBy,
+    deviceId: deviceId.present ? deviceId.value : this.deviceId,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    caseNo: caseNo ?? this.caseNo,
+    memberId: memberId ?? this.memberId,
+    caseTypeId: caseTypeId ?? this.caseTypeId,
+    beneficiary: beneficiary.present ? beneficiary.value : this.beneficiary,
+    description: description.present ? description.value : this.description,
+    occurredOn: occurredOn ?? this.occurredOn,
+    amount: amount ?? this.amount,
+    amountIsFixed: amountIsFixed ?? this.amountIsFixed,
+    status: status ?? this.status,
+    preparedByName: preparedByName ?? this.preparedByName,
+    decidedBy: decidedBy.present ? decidedBy.value : this.decidedBy,
+    decidedByName: decidedByName.present
+        ? decidedByName.value
+        : this.decidedByName,
+    decidedByRole: decidedByRole.present
+        ? decidedByRole.value
+        : this.decidedByRole,
+    decidedAt: decidedAt.present ? decidedAt.value : this.decidedAt,
+    decisionNote: decisionNote.present ? decisionNote.value : this.decisionNote,
+    paidOn: paidOn.present ? paidOn.value : this.paidOn,
+    payMethod: payMethod.present ? payMethod.value : this.payMethod,
+    payReference: payReference.present ? payReference.value : this.payReference,
+    paidBy: paidBy.present ? paidBy.value : this.paidBy,
+    paidByName: paidByName.present ? paidByName.value : this.paidByName,
+  );
+  WelfareCase copyWithCompanion(WelfareCasesCompanion data) {
+    return WelfareCase(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      caseNo: data.caseNo.present ? data.caseNo.value : this.caseNo,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      caseTypeId: data.caseTypeId.present
+          ? data.caseTypeId.value
+          : this.caseTypeId,
+      beneficiary: data.beneficiary.present
+          ? data.beneficiary.value
+          : this.beneficiary,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      occurredOn: data.occurredOn.present
+          ? data.occurredOn.value
+          : this.occurredOn,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      amountIsFixed: data.amountIsFixed.present
+          ? data.amountIsFixed.value
+          : this.amountIsFixed,
+      status: data.status.present ? data.status.value : this.status,
+      preparedByName: data.preparedByName.present
+          ? data.preparedByName.value
+          : this.preparedByName,
+      decidedBy: data.decidedBy.present ? data.decidedBy.value : this.decidedBy,
+      decidedByName: data.decidedByName.present
+          ? data.decidedByName.value
+          : this.decidedByName,
+      decidedByRole: data.decidedByRole.present
+          ? data.decidedByRole.value
+          : this.decidedByRole,
+      decidedAt: data.decidedAt.present ? data.decidedAt.value : this.decidedAt,
+      decisionNote: data.decisionNote.present
+          ? data.decisionNote.value
+          : this.decisionNote,
+      paidOn: data.paidOn.present ? data.paidOn.value : this.paidOn,
+      payMethod: data.payMethod.present ? data.payMethod.value : this.payMethod,
+      payReference: data.payReference.present
+          ? data.payReference.value
+          : this.payReference,
+      paidBy: data.paidBy.present ? data.paidBy.value : this.paidBy,
+      paidByName: data.paidByName.present
+          ? data.paidByName.value
+          : this.paidByName,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WelfareCase(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('caseNo: $caseNo, ')
+          ..write('memberId: $memberId, ')
+          ..write('caseTypeId: $caseTypeId, ')
+          ..write('beneficiary: $beneficiary, ')
+          ..write('description: $description, ')
+          ..write('occurredOn: $occurredOn, ')
+          ..write('amount: $amount, ')
+          ..write('amountIsFixed: $amountIsFixed, ')
+          ..write('status: $status, ')
+          ..write('preparedByName: $preparedByName, ')
+          ..write('decidedBy: $decidedBy, ')
+          ..write('decidedByName: $decidedByName, ')
+          ..write('decidedByRole: $decidedByRole, ')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('decisionNote: $decisionNote, ')
+          ..write('paidOn: $paidOn, ')
+          ..write('payMethod: $payMethod, ')
+          ..write('payReference: $payReference, ')
+          ..write('paidBy: $paidBy, ')
+          ..write('paidByName: $paidByName')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    createdAt,
+    updatedAt,
+    createdBy,
+    deviceId,
+    deletedAt,
+    caseNo,
+    memberId,
+    caseTypeId,
+    beneficiary,
+    description,
+    occurredOn,
+    amount,
+    amountIsFixed,
+    status,
+    preparedByName,
+    decidedBy,
+    decidedByName,
+    decidedByRole,
+    decidedAt,
+    decisionNote,
+    paidOn,
+    payMethod,
+    payReference,
+    paidBy,
+    paidByName,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WelfareCase &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.createdBy == this.createdBy &&
+          other.deviceId == this.deviceId &&
+          other.deletedAt == this.deletedAt &&
+          other.caseNo == this.caseNo &&
+          other.memberId == this.memberId &&
+          other.caseTypeId == this.caseTypeId &&
+          other.beneficiary == this.beneficiary &&
+          other.description == this.description &&
+          other.occurredOn == this.occurredOn &&
+          other.amount == this.amount &&
+          other.amountIsFixed == this.amountIsFixed &&
+          other.status == this.status &&
+          other.preparedByName == this.preparedByName &&
+          other.decidedBy == this.decidedBy &&
+          other.decidedByName == this.decidedByName &&
+          other.decidedByRole == this.decidedByRole &&
+          other.decidedAt == this.decidedAt &&
+          other.decisionNote == this.decisionNote &&
+          other.paidOn == this.paidOn &&
+          other.payMethod == this.payMethod &&
+          other.payReference == this.payReference &&
+          other.paidBy == this.paidBy &&
+          other.paidByName == this.paidByName);
+}
+
+class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
+  final Value<String> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<String?> createdBy;
+  final Value<String?> deviceId;
+  final Value<DateTime?> deletedAt;
+  final Value<String> caseNo;
+  final Value<String> memberId;
+  final Value<String> caseTypeId;
+  final Value<String?> beneficiary;
+  final Value<String?> description;
+  final Value<DateTime> occurredOn;
+  final Value<int> amount;
+  final Value<bool> amountIsFixed;
+  final Value<WelfareStatus> status;
+  final Value<String> preparedByName;
+  final Value<String?> decidedBy;
+  final Value<String?> decidedByName;
+  final Value<String?> decidedByRole;
+  final Value<DateTime?> decidedAt;
+  final Value<String?> decisionNote;
+  final Value<DateTime?> paidOn;
+  final Value<PaymentMethod?> payMethod;
+  final Value<String?> payReference;
+  final Value<String?> paidBy;
+  final Value<String?> paidByName;
+  final Value<int> rowid;
+  const WelfareCasesCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.caseNo = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.caseTypeId = const Value.absent(),
+    this.beneficiary = const Value.absent(),
+    this.description = const Value.absent(),
+    this.occurredOn = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.amountIsFixed = const Value.absent(),
+    this.status = const Value.absent(),
+    this.preparedByName = const Value.absent(),
+    this.decidedBy = const Value.absent(),
+    this.decidedByName = const Value.absent(),
+    this.decidedByRole = const Value.absent(),
+    this.decidedAt = const Value.absent(),
+    this.decisionNote = const Value.absent(),
+    this.paidOn = const Value.absent(),
+    this.payMethod = const Value.absent(),
+    this.payReference = const Value.absent(),
+    this.paidBy = const Value.absent(),
+    this.paidByName = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WelfareCasesCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    required String caseNo,
+    required String memberId,
+    required String caseTypeId,
+    this.beneficiary = const Value.absent(),
+    this.description = const Value.absent(),
+    required DateTime occurredOn,
+    required int amount,
+    this.amountIsFixed = const Value.absent(),
+    this.status = const Value.absent(),
+    required String preparedByName,
+    this.decidedBy = const Value.absent(),
+    this.decidedByName = const Value.absent(),
+    this.decidedByRole = const Value.absent(),
+    this.decidedAt = const Value.absent(),
+    this.decisionNote = const Value.absent(),
+    this.paidOn = const Value.absent(),
+    this.payMethod = const Value.absent(),
+    this.payReference = const Value.absent(),
+    this.paidBy = const Value.absent(),
+    this.paidByName = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : caseNo = Value(caseNo),
+       memberId = Value(memberId),
+       caseTypeId = Value(caseTypeId),
+       occurredOn = Value(occurredOn),
+       amount = Value(amount),
+       preparedByName = Value(preparedByName);
+  static Insertable<WelfareCase> custom({
+    Expression<String>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? createdBy,
+    Expression<String>? deviceId,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? caseNo,
+    Expression<String>? memberId,
+    Expression<String>? caseTypeId,
+    Expression<String>? beneficiary,
+    Expression<String>? description,
+    Expression<DateTime>? occurredOn,
+    Expression<int>? amount,
+    Expression<bool>? amountIsFixed,
+    Expression<String>? status,
+    Expression<String>? preparedByName,
+    Expression<String>? decidedBy,
+    Expression<String>? decidedByName,
+    Expression<String>? decidedByRole,
+    Expression<DateTime>? decidedAt,
+    Expression<String>? decisionNote,
+    Expression<DateTime>? paidOn,
+    Expression<String>? payMethod,
+    Expression<String>? payReference,
+    Expression<String>? paidBy,
+    Expression<String>? paidByName,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdBy != null) 'created_by': createdBy,
+      if (deviceId != null) 'device_id': deviceId,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (caseNo != null) 'case_no': caseNo,
+      if (memberId != null) 'member_id': memberId,
+      if (caseTypeId != null) 'case_type_id': caseTypeId,
+      if (beneficiary != null) 'beneficiary': beneficiary,
+      if (description != null) 'description': description,
+      if (occurredOn != null) 'occurred_on': occurredOn,
+      if (amount != null) 'amount': amount,
+      if (amountIsFixed != null) 'amount_is_fixed': amountIsFixed,
+      if (status != null) 'status': status,
+      if (preparedByName != null) 'prepared_by_name': preparedByName,
+      if (decidedBy != null) 'decided_by': decidedBy,
+      if (decidedByName != null) 'decided_by_name': decidedByName,
+      if (decidedByRole != null) 'decided_by_role': decidedByRole,
+      if (decidedAt != null) 'decided_at': decidedAt,
+      if (decisionNote != null) 'decision_note': decisionNote,
+      if (paidOn != null) 'paid_on': paidOn,
+      if (payMethod != null) 'pay_method': payMethod,
+      if (payReference != null) 'pay_reference': payReference,
+      if (paidBy != null) 'paid_by': paidBy,
+      if (paidByName != null) 'paid_by_name': paidByName,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WelfareCasesCompanion copyWith({
+    Value<String>? id,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<String?>? createdBy,
+    Value<String?>? deviceId,
+    Value<DateTime?>? deletedAt,
+    Value<String>? caseNo,
+    Value<String>? memberId,
+    Value<String>? caseTypeId,
+    Value<String?>? beneficiary,
+    Value<String?>? description,
+    Value<DateTime>? occurredOn,
+    Value<int>? amount,
+    Value<bool>? amountIsFixed,
+    Value<WelfareStatus>? status,
+    Value<String>? preparedByName,
+    Value<String?>? decidedBy,
+    Value<String?>? decidedByName,
+    Value<String?>? decidedByRole,
+    Value<DateTime?>? decidedAt,
+    Value<String?>? decisionNote,
+    Value<DateTime?>? paidOn,
+    Value<PaymentMethod?>? payMethod,
+    Value<String?>? payReference,
+    Value<String?>? paidBy,
+    Value<String?>? paidByName,
+    Value<int>? rowid,
+  }) {
+    return WelfareCasesCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdBy: createdBy ?? this.createdBy,
+      deviceId: deviceId ?? this.deviceId,
+      deletedAt: deletedAt ?? this.deletedAt,
+      caseNo: caseNo ?? this.caseNo,
+      memberId: memberId ?? this.memberId,
+      caseTypeId: caseTypeId ?? this.caseTypeId,
+      beneficiary: beneficiary ?? this.beneficiary,
+      description: description ?? this.description,
+      occurredOn: occurredOn ?? this.occurredOn,
+      amount: amount ?? this.amount,
+      amountIsFixed: amountIsFixed ?? this.amountIsFixed,
+      status: status ?? this.status,
+      preparedByName: preparedByName ?? this.preparedByName,
+      decidedBy: decidedBy ?? this.decidedBy,
+      decidedByName: decidedByName ?? this.decidedByName,
+      decidedByRole: decidedByRole ?? this.decidedByRole,
+      decidedAt: decidedAt ?? this.decidedAt,
+      decisionNote: decisionNote ?? this.decisionNote,
+      paidOn: paidOn ?? this.paidOn,
+      payMethod: payMethod ?? this.payMethod,
+      payReference: payReference ?? this.payReference,
+      paidBy: paidBy ?? this.paidBy,
+      paidByName: paidByName ?? this.paidByName,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (caseNo.present) {
+      map['case_no'] = Variable<String>(caseNo.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (caseTypeId.present) {
+      map['case_type_id'] = Variable<String>(caseTypeId.value);
+    }
+    if (beneficiary.present) {
+      map['beneficiary'] = Variable<String>(beneficiary.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (occurredOn.present) {
+      map['occurred_on'] = Variable<DateTime>(occurredOn.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (amountIsFixed.present) {
+      map['amount_is_fixed'] = Variable<bool>(amountIsFixed.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $WelfareCasesTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (preparedByName.present) {
+      map['prepared_by_name'] = Variable<String>(preparedByName.value);
+    }
+    if (decidedBy.present) {
+      map['decided_by'] = Variable<String>(decidedBy.value);
+    }
+    if (decidedByName.present) {
+      map['decided_by_name'] = Variable<String>(decidedByName.value);
+    }
+    if (decidedByRole.present) {
+      map['decided_by_role'] = Variable<String>(decidedByRole.value);
+    }
+    if (decidedAt.present) {
+      map['decided_at'] = Variable<DateTime>(decidedAt.value);
+    }
+    if (decisionNote.present) {
+      map['decision_note'] = Variable<String>(decisionNote.value);
+    }
+    if (paidOn.present) {
+      map['paid_on'] = Variable<DateTime>(paidOn.value);
+    }
+    if (payMethod.present) {
+      map['pay_method'] = Variable<String>(
+        $WelfareCasesTable.$converterpayMethodn.toSql(payMethod.value),
+      );
+    }
+    if (payReference.present) {
+      map['pay_reference'] = Variable<String>(payReference.value);
+    }
+    if (paidBy.present) {
+      map['paid_by'] = Variable<String>(paidBy.value);
+    }
+    if (paidByName.present) {
+      map['paid_by_name'] = Variable<String>(paidByName.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WelfareCasesCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('caseNo: $caseNo, ')
+          ..write('memberId: $memberId, ')
+          ..write('caseTypeId: $caseTypeId, ')
+          ..write('beneficiary: $beneficiary, ')
+          ..write('description: $description, ')
+          ..write('occurredOn: $occurredOn, ')
+          ..write('amount: $amount, ')
+          ..write('amountIsFixed: $amountIsFixed, ')
+          ..write('status: $status, ')
+          ..write('preparedByName: $preparedByName, ')
+          ..write('decidedBy: $decidedBy, ')
+          ..write('decidedByName: $decidedByName, ')
+          ..write('decidedByRole: $decidedByRole, ')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('decisionNote: $decisionNote, ')
+          ..write('paidOn: $paidOn, ')
+          ..write('payMethod: $payMethod, ')
+          ..write('payReference: $payReference, ')
+          ..write('paidBy: $paidBy, ')
+          ..write('paidByName: $paidByName, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7820,6 +10397,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ContributionTypesTable contributionTypes =
       $ContributionTypesTable(this);
   late final $PaymentsTable payments = $PaymentsTable(this);
+  late final $WelfareCaseTypesTable welfareCaseTypes = $WelfareCaseTypesTable(
+    this,
+  );
+  late final $WelfareCasesTable welfareCases = $WelfareCasesTable(this);
   late final Index membersFullName = Index(
     'members_full_name',
     'CREATE INDEX members_full_name ON members (full_name)',
@@ -7844,6 +10425,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'payments_paid_on',
     'CREATE INDEX payments_paid_on ON payments (paid_on)',
   );
+  late final Index welfareCasesMember = Index(
+    'welfare_cases_member',
+    'CREATE INDEX welfare_cases_member ON welfare_cases (member_id)',
+  );
+  late final Index welfareCasesStatus = Index(
+    'welfare_cases_status',
+    'CREATE INDEX welfare_cases_status ON welfare_cases (status)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7859,12 +10448,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     auditLogs,
     contributionTypes,
     payments,
+    welfareCaseTypes,
+    welfareCases,
     membersFullName,
     membersPhone,
     memberZonesMember,
     auditLogsAt,
     paymentsMember,
     paymentsPaidOn,
+    welfareCasesMember,
+    welfareCasesStatus,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -7885,6 +10478,7 @@ typedef $$OrgSettingsTableCreateCompanionBuilder =
       Value<int> accentColor,
       Value<String> receiptPrefix,
       Value<int> nextReceiptNo,
+      Value<int> nextWelfareCaseNo,
     });
 typedef $$OrgSettingsTableUpdateCompanionBuilder =
     OrgSettingsCompanion Function({
@@ -7900,6 +10494,7 @@ typedef $$OrgSettingsTableUpdateCompanionBuilder =
       Value<int> accentColor,
       Value<String> receiptPrefix,
       Value<int> nextReceiptNo,
+      Value<int> nextWelfareCaseNo,
     });
 
 class $$OrgSettingsTableFilterComposer
@@ -7968,6 +10563,11 @@ class $$OrgSettingsTableFilterComposer
 
   ColumnFilters<int> get nextReceiptNo => $composableBuilder(
     column: $table.nextReceiptNo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextWelfareCaseNo => $composableBuilder(
+    column: $table.nextWelfareCaseNo,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -8040,6 +10640,11 @@ class $$OrgSettingsTableOrderingComposer
     column: $table.nextReceiptNo,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get nextWelfareCaseNo => $composableBuilder(
+    column: $table.nextWelfareCaseNo,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$OrgSettingsTableAnnotationComposer
@@ -8098,6 +10703,11 @@ class $$OrgSettingsTableAnnotationComposer
     column: $table.nextReceiptNo,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get nextWelfareCaseNo => $composableBuilder(
+    column: $table.nextWelfareCaseNo,
+    builder: (column) => column,
+  );
 }
 
 class $$OrgSettingsTableTableManager
@@ -8143,6 +10753,7 @@ class $$OrgSettingsTableTableManager
                 Value<int> accentColor = const Value.absent(),
                 Value<String> receiptPrefix = const Value.absent(),
                 Value<int> nextReceiptNo = const Value.absent(),
+                Value<int> nextWelfareCaseNo = const Value.absent(),
               }) => OrgSettingsCompanion(
                 id: id,
                 name: name,
@@ -8156,6 +10767,7 @@ class $$OrgSettingsTableTableManager
                 accentColor: accentColor,
                 receiptPrefix: receiptPrefix,
                 nextReceiptNo: nextReceiptNo,
+                nextWelfareCaseNo: nextWelfareCaseNo,
               ),
           createCompanionCallback:
               ({
@@ -8171,6 +10783,7 @@ class $$OrgSettingsTableTableManager
                 Value<int> accentColor = const Value.absent(),
                 Value<String> receiptPrefix = const Value.absent(),
                 Value<int> nextReceiptNo = const Value.absent(),
+                Value<int> nextWelfareCaseNo = const Value.absent(),
               }) => OrgSettingsCompanion.insert(
                 id: id,
                 name: name,
@@ -8184,6 +10797,7 @@ class $$OrgSettingsTableTableManager
                 accentColor: accentColor,
                 receiptPrefix: receiptPrefix,
                 nextReceiptNo: nextReceiptNo,
+                nextWelfareCaseNo: nextWelfareCaseNo,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -8743,6 +11357,24 @@ final class $$MembersTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$WelfareCasesTable, List<WelfareCase>>
+  _welfareCasesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.welfareCases,
+    aliasName: 'members__id__welfare_cases__member_id',
+  );
+
+  $$WelfareCasesTableProcessedTableManager get welfareCasesRefs {
+    final manager = $$WelfareCasesTableTableManager(
+      $_db,
+      $_db.welfareCases,
+    ).filter((f) => f.memberId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_welfareCasesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$MembersTableFilterComposer
@@ -8946,6 +11578,31 @@ class $$MembersTableFilterComposer
           }) => $$PaymentsTableFilterComposer(
             $db: $db,
             $table: $db.payments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> welfareCasesRefs(
+    Expression<bool> Function($$WelfareCasesTableFilterComposer f) f,
+  ) {
+    final $$WelfareCasesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.welfareCases,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCasesTableFilterComposer(
+            $db: $db,
+            $table: $db.welfareCases,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9267,6 +11924,31 @@ class $$MembersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> welfareCasesRefs<T extends Object>(
+    Expression<T> Function($$WelfareCasesTableAnnotationComposer a) f,
+  ) {
+    final $$WelfareCasesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.welfareCases,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCasesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.welfareCases,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$MembersTableTableManager
@@ -9286,6 +11968,7 @@ class $$MembersTableTableManager
             bool memberZonesRefs,
             bool usersRefs,
             bool paymentsRefs,
+            bool welfareCasesRefs,
           })
         > {
   $$MembersTableTableManager(_$AppDatabase db, $MembersTable table)
@@ -9424,6 +12107,7 @@ class $$MembersTableTableManager
                 memberZonesRefs = false,
                 usersRefs = false,
                 paymentsRefs = false,
+                welfareCasesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9431,6 +12115,7 @@ class $$MembersTableTableManager
                     if (memberZonesRefs) db.memberZones,
                     if (usersRefs) db.users,
                     if (paymentsRefs) db.payments,
+                    if (welfareCasesRefs) db.welfareCases,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -9490,6 +12175,27 @@ class $$MembersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (welfareCasesRefs)
+                        await $_getPrefetchedData<
+                          Member,
+                          $MembersTable,
+                          WelfareCase
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MembersTableReferences
+                              ._welfareCasesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MembersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).welfareCasesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.memberId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -9514,6 +12220,7 @@ typedef $$MembersTableProcessedTableManager =
         bool memberZonesRefs,
         bool usersRefs,
         bool paymentsRefs,
+        bool welfareCasesRefs,
       })
     >;
 typedef $$MemberZonesTableCreateCompanionBuilder =
@@ -12951,6 +15658,1404 @@ typedef $$PaymentsTableProcessedTableManager =
       Payment,
       PrefetchHooks Function({bool memberId, bool contributionTypeId})
     >;
+typedef $$WelfareCaseTypesTableCreateCompanionBuilder =
+    WelfareCaseTypesCompanion Function({
+      Value<String> id,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String?> createdBy,
+      Value<String?> deviceId,
+      Value<DateTime?> deletedAt,
+      required String name,
+      Value<String?> description,
+      Value<int?> benefitAmount,
+      Value<String?> benefitApprovedBy,
+      Value<String?> benefitApprovedByName,
+      Value<DateTime?> benefitApprovedAt,
+      Value<int?> proposedAmount,
+      Value<String?> proposedBy,
+      Value<String?> proposedByName,
+      Value<DateTime?> proposedAt,
+      Value<bool> isActive,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+typedef $$WelfareCaseTypesTableUpdateCompanionBuilder =
+    WelfareCaseTypesCompanion Function({
+      Value<String> id,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String?> createdBy,
+      Value<String?> deviceId,
+      Value<DateTime?> deletedAt,
+      Value<String> name,
+      Value<String?> description,
+      Value<int?> benefitAmount,
+      Value<String?> benefitApprovedBy,
+      Value<String?> benefitApprovedByName,
+      Value<DateTime?> benefitApprovedAt,
+      Value<int?> proposedAmount,
+      Value<String?> proposedBy,
+      Value<String?> proposedByName,
+      Value<DateTime?> proposedAt,
+      Value<bool> isActive,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+
+final class $$WelfareCaseTypesTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $WelfareCaseTypesTable, WelfareCaseType> {
+  $$WelfareCaseTypesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$WelfareCasesTable, List<WelfareCase>>
+  _welfareCasesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.welfareCases,
+    aliasName: 'welfare_case_types__id__welfare_cases__case_type_id',
+  );
+
+  $$WelfareCasesTableProcessedTableManager get welfareCasesRefs {
+    final manager = $$WelfareCasesTableTableManager(
+      $_db,
+      $_db.welfareCases,
+    ).filter((f) => f.caseTypeId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_welfareCasesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$WelfareCaseTypesTableFilterComposer
+    extends Composer<_$AppDatabase, $WelfareCaseTypesTable> {
+  $$WelfareCaseTypesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get benefitAmount => $composableBuilder(
+    column: $table.benefitAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get benefitApprovedBy => $composableBuilder(
+    column: $table.benefitApprovedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get benefitApprovedByName => $composableBuilder(
+    column: $table.benefitApprovedByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get benefitApprovedAt => $composableBuilder(
+    column: $table.benefitApprovedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get proposedAmount => $composableBuilder(
+    column: $table.proposedAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get proposedBy => $composableBuilder(
+    column: $table.proposedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get proposedByName => $composableBuilder(
+    column: $table.proposedByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get proposedAt => $composableBuilder(
+    column: $table.proposedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> welfareCasesRefs(
+    Expression<bool> Function($$WelfareCasesTableFilterComposer f) f,
+  ) {
+    final $$WelfareCasesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.welfareCases,
+      getReferencedColumn: (t) => t.caseTypeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCasesTableFilterComposer(
+            $db: $db,
+            $table: $db.welfareCases,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$WelfareCaseTypesTableOrderingComposer
+    extends Composer<_$AppDatabase, $WelfareCaseTypesTable> {
+  $$WelfareCaseTypesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get benefitAmount => $composableBuilder(
+    column: $table.benefitAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get benefitApprovedBy => $composableBuilder(
+    column: $table.benefitApprovedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get benefitApprovedByName => $composableBuilder(
+    column: $table.benefitApprovedByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get benefitApprovedAt => $composableBuilder(
+    column: $table.benefitApprovedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get proposedAmount => $composableBuilder(
+    column: $table.proposedAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get proposedBy => $composableBuilder(
+    column: $table.proposedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get proposedByName => $composableBuilder(
+    column: $table.proposedByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get proposedAt => $composableBuilder(
+    column: $table.proposedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WelfareCaseTypesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WelfareCaseTypesTable> {
+  $$WelfareCaseTypesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get benefitAmount => $composableBuilder(
+    column: $table.benefitAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get benefitApprovedBy => $composableBuilder(
+    column: $table.benefitApprovedBy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get benefitApprovedByName => $composableBuilder(
+    column: $table.benefitApprovedByName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get benefitApprovedAt => $composableBuilder(
+    column: $table.benefitApprovedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get proposedAmount => $composableBuilder(
+    column: $table.proposedAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get proposedBy => $composableBuilder(
+    column: $table.proposedBy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get proposedByName => $composableBuilder(
+    column: $table.proposedByName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get proposedAt => $composableBuilder(
+    column: $table.proposedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  Expression<T> welfareCasesRefs<T extends Object>(
+    Expression<T> Function($$WelfareCasesTableAnnotationComposer a) f,
+  ) {
+    final $$WelfareCasesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.welfareCases,
+      getReferencedColumn: (t) => t.caseTypeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCasesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.welfareCases,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$WelfareCaseTypesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WelfareCaseTypesTable,
+          WelfareCaseType,
+          $$WelfareCaseTypesTableFilterComposer,
+          $$WelfareCaseTypesTableOrderingComposer,
+          $$WelfareCaseTypesTableAnnotationComposer,
+          $$WelfareCaseTypesTableCreateCompanionBuilder,
+          $$WelfareCaseTypesTableUpdateCompanionBuilder,
+          (WelfareCaseType, $$WelfareCaseTypesTableReferences),
+          WelfareCaseType,
+          PrefetchHooks Function({bool welfareCasesRefs})
+        > {
+  $$WelfareCaseTypesTableTableManager(
+    _$AppDatabase db,
+    $WelfareCaseTypesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WelfareCaseTypesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WelfareCaseTypesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WelfareCaseTypesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String?> deviceId = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<int?> benefitAmount = const Value.absent(),
+                Value<String?> benefitApprovedBy = const Value.absent(),
+                Value<String?> benefitApprovedByName = const Value.absent(),
+                Value<DateTime?> benefitApprovedAt = const Value.absent(),
+                Value<int?> proposedAmount = const Value.absent(),
+                Value<String?> proposedBy = const Value.absent(),
+                Value<String?> proposedByName = const Value.absent(),
+                Value<DateTime?> proposedAt = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WelfareCaseTypesCompanion(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                createdBy: createdBy,
+                deviceId: deviceId,
+                deletedAt: deletedAt,
+                name: name,
+                description: description,
+                benefitAmount: benefitAmount,
+                benefitApprovedBy: benefitApprovedBy,
+                benefitApprovedByName: benefitApprovedByName,
+                benefitApprovedAt: benefitApprovedAt,
+                proposedAmount: proposedAmount,
+                proposedBy: proposedBy,
+                proposedByName: proposedByName,
+                proposedAt: proposedAt,
+                isActive: isActive,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String?> deviceId = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String name,
+                Value<String?> description = const Value.absent(),
+                Value<int?> benefitAmount = const Value.absent(),
+                Value<String?> benefitApprovedBy = const Value.absent(),
+                Value<String?> benefitApprovedByName = const Value.absent(),
+                Value<DateTime?> benefitApprovedAt = const Value.absent(),
+                Value<int?> proposedAmount = const Value.absent(),
+                Value<String?> proposedBy = const Value.absent(),
+                Value<String?> proposedByName = const Value.absent(),
+                Value<DateTime?> proposedAt = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WelfareCaseTypesCompanion.insert(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                createdBy: createdBy,
+                deviceId: deviceId,
+                deletedAt: deletedAt,
+                name: name,
+                description: description,
+                benefitAmount: benefitAmount,
+                benefitApprovedBy: benefitApprovedBy,
+                benefitApprovedByName: benefitApprovedByName,
+                benefitApprovedAt: benefitApprovedAt,
+                proposedAmount: proposedAmount,
+                proposedBy: proposedBy,
+                proposedByName: proposedByName,
+                proposedAt: proposedAt,
+                isActive: isActive,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$WelfareCaseTypesTable, WelfareCaseType>(table),
+                  $$WelfareCaseTypesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({welfareCasesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (welfareCasesRefs) db.welfareCases],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (welfareCasesRefs)
+                    await $_getPrefetchedData<
+                      WelfareCaseType,
+                      $WelfareCaseTypesTable,
+                      WelfareCase
+                    >(
+                      currentTable: table,
+                      referencedTable: $$WelfareCaseTypesTableReferences
+                          ._welfareCasesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$WelfareCaseTypesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).welfareCasesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.caseTypeId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$WelfareCaseTypesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WelfareCaseTypesTable,
+      WelfareCaseType,
+      $$WelfareCaseTypesTableFilterComposer,
+      $$WelfareCaseTypesTableOrderingComposer,
+      $$WelfareCaseTypesTableAnnotationComposer,
+      $$WelfareCaseTypesTableCreateCompanionBuilder,
+      $$WelfareCaseTypesTableUpdateCompanionBuilder,
+      (WelfareCaseType, $$WelfareCaseTypesTableReferences),
+      WelfareCaseType,
+      PrefetchHooks Function({bool welfareCasesRefs})
+    >;
+typedef $$WelfareCasesTableCreateCompanionBuilder =
+    WelfareCasesCompanion Function({
+      Value<String> id,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String?> createdBy,
+      Value<String?> deviceId,
+      Value<DateTime?> deletedAt,
+      required String caseNo,
+      required String memberId,
+      required String caseTypeId,
+      Value<String?> beneficiary,
+      Value<String?> description,
+      required DateTime occurredOn,
+      required int amount,
+      Value<bool> amountIsFixed,
+      Value<WelfareStatus> status,
+      required String preparedByName,
+      Value<String?> decidedBy,
+      Value<String?> decidedByName,
+      Value<String?> decidedByRole,
+      Value<DateTime?> decidedAt,
+      Value<String?> decisionNote,
+      Value<DateTime?> paidOn,
+      Value<PaymentMethod?> payMethod,
+      Value<String?> payReference,
+      Value<String?> paidBy,
+      Value<String?> paidByName,
+      Value<int> rowid,
+    });
+typedef $$WelfareCasesTableUpdateCompanionBuilder =
+    WelfareCasesCompanion Function({
+      Value<String> id,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String?> createdBy,
+      Value<String?> deviceId,
+      Value<DateTime?> deletedAt,
+      Value<String> caseNo,
+      Value<String> memberId,
+      Value<String> caseTypeId,
+      Value<String?> beneficiary,
+      Value<String?> description,
+      Value<DateTime> occurredOn,
+      Value<int> amount,
+      Value<bool> amountIsFixed,
+      Value<WelfareStatus> status,
+      Value<String> preparedByName,
+      Value<String?> decidedBy,
+      Value<String?> decidedByName,
+      Value<String?> decidedByRole,
+      Value<DateTime?> decidedAt,
+      Value<String?> decisionNote,
+      Value<DateTime?> paidOn,
+      Value<PaymentMethod?> payMethod,
+      Value<String?> payReference,
+      Value<String?> paidBy,
+      Value<String?> paidByName,
+      Value<int> rowid,
+    });
+
+final class $$WelfareCasesTableReferences
+    extends BaseReferences<_$AppDatabase, $WelfareCasesTable, WelfareCase> {
+  $$WelfareCasesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $MembersTable _memberIdTable(_$AppDatabase db) =>
+      db.members.createAlias('welfare_cases__member_id__members__id');
+
+  $$MembersTableProcessedTableManager get memberId {
+    final $_column = $_itemColumn<String>('member_id')!;
+
+    final manager = $$MembersTableTableManager(
+      $_db,
+      $_db.members,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_memberIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $WelfareCaseTypesTable _caseTypeIdTable(_$AppDatabase db) => db
+      .welfareCaseTypes
+      .createAlias('welfare_cases__case_type_id__welfare_case_types__id');
+
+  $$WelfareCaseTypesTableProcessedTableManager get caseTypeId {
+    final $_column = $_itemColumn<String>('case_type_id')!;
+
+    final manager = $$WelfareCaseTypesTableTableManager(
+      $_db,
+      $_db.welfareCaseTypes,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_caseTypeIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$WelfareCasesTableFilterComposer
+    extends Composer<_$AppDatabase, $WelfareCasesTable> {
+  $$WelfareCasesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get caseNo => $composableBuilder(
+    column: $table.caseNo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get beneficiary => $composableBuilder(
+    column: $table.beneficiary,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get occurredOn => $composableBuilder(
+    column: $table.occurredOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get amountIsFixed => $composableBuilder(
+    column: $table.amountIsFixed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<WelfareStatus, WelfareStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get preparedByName => $composableBuilder(
+    column: $table.preparedByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get decidedBy => $composableBuilder(
+    column: $table.decidedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get decidedByName => $composableBuilder(
+    column: $table.decidedByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get decidedByRole => $composableBuilder(
+    column: $table.decidedByRole,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get decidedAt => $composableBuilder(
+    column: $table.decidedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get decisionNote => $composableBuilder(
+    column: $table.decisionNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get paidOn => $composableBuilder(
+    column: $table.paidOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<PaymentMethod?, PaymentMethod, String>
+  get payMethod => $composableBuilder(
+    column: $table.payMethod,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get payReference => $composableBuilder(
+    column: $table.payReference,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paidBy => $composableBuilder(
+    column: $table.paidBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paidByName => $composableBuilder(
+    column: $table.paidByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$MembersTableFilterComposer get memberId {
+    final $$MembersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MembersTableFilterComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$WelfareCaseTypesTableFilterComposer get caseTypeId {
+    final $$WelfareCaseTypesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.caseTypeId,
+      referencedTable: $db.welfareCaseTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCaseTypesTableFilterComposer(
+            $db: $db,
+            $table: $db.welfareCaseTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WelfareCasesTableOrderingComposer
+    extends Composer<_$AppDatabase, $WelfareCasesTable> {
+  $$WelfareCasesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get caseNo => $composableBuilder(
+    column: $table.caseNo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get beneficiary => $composableBuilder(
+    column: $table.beneficiary,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get occurredOn => $composableBuilder(
+    column: $table.occurredOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get amountIsFixed => $composableBuilder(
+    column: $table.amountIsFixed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preparedByName => $composableBuilder(
+    column: $table.preparedByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get decidedBy => $composableBuilder(
+    column: $table.decidedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get decidedByName => $composableBuilder(
+    column: $table.decidedByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get decidedByRole => $composableBuilder(
+    column: $table.decidedByRole,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get decidedAt => $composableBuilder(
+    column: $table.decidedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get decisionNote => $composableBuilder(
+    column: $table.decisionNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get paidOn => $composableBuilder(
+    column: $table.paidOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payMethod => $composableBuilder(
+    column: $table.payMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payReference => $composableBuilder(
+    column: $table.payReference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paidBy => $composableBuilder(
+    column: $table.paidBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paidByName => $composableBuilder(
+    column: $table.paidByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$MembersTableOrderingComposer get memberId {
+    final $$MembersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MembersTableOrderingComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$WelfareCaseTypesTableOrderingComposer get caseTypeId {
+    final $$WelfareCaseTypesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.caseTypeId,
+      referencedTable: $db.welfareCaseTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCaseTypesTableOrderingComposer(
+            $db: $db,
+            $table: $db.welfareCaseTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WelfareCasesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WelfareCasesTable> {
+  $$WelfareCasesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get caseNo =>
+      $composableBuilder(column: $table.caseNo, builder: (column) => column);
+
+  GeneratedColumn<String> get beneficiary => $composableBuilder(
+    column: $table.beneficiary,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get occurredOn => $composableBuilder(
+    column: $table.occurredOn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<bool> get amountIsFixed => $composableBuilder(
+    column: $table.amountIsFixed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<WelfareStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get preparedByName => $composableBuilder(
+    column: $table.preparedByName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get decidedBy =>
+      $composableBuilder(column: $table.decidedBy, builder: (column) => column);
+
+  GeneratedColumn<String> get decidedByName => $composableBuilder(
+    column: $table.decidedByName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get decidedByRole => $composableBuilder(
+    column: $table.decidedByRole,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get decidedAt =>
+      $composableBuilder(column: $table.decidedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get decisionNote => $composableBuilder(
+    column: $table.decisionNote,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get paidOn =>
+      $composableBuilder(column: $table.paidOn, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<PaymentMethod?, String> get payMethod =>
+      $composableBuilder(column: $table.payMethod, builder: (column) => column);
+
+  GeneratedColumn<String> get payReference => $composableBuilder(
+    column: $table.payReference,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get paidBy =>
+      $composableBuilder(column: $table.paidBy, builder: (column) => column);
+
+  GeneratedColumn<String> get paidByName => $composableBuilder(
+    column: $table.paidByName,
+    builder: (column) => column,
+  );
+
+  $$MembersTableAnnotationComposer get memberId {
+    final $$MembersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MembersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$WelfareCaseTypesTableAnnotationComposer get caseTypeId {
+    final $$WelfareCaseTypesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.caseTypeId,
+      referencedTable: $db.welfareCaseTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCaseTypesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.welfareCaseTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WelfareCasesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WelfareCasesTable,
+          WelfareCase,
+          $$WelfareCasesTableFilterComposer,
+          $$WelfareCasesTableOrderingComposer,
+          $$WelfareCasesTableAnnotationComposer,
+          $$WelfareCasesTableCreateCompanionBuilder,
+          $$WelfareCasesTableUpdateCompanionBuilder,
+          (WelfareCase, $$WelfareCasesTableReferences),
+          WelfareCase,
+          PrefetchHooks Function({bool memberId, bool caseTypeId})
+        > {
+  $$WelfareCasesTableTableManager(_$AppDatabase db, $WelfareCasesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WelfareCasesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WelfareCasesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WelfareCasesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String?> deviceId = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> caseNo = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<String> caseTypeId = const Value.absent(),
+                Value<String?> beneficiary = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<DateTime> occurredOn = const Value.absent(),
+                Value<int> amount = const Value.absent(),
+                Value<bool> amountIsFixed = const Value.absent(),
+                Value<WelfareStatus> status = const Value.absent(),
+                Value<String> preparedByName = const Value.absent(),
+                Value<String?> decidedBy = const Value.absent(),
+                Value<String?> decidedByName = const Value.absent(),
+                Value<String?> decidedByRole = const Value.absent(),
+                Value<DateTime?> decidedAt = const Value.absent(),
+                Value<String?> decisionNote = const Value.absent(),
+                Value<DateTime?> paidOn = const Value.absent(),
+                Value<PaymentMethod?> payMethod = const Value.absent(),
+                Value<String?> payReference = const Value.absent(),
+                Value<String?> paidBy = const Value.absent(),
+                Value<String?> paidByName = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WelfareCasesCompanion(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                createdBy: createdBy,
+                deviceId: deviceId,
+                deletedAt: deletedAt,
+                caseNo: caseNo,
+                memberId: memberId,
+                caseTypeId: caseTypeId,
+                beneficiary: beneficiary,
+                description: description,
+                occurredOn: occurredOn,
+                amount: amount,
+                amountIsFixed: amountIsFixed,
+                status: status,
+                preparedByName: preparedByName,
+                decidedBy: decidedBy,
+                decidedByName: decidedByName,
+                decidedByRole: decidedByRole,
+                decidedAt: decidedAt,
+                decisionNote: decisionNote,
+                paidOn: paidOn,
+                payMethod: payMethod,
+                payReference: payReference,
+                paidBy: paidBy,
+                paidByName: paidByName,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String?> deviceId = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String caseNo,
+                required String memberId,
+                required String caseTypeId,
+                Value<String?> beneficiary = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                required DateTime occurredOn,
+                required int amount,
+                Value<bool> amountIsFixed = const Value.absent(),
+                Value<WelfareStatus> status = const Value.absent(),
+                required String preparedByName,
+                Value<String?> decidedBy = const Value.absent(),
+                Value<String?> decidedByName = const Value.absent(),
+                Value<String?> decidedByRole = const Value.absent(),
+                Value<DateTime?> decidedAt = const Value.absent(),
+                Value<String?> decisionNote = const Value.absent(),
+                Value<DateTime?> paidOn = const Value.absent(),
+                Value<PaymentMethod?> payMethod = const Value.absent(),
+                Value<String?> payReference = const Value.absent(),
+                Value<String?> paidBy = const Value.absent(),
+                Value<String?> paidByName = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WelfareCasesCompanion.insert(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                createdBy: createdBy,
+                deviceId: deviceId,
+                deletedAt: deletedAt,
+                caseNo: caseNo,
+                memberId: memberId,
+                caseTypeId: caseTypeId,
+                beneficiary: beneficiary,
+                description: description,
+                occurredOn: occurredOn,
+                amount: amount,
+                amountIsFixed: amountIsFixed,
+                status: status,
+                preparedByName: preparedByName,
+                decidedBy: decidedBy,
+                decidedByName: decidedByName,
+                decidedByRole: decidedByRole,
+                decidedAt: decidedAt,
+                decisionNote: decisionNote,
+                paidOn: paidOn,
+                payMethod: payMethod,
+                payReference: payReference,
+                paidBy: paidBy,
+                paidByName: paidByName,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$WelfareCasesTable, WelfareCase>(table),
+                  $$WelfareCasesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({memberId = false, caseTypeId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (memberId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.memberId,
+                                referencedTable: $$WelfareCasesTableReferences
+                                    ._memberIdTable(db),
+                                referencedColumn: $$WelfareCasesTableReferences
+                                    ._memberIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (caseTypeId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.caseTypeId,
+                                referencedTable: $$WelfareCasesTableReferences
+                                    ._caseTypeIdTable(db),
+                                referencedColumn: $$WelfareCasesTableReferences
+                                    ._caseTypeIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$WelfareCasesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WelfareCasesTable,
+      WelfareCase,
+      $$WelfareCasesTableFilterComposer,
+      $$WelfareCasesTableOrderingComposer,
+      $$WelfareCasesTableAnnotationComposer,
+      $$WelfareCasesTableCreateCompanionBuilder,
+      $$WelfareCasesTableUpdateCompanionBuilder,
+      (WelfareCase, $$WelfareCasesTableReferences),
+      WelfareCase,
+      PrefetchHooks Function({bool memberId, bool caseTypeId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -12975,4 +17080,8 @@ class $AppDatabaseManager {
       $$ContributionTypesTableTableManager(_db, _db.contributionTypes);
   $$PaymentsTableTableManager get payments =>
       $$PaymentsTableTableManager(_db, _db.payments);
+  $$WelfareCaseTypesTableTableManager get welfareCaseTypes =>
+      $$WelfareCaseTypesTableTableManager(_db, _db.welfareCaseTypes);
+  $$WelfareCasesTableTableManager get welfareCases =>
+      $$WelfareCasesTableTableManager(_db, _db.welfareCases);
 }

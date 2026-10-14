@@ -8,11 +8,14 @@ import '../../data/database.dart';
 import '../../data/repositories/dashboard_repository.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/payment_repository.dart';
+import '../../data/repositories/welfare_repository.dart';
 import '../../domain/permissions.dart';
 import '../auth/auth_cubit.dart';
 import '../members/member_detail_screen.dart';
 import '../payments/defaulters_screen.dart';
 import '../payments/payment_widgets.dart';
+import '../welfare/welfare_common.dart';
+import '../welfare/welfare_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -30,6 +33,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       .read<AppServices>()
       .payments
       .watchCollectionStats();
+  late final Stream<WelfareSummary> _welfare = context
+      .read<AppServices>()
+      .welfare
+      .watchSummary();
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if ((user?.can(Perm.financeView) ?? false) ||
                   (user?.can(Perm.paymentsRecord) ?? false))
                 _Collections(_collections),
+              if (user?.canViewWelfare ?? false) _WelfareCard(_welfare),
               // Rows that size to their content, so larger phone text
               // settings never overflow the tiles.
               _TileRow([
@@ -227,6 +235,58 @@ class _Collections extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WelfareCard extends StatelessWidget {
+  const _WelfareCard(this.stream);
+  final Stream<WelfareSummary> stream;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<WelfareSummary>(
+      stream: stream,
+      builder: (context, snap) {
+        final s = snap.data;
+        if (s == null) return const SizedBox.shrink();
+        final waiting = [
+          if (s.pendingCases > 0) '${s.pendingCases} awaiting approval',
+          if (s.approvedUnpaid > 0) '${s.approvedUnpaid} to pay',
+          if (s.pendingBenefitChanges > 0)
+            '${s.pendingBenefitChanges} amount change'
+                '${s.pendingBenefitChanges == 1 ? '' : 's'} to approve',
+        ];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Card(
+            color: waiting.isEmpty
+                ? null
+                : Theme.of(context).colorScheme.tertiaryContainer,
+            child: ListTile(
+              leading: const Icon(Icons.volunteer_activism),
+              title: Text('Welfare fund ${formatMoney(s.fundBalance)}'),
+              subtitle: Text(
+                waiting.isEmpty
+                    ? 'Paid out this month ${formatMoney(s.paidThisMonth)}'
+                    : waiting.join(' · '),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => WelfareScreen(
+                    initialFilter: s.pendingCases > 0
+                        ? WelfareStatus.pending
+                        : s.approvedUnpaid > 0
+                        ? WelfareStatus.approved
+                        : null,
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },

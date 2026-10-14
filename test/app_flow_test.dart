@@ -25,7 +25,14 @@ Future<void> pumpUntil(WidgetTester tester, Finder finder) async {
     await tester.pump();
     if (finder.evaluate().isNotEmpty) return;
   }
-  throw TestFailure('Timed out waiting for $finder');
+  final texts = find
+      .byType(Text)
+      .evaluate()
+      .map((e) => (e.widget as Text).data)
+      .join(' | ');
+  throw TestFailure(
+    'Timed out waiting for $finder. Showing: $texts. Exception: ${tester.takeException()}',
+  );
 }
 
 void main() {
@@ -61,7 +68,7 @@ void main() {
 
     await pumpUntil(tester, find.text('Hello, Ama Owusu'));
     expect(find.text('Super Administrator'), findsOneWidget);
-    await pumpUntil(tester, find.text('Total members'));
+    await pumpUntil(tester, find.text('Collected today'));
     await tester.scrollUntilVisible(
       find.text('Zone 8 (Abrempong)'),
       200,
@@ -167,6 +174,75 @@ void main() {
     expect(find.textContaining('RCP-'), findsWidgets);
     expect(find.text('GHS 20.00'), findsOneWidget);
     expect(find.text('Share receipt (PDF)'), findsOneWidget);
+
+    // Welfare: set a benefit amount, approve it, report, approve, pay.
+    Future<void> tapAndWait(Finder f, Finder next) async {
+      await tester.pump(const Duration(seconds: 1));
+      if (f.evaluate().isEmpty) {
+        // Lazy lists only build what is near the screen.
+        await tester.scrollUntilVisible(
+          f,
+          200,
+          scrollable: find.byType(Scrollable).last,
+        );
+      }
+      await tester.ensureVisible(f);
+      tester
+          .state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger).first)
+          .clearSnackBars();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(f);
+      await pumpUntil(tester, next);
+    }
+
+    await tapAndWait(find.byTooltip('Back'), find.text('More'));
+    await tapAndWait(find.text('More'), find.text('Welfare'));
+    await tapAndWait(find.text('Welfare'), find.text('Welfare fund balance'));
+    await tapAndWait(
+      find.byTooltip('Benefit amounts'),
+      find.text('Hospitalisation'),
+    );
+    await tapAndWait(
+      find.text('Hospitalisation'),
+      find.text('Send for approval'),
+    );
+    await tester.enterText(find.byType(TextField).last, '500');
+    await tapAndWait(
+      find.text('Send for approval'),
+      find.textContaining('awaiting approval'),
+    );
+    await tapAndWait(
+      find.widgetWithText(FilledButton, 'Approve'),
+      find.text('GHS 500.00'),
+    );
+    await tapAndWait(find.byTooltip('Back'), find.text('New case'));
+    await tapAndWait(find.text('New case'), find.text('Choose member'));
+    await tapAndWait(find.text('Choose member'), find.text('Kofi Mensah'));
+    await tapAndWait(find.text('Kofi Mensah'), find.text('Type of case'));
+    await tapAndWait(
+      find.text('Type of case'),
+      find.text('Hospitalisation').last,
+    );
+    await tapAndWait(
+      find.text('Hospitalisation').last,
+      find.text('Fixed benefit for this type of case'),
+    );
+    expect(find.text('GHS 500.00'), findsOneWidget);
+    await tapAndWait(
+      find.text('Submit for approval'),
+      find.text('WEL-${DateTime.now().year}-0001'),
+    );
+    await tapAndWait(find.text('Approve'), find.text('Approve this case?'));
+    await tapAndWait(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Approve'),
+      ),
+      find.text('Record payout'),
+    );
+    await tapAndWait(find.text('Record payout'), find.text('Mark as paid'));
+    await tapAndWait(find.text('Mark as paid'), find.text('Paid'));
+    expect(find.textContaining('standing in'), findsNothing);
 
     await tester.pumpWidget(const SizedBox());
     // Let snack bars and drift's stream clean-up timers finish.

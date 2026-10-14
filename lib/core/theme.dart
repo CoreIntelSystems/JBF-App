@@ -44,12 +44,14 @@ ThemeData buildTheme(
     // Large, easy-to-tap buttons for use at meetings.
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
+        // Not Size.fromHeight: an infinite minimum width breaks buttons in
+        // dialogs and rows. Full-width buttons sit in stretched columns.
+        minimumSize: const Size(64, 52),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+      style: OutlinedButton.styleFrom(minimumSize: const Size(64, 48)),
     ),
     inputDecorationTheme: const InputDecorationTheme(
       border: OutlineInputBorder(),

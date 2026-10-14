@@ -198,8 +198,8 @@ class _UserFormState extends State<_UserForm> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                initialValue: _roleId,
                 isExpanded: true,
+                initialValue: _roleId,
                 decoration: const InputDecoration(labelText: 'Role'),
                 items: [
                   for (final r in widget.roles)

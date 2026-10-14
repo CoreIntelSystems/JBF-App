@@ -337,6 +337,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
+        isExpanded: true,
         initialValue: options.contains(value) ? value : null,
         decoration: InputDecoration(labelText: label),
         items: [

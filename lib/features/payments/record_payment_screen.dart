@@ -5,10 +5,10 @@ import '../../app_services.dart';
 import '../../core/format.dart';
 import '../../core/money.dart';
 import '../../data/database.dart';
-import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../domain/dues.dart';
 import '../auth/auth_cubit.dart';
+import '../members/member_picker.dart';
 import 'payment_detail_screen.dart';
 
 /// Records money received and issues a receipt.
@@ -107,7 +107,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
   Future<void> _pickMember() async {
     final picked = await Navigator.of(
       context,
-    ).push<Member>(MaterialPageRoute(builder: (_) => const _MemberPicker()));
+    ).push<Member>(MaterialPageRoute(builder: (_) => const MemberPicker()));
     if (picked == null) return;
     setState(() => _member = picked);
     _refreshDues();
@@ -203,8 +203,8 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<ContributionType>(
-                    initialValue: _type,
                     isExpanded: true,
+                    initialValue: _type,
                     decoration: const InputDecoration(labelText: 'For'),
                     items: [
                       for (final t in types)
@@ -221,6 +221,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                   if (_isMonthly) ...[
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       key: ValueKey('period-$_period'),
                       initialValue: _period,
                       decoration: const InputDecoration(
@@ -330,50 +331,4 @@ class _Hint extends StatelessWidget {
     padding: const EdgeInsets.only(top: 6, left: 4),
     child: Text(text, style: Theme.of(context).textTheme.bodySmall),
   );
-}
-
-/// Search and pick a member.
-class _MemberPicker extends StatefulWidget {
-  const _MemberPicker();
-
-  @override
-  State<_MemberPicker> createState() => _MemberPickerState();
-}
-
-class _MemberPickerState extends State<_MemberPicker> {
-  String _query = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final members = context.read<AppServices>().members;
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Search name, phone or member ID',
-            border: InputBorder.none,
-            filled: false,
-          ),
-          onChanged: (v) => setState(() => _query = v),
-        ),
-      ),
-      body: StreamBuilder<List<MemberWithZones>>(
-        stream: members.watchMembers(MemberFilter(query: _query)),
-        builder: (context, snap) {
-          final items = snap.data ?? const [];
-          return ListView(
-            children: [
-              for (final item in items)
-                ListTile(
-                  title: Text(item.member.fullName),
-                  subtitle: Text('${item.member.memberNo} · ${item.zoneLabel}'),
-                  onTap: () => Navigator.of(context).pop(item.member),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
 }

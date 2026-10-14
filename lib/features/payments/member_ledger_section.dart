@@ -50,6 +50,7 @@ class _MemberLedgerSectionState extends State<MemberLedgerSection> {
               else
                 Card(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       ListTile(
                         title: const Text('Total paid'),

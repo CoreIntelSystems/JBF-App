@@ -67,6 +67,18 @@ class OrgDefaults {
         ),
       ];
 
+  /// Seeded welfare case types: (name, description). Benefit amounts start
+  /// unset; the Treasurer proposes them and the Welfare Chairman approves.
+  static const welfareCaseTypes = <(String, String?)>[
+    ('Death of a member', 'Support to the family of a member who has died.'),
+    ('Death of spouse, parent or child', null),
+    ('Hospitalisation', 'Member admitted to hospital.'),
+    ('Childbirth', 'Member or spouse has had a baby.'),
+    ('Wedding', 'Member is getting married.'),
+    ('Fire, flood or disaster', null),
+    ('Other support', 'Amount decided case by case.'),
+  ];
+
   /// Seeded zones: (code, name, nickname, active).
   /// Zone 6 is kept in the list but switched off until it has a name and
   /// is ready to receive members.

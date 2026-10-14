@@ -2,9 +2,10 @@ name: Android build
 
 on:
   push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 concurrency:
   group: android-${{ github.ref }}
@@ -40,9 +41,28 @@ jobs:
       - name: Build debug APK
         run: flutter build apk --debug
 
+      - name: Name the APK
+        run: cp build/app/outputs/flutter-apk/app-debug.apk build/app/outputs/flutter-apk/jbf-app-debug-${{ github.run_number }}.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: jbf-app-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
+
+      # A plain .apk on a pre-release, so phones can download and install it
+      # directly without unzipping (some Android file apps mistake the
+      # artifact zip for a password-protected one).
+      - name: Publish APK to a pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Test build ${{ github.run_number }} (${{ github.ref_name }})
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          body: |
+            Debug build of ${{ github.sha }} from ${{ github.ref_name }}.
+            On your phone, tap the .apk below to download and install it.
+          files: |
+            build/app/outputs/flutter-apk/jbf-app-debug-${{ github.run_number }}.apk

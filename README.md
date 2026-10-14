@@ -34,8 +34,10 @@ phases (see the build plan).
 
 ## Getting a test APK
 
-Every push and pull request runs the **Android build** workflow. Open the run
-in the Actions tab and download `jbf-app-debug-apk` from the Artifacts list.
+Every push runs the **Android build** workflow. When it passes it publishes a
+pre-release named **Test build N** on the Releases page with a plain `.apk`:
+open it on the phone, tap the `.apk` to download, then install. The same APK is
+also attached to the run as the `jbf-app-debug-apk` artifact (a zip).
 
 ## Development
 

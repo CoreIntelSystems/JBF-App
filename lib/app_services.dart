@@ -3,6 +3,7 @@ import 'data/repositories/audit_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
 import 'data/repositories/member_repository.dart';
+import 'data/repositories/payment_repository.dart';
 import 'data/secure_store.dart';
 
 /// Everything the screens need, created once at start-up.
@@ -12,6 +13,7 @@ class AppServices {
     auth = AuthRepository(db, audit);
     members = MemberRepository(db, audit);
     dashboard = DashboardRepository(db);
+    payments = PaymentRepository(db, audit);
   }
 
   final AppDatabase db;
@@ -21,4 +23,5 @@ class AppServices {
   late final AuthRepository auth;
   late final MemberRepository members;
   late final DashboardRepository dashboard;
+  late final PaymentRepository payments;
 }

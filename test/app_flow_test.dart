@@ -8,6 +8,7 @@ import 'package:jbf_app/data/secure_store.dart';
 import 'package:jbf_app/features/auth/biometrics.dart';
 import 'package:jbf_app/features/dashboard/dashboard_screen.dart';
 import 'package:jbf_app/features/members/member_form_screen.dart';
+import 'package:jbf_app/features/payments/record_payment_screen.dart';
 
 class _NoBiometrics extends Biometrics {
   @override
@@ -129,6 +130,43 @@ void main() {
     await tester.tap(registerButton);
     await pumpUntil(tester, find.text('Kofi Mensah'));
     expect(find.textContaining('JBF-000001'), findsWidgets);
+
+    // Record a dues payment for Kofi and get a receipt.
+    // Dismiss the queued zone-limit and registered snack bars.
+    tester
+        .state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger).first)
+        .clearSnackBars();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('Payments'));
+    await pumpUntil(tester, find.text('Record payment'));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('Record payment'));
+    await pumpUntil(tester, find.text('Choose member'));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('Choose member'));
+    await pumpUntil(tester, find.text('Kofi Mensah'));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('Kofi Mensah'));
+    await pumpUntil(tester, find.text('Month paid for'));
+    expect(find.text('Monthly welfare dues'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '20');
+    final save = find.text('Save and issue receipt');
+    await tester.scrollUntilVisible(
+      save,
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(RecordPaymentScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pump();
+    await tester.tap(save);
+    await pumpUntil(tester, find.text('Payment saved'));
+    expect(find.textContaining('RCP-'), findsWidgets);
+    expect(find.text('GHS 20.00'), findsOneWidget);
+    expect(find.text('Share receipt (PDF)'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     // Let snack bars and drift's stream clean-up timers finish.

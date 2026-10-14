@@ -7,6 +7,7 @@ import '../../data/database.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/permissions.dart';
 import '../auth/auth_cubit.dart';
+import '../payments/member_ledger_section.dart';
 import 'member_form_screen.dart';
 import 'members_screen.dart';
 
@@ -124,6 +125,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   label: const Text('Change status'),
                 ),
               ],
+              MemberLedgerSection(member: m),
               _Section('Zones', [
                 for (final z in item.zones)
                   _Row(zoneDisplayName(z), primary(z) ?? ''),

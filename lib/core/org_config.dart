@@ -1,3 +1,5 @@
+import '../data/database.dart';
+
 /// Organisation defaults used to seed a fresh database.
 ///
 /// The app is a configurable CoreIntel Systems welfare platform: everything
@@ -16,6 +18,54 @@ class OrgDefaults {
 
   /// Bundled logo, used until an organisation sets its own in settings.
   static const logoAsset = 'assets/branding/logo_shield.png';
+
+  /// Seeded contribution types. Amounts start unset: the Founder, Treasurer
+  /// or General Secretary sets the monthly dues in the app.
+  static const contributionTypes =
+      <(String, ContributionCategory, ContributionFrequency, String?)>[
+        (
+          'Monthly welfare dues',
+          ContributionCategory.welfare,
+          ContributionFrequency.monthly,
+          'Set the monthly amount before recording dues.',
+        ),
+        (
+          'Silver collection',
+          ContributionCategory.welfare,
+          ContributionFrequency.perEvent,
+          'Impromptu collection taken at an event.',
+        ),
+        (
+          'Emergency levy',
+          ContributionCategory.emergency,
+          ContributionFrequency.oneOff,
+          'Funeral, hospital or disaster support.',
+        ),
+        (
+          'Charity project',
+          ContributionCategory.charity,
+          ContributionFrequency.open,
+          null,
+        ),
+        (
+          'Executive council dues',
+          ContributionCategory.executive,
+          ContributionFrequency.monthly,
+          'Executives only.',
+        ),
+        (
+          'Event contribution',
+          ContributionCategory.event,
+          ContributionFrequency.perEvent,
+          null,
+        ),
+        (
+          'Voluntary donation',
+          ContributionCategory.voluntary,
+          ContributionFrequency.open,
+          null,
+        ),
+      ];
 
   /// Seeded zones: (code, name, nickname, active).
   /// Zone 6 is kept in the list but switched off until it has a name and

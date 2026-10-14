@@ -39,6 +39,10 @@ class OrgSettings extends Table {
   IntColumn get accentColor =>
       integer().withDefault(const Constant(OrgDefaults.accentColor))();
 
+  /// Receipt numbers look like `RCP-2026-000045`.
+  TextColumn get receiptPrefix => text().withDefault(const Constant('RCP'))();
+  IntColumn get nextReceiptNo => integer().withDefault(const Constant(1))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -141,6 +145,93 @@ class AuditLogs extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// The six contribution categories from the JBF specification.
+enum ContributionCategory {
+  welfare('Welfare'),
+  emergency('Emergency'),
+  charity('Charity project'),
+  executive('Executive council'),
+  event('Event'),
+  voluntary('Voluntary donation');
+
+  const ContributionCategory(this.label);
+  final String label;
+}
+
+enum ContributionFrequency {
+  /// Owed every month from the member's join date: drives arrears.
+  monthly('Monthly'),
+
+  /// A single levy, e.g. a funeral contribution.
+  oneOff('One-off'),
+
+  /// Collected at an event, e.g. Silver Collection. No arrears.
+  perEvent('Per event'),
+
+  /// Any amount, any time, e.g. donations.
+  open('Any time');
+
+  const ContributionFrequency(this.label);
+  final String label;
+}
+
+/// What members contribute towards. Amounts are configurable per
+/// organisation; a null amount means "any amount".
+class ContributionTypes extends Table with SyncColumns {
+  TextColumn get name => text()();
+  TextColumn get category => textEnum<ContributionCategory>()();
+  TextColumn get frequency => textEnum<ContributionFrequency>()();
+  IntColumn get amount => integer().nullable()();
+  DateTimeColumn get startDate => dateTime().nullable()();
+  DateTimeColumn get endDate => dateTime().nullable()();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+
+  /// False for executive-only dues; those get arrears once executives are
+  /// recorded (Phase 3).
+  BoolColumn get appliesToAll => boolean().withDefault(const Constant(true))();
+  TextColumn get notes => text().nullable()();
+}
+
+enum PaymentMethod {
+  cash('Cash'),
+  momo('Mobile money'),
+  bank('Bank');
+
+  const PaymentMethod(this.label);
+  final String label;
+}
+
+enum PaymentStatus { valid, voided }
+
+/// A money received. Never deleted or edited: a mistake is voided with a
+/// reason, and the void is audited.
+@TableIndex(name: 'payments_member', columns: {#memberId})
+@TableIndex(name: 'payments_paid_on', columns: {#paidOn})
+class Payments extends Table with SyncColumns {
+  TextColumn get receiptNo => text().unique()();
+
+  /// Null for anonymous donations.
+  TextColumn get memberId => text().nullable().references(Members, #id)();
+  TextColumn get contributionTypeId =>
+      text().references(ContributionTypes, #id)();
+
+  /// For monthly dues, the month paid for as `YYYY-MM`.
+  TextColumn get period => text().nullable()();
+  IntColumn get amount => integer()();
+  TextColumn get method => textEnum<PaymentMethod>()();
+  TextColumn get reference => text().nullable()();
+  DateTimeColumn get paidOn => dateTime()();
+  TextColumn get collectedBy => text().nullable()();
+  TextColumn get collectorName => text()();
+  TextColumn get remarks => text().nullable()();
+  TextColumn get status => textEnum<PaymentStatus>().withDefault(
+    Constant(PaymentStatus.valid.name),
+  )();
+  TextColumn get voidReason => text().nullable()();
+  TextColumn get voidedBy => text().nullable()();
+  DateTimeColumn get voidedAt => dateTime().nullable()();
+}
+
 const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
 
 @DriftDatabase(
@@ -153,20 +244,36 @@ const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
     RolePermissions,
     Users,
     AuditLogs,
+    ContributionTypes,
+    Payments,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _createGuards();
+      await _createPaymentGuards();
       await _seed();
+      await _seedContributionTypes();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(orgSettings, orgSettings.receiptPrefix);
+        await m.addColumn(orgSettings, orgSettings.nextReceiptNo);
+        await m.createTable(contributionTypes);
+        await m.createTable(payments);
+        await m.createIndex(paymentsMember);
+        await m.createIndex(paymentsPaidOn);
+        await _createPaymentGuards();
+        await _seedContributionTypes();
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -205,6 +312,42 @@ class AppDatabase extends _$AppDatabase {
       CREATE TRIGGER audit_logs_no_delete BEFORE DELETE ON audit_logs
       BEGIN SELECT RAISE(ABORT, 'Audit logs cannot be deleted'); END
     ''');
+  }
+
+  /// Payments can be voided but never deleted or have their money changed.
+  Future<void> _createPaymentGuards() async {
+    await customStatement('''
+      CREATE TRIGGER payments_no_delete BEFORE DELETE ON payments
+      BEGIN SELECT RAISE(ABORT, 'Payments cannot be deleted; void them'); END
+    ''');
+    await customStatement('''
+      CREATE TRIGGER payments_no_edit BEFORE UPDATE ON payments
+      WHEN NEW.amount IS NOT OLD.amount
+        OR NEW.member_id IS NOT OLD.member_id
+        OR NEW.contribution_type_id IS NOT OLD.contribution_type_id
+        OR NEW.receipt_no IS NOT OLD.receipt_no
+        OR NEW.period IS NOT OLD.period
+        OR NEW.paid_on IS NOT OLD.paid_on
+        OR (OLD.status = 'voided' AND NEW.status = 'valid')
+      BEGIN SELECT RAISE(ABORT, 'Payments cannot be edited; void and re-enter'); END
+    ''');
+  }
+
+  Future<void> _seedContributionTypes() async {
+    await batch((b) {
+      for (final (name, cat, freq, notes) in OrgDefaults.contributionTypes) {
+        b.insert(
+          contributionTypes,
+          ContributionTypesCompanion.insert(
+            name: name,
+            category: cat,
+            frequency: freq,
+            notes: Value(notes),
+            appliesToAll: Value(cat != ContributionCategory.executive),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _seed() async {

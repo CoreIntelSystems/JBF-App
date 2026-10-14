@@ -5,10 +5,11 @@ import 'package:jbf_app/data/repositories/actor.dart';
 import 'package:jbf_app/data/repositories/audit_repository.dart';
 import 'package:jbf_app/data/repositories/auth_repository.dart';
 import 'package:jbf_app/data/repositories/member_repository.dart';
+import 'package:jbf_app/data/repositories/payment_repository.dart';
 import 'package:jbf_app/domain/password_hasher.dart';
 
 class TestEnv {
-  TestEnv() : db = openInMemoryDatabase() {
+  TestEnv({DateTime Function()? clock}) : db = openInMemoryDatabase() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     audit = AuditRepository(db);
     auth = AuthRepository(
@@ -16,13 +17,15 @@ class TestEnv {
       audit,
       hasher: const PasswordHasher(iterations: 10),
     );
-    members = MemberRepository(db, audit);
+    members = MemberRepository(db, audit, clock: clock);
+    payments = PaymentRepository(db, audit, clock: clock);
   }
 
   final AppDatabase db;
   late final AuditRepository audit;
   late final AuthRepository auth;
   late final MemberRepository members;
+  late final PaymentRepository payments;
 
   static const actor = Actor(userId: 'u1', username: 'tester', deviceId: 'd1');
 

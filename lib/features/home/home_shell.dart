@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../members/members_screen.dart';
 import '../more/more_screen.dart';
+import '../payments/payments_screen.dart';
 
 /// Bottom navigation for signed-in users.
 class HomeShell extends StatefulWidget {
@@ -15,7 +16,12 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  static const _pages = [DashboardScreen(), MembersScreen(), MoreScreen()];
+  static const _pages = [
+    DashboardScreen(),
+    MembersScreen(),
+    PaymentsScreen(),
+    MoreScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +40,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
             label: 'Members',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.payments_outlined),
+            selectedIcon: Icon(Icons.payments),
+            label: 'Payments',
           ),
           NavigationDestination(icon: Icon(Icons.menu), label: 'More'),
         ],

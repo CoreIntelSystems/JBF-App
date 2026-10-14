@@ -6,6 +6,7 @@ import '../../core/org_config.dart';
 import '../../domain/permissions.dart';
 import '../audit/audit_log_screen.dart';
 import '../auth/auth_cubit.dart';
+import '../contributions/contribution_types_screen.dart';
 import '../users/users_screen.dart';
 import 'account_screen.dart';
 
@@ -35,6 +36,12 @@ class MoreScreen extends StatelessWidget {
             title: const Text('My login and security'),
             subtitle: const Text('Password, PIN and fingerprint'),
             onTap: () => open(const AccountScreen()),
+          ),
+          ListTile(
+            leading: const Icon(Icons.price_change_outlined),
+            title: const Text('Contribution types'),
+            subtitle: const Text('Monthly dues and other contributions'),
+            onTap: () => open(const ContributionTypesScreen()),
           ),
           if (user?.can(Perm.usersManage) ?? false)
             ListTile(
@@ -75,7 +82,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.1.0 (Phase 1 preview)',
+              applicationVersion: '0.2.0 (Phase 2 preview)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'All data stays on this device in an encrypted database.',

@@ -30,6 +30,9 @@ abstract final class Perm {
 
   /// Pay out approved welfare cases.
   static const welfarePay = 'welfare.pay';
+
+  /// Record money spent. Voiding uses [paymentsVoid].
+  static const expensesRecord = 'expenses.record';
   static const financeView = 'finance.view';
   static const reportsExport = 'reports.export';
   static const eventsManage = 'events.manage';
@@ -54,6 +57,7 @@ abstract final class Perm {
     welfareSetBenefits,
     welfareApprove,
     welfarePay,
+    expensesRecord,
     financeView,
     reportsExport,
     eventsManage,
@@ -115,6 +119,7 @@ final defaultRoles = <RoleSeed>[
     Perm.duesManage,
     Perm.welfareSetBenefits,
     Perm.welfarePay,
+    Perm.expensesRecord,
     Perm.financeView,
     Perm.reportsExport,
     Perm.backupManage,

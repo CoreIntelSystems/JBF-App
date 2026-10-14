@@ -5,6 +5,7 @@ import 'package:jbf_app/data/repositories/actor.dart';
 import 'package:jbf_app/data/repositories/audit_repository.dart';
 import 'package:jbf_app/data/repositories/auth_repository.dart';
 import 'package:jbf_app/data/repositories/member_repository.dart';
+import 'package:jbf_app/data/repositories/finance_repository.dart';
 import 'package:jbf_app/data/repositories/payment_repository.dart';
 import 'package:jbf_app/data/repositories/welfare_repository.dart';
 import 'package:jbf_app/domain/password_hasher.dart';
@@ -21,6 +22,7 @@ class TestEnv {
     members = MemberRepository(db, audit, clock: clock);
     payments = PaymentRepository(db, audit, clock: clock);
     welfare = WelfareRepository(db, audit, clock: clock);
+    finance = FinanceRepository(db, audit, clock: clock);
   }
 
   final AppDatabase db;
@@ -29,6 +31,7 @@ class TestEnv {
   late final MemberRepository members;
   late final PaymentRepository payments;
   late final WelfareRepository welfare;
+  late final FinanceRepository finance;
 
   static const actor = Actor(userId: 'u1', username: 'tester', deviceId: 'd1');
 

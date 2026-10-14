@@ -79,6 +79,21 @@ class OrgDefaults {
     ('Other support', 'Amount decided case by case.'),
   ];
 
+  /// Seeded expense categories. Welfare payouts are recorded on the
+  /// welfare case, not as expenses.
+  static const expenseCategories = <String>[
+    'Event costs',
+    'Venue and hall hire',
+    'Food and refreshments',
+    'Transport',
+    'Printing and stationery',
+    'Charity project',
+    'Gifts and donations given',
+    'Bank and MoMo charges',
+    'Administration',
+    'Other',
+  ];
+
   /// Seeded zones: (code, name, nickname, active).
   /// Zone 6 is kept in the list but switched off until it has a name and
   /// is ready to receive members.

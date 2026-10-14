@@ -25,10 +25,15 @@ void applyEncryptionKey(Database db, String hexKey) {
   db.select('SELECT count(*) FROM sqlite_master');
 }
 
+/// Where the app's database lives.
+Future<File> appDatabaseFile() async {
+  final dir = await getApplicationSupportDirectory();
+  return File(p.join(dir.path, databaseFileName));
+}
+
 /// Opens the app's encrypted database in a background isolate.
 Future<AppDatabase> openAppDatabase({required String hexKey}) async {
-  final dir = await getApplicationSupportDirectory();
-  final file = File(p.join(dir.path, databaseFileName));
+  final file = await appDatabaseFile();
   final executor = NativeDatabase.createInBackground(
     file,
     setup: (db) => applyEncryptionKey(db, hexKey),

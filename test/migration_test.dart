@@ -10,6 +10,21 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    for (final t in ['expenses_no_delete', 'expenses_no_edit']) {
+      await db.customStatement('DROP TRIGGER $t');
+    }
+    await db.customStatement('DROP TABLE expenses');
+    await db.customStatement('DROP TABLE expense_categories');
+    await db.customStatement(
+      'ALTER TABLE org_settings DROP COLUMN next_expense_no',
+    );
+    await db.customStatement(
+      "DELETE FROM role_permissions WHERE permission = 'expenses.record'",
+    );
+    if (version >= 3) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     for (final t in ['welfare_cases_no_delete', 'welfare_cases_flow']) {
       await db.customStatement('DROP TRIGGER $t');
     }
@@ -46,10 +61,12 @@ void main() {
     final triggers = await db
         .customSelect(
           "SELECT name FROM sqlite_master WHERE type = 'trigger' "
-          "AND (name LIKE 'payments_%' OR name LIKE 'welfare_%')",
+          "AND (name LIKE 'payments_%' OR name LIKE 'welfare_%' "
+          "OR name LIKE 'expenses_%')",
         )
         .get();
-    expect(triggers, hasLength(4));
+    expect(triggers, hasLength(6));
+    expect(await db.select(db.expenseCategories).get(), hasLength(10));
     final pay = await db
         .customSelect(
           'SELECT r.key FROM role_permissions p JOIN roles r '
@@ -62,7 +79,7 @@ void main() {
     });
   }
 
-  for (final from in [1, 2]) {
+  for (final from in [1, 2, 3]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

@@ -7,6 +7,9 @@ import '../../domain/permissions.dart';
 import '../audit/audit_log_screen.dart';
 import '../auth/auth_cubit.dart';
 import '../contributions/contribution_types_screen.dart';
+import '../backup/backup_screen.dart';
+import '../finance/expenses_screen.dart';
+import '../reports/reports_screen.dart';
 import '../users/users_screen.dart';
 import '../welfare/welfare_common.dart';
 import '../welfare/welfare_screen.dart';
@@ -46,6 +49,21 @@ class MoreScreen extends StatelessWidget {
               subtitle: const Text('Cases, approvals, payouts and the fund'),
               onTap: () => open(const WelfareScreen()),
             ),
+          if ((user?.can(Perm.financeView) ?? false) ||
+              (user?.can(Perm.expensesRecord) ?? false))
+            ListTile(
+              leading: const Icon(Icons.outbox),
+              title: const Text('Expenses'),
+              subtitle: const Text('Money spent, with vouchers'),
+              onTap: () => open(const ExpensesScreen()),
+            ),
+          if (user?.can(Perm.financeView) ?? false)
+            ListTile(
+              leading: const Icon(Icons.bar_chart),
+              title: const Text('Financial reports'),
+              subtitle: const Text('Daily to annual; PDF, Excel and CSV'),
+              onTap: () => open(const ReportsScreen()),
+            ),
           ListTile(
             leading: const Icon(Icons.price_change_outlined),
             title: const Text('Contribution types'),
@@ -65,6 +83,13 @@ class MoreScreen extends StatelessWidget {
               title: const Text('Audit log'),
               subtitle: const Text('Logins, edits and status changes'),
               onTap: () => open(const AuditLogScreen()),
+            ),
+          if (user?.can(Perm.backupManage) ?? false)
+            ListTile(
+              leading: const Icon(Icons.backup_outlined),
+              title: const Text('Backup and restore'),
+              subtitle: const Text('Encrypted backup file and daily copies'),
+              onTap: () => open(const BackupScreen()),
             ),
           ListTile(
             leading: const Icon(Icons.dark_mode_outlined),
@@ -91,7 +116,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.3.0 (Phase 2 preview)',
+              applicationVersion: '0.4.0 (Phase 2 preview)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'All data stays on this device in an encrypted database.',

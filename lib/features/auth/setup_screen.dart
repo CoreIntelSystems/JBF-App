@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/repositories/auth_repository.dart';
+import '../backup/backup_screen.dart';
 import 'auth_cubit.dart';
 import 'brand_header.dart';
 
@@ -136,6 +137,18 @@ class _SetupScreenState extends State<SetupScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Text('Create account'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const BackupScreen(),
+                              ),
+                            ),
+                      icon: const Icon(Icons.restore),
+                      label: const Text('New phone? Restore from a backup'),
                     ),
                   ],
                 ),

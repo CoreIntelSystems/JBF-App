@@ -38,6 +38,13 @@ class PasswordHasher {
   static String _encode(int iters, List<int> salt, List<int> hash) =>
       'pbkdf2-sha256\$$iters\$${base64Encode(salt)}\$${base64Encode(hash)}';
 
+  /// Derives a 32-byte key, e.g. for encrypting backups with a password.
+  static Future<Uint8List> deriveKey(
+    String secret,
+    List<int> salt, {
+    int iterations = 100000,
+  }) => Isolate.run(() => _pbkdf2(secret, salt, iterations));
+
   static Uint8List _pbkdf2(String secret, List<int> salt, int iterations) {
     final hmac = Hmac(sha256, utf8.encode(secret));
     // One 32-byte block is all we need (block index 1).

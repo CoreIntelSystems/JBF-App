@@ -46,6 +46,9 @@ class OrgSettings extends Table {
   /// Welfare case numbers look like `WEL-2026-0007`.
   IntColumn get nextWelfareCaseNo => integer().withDefault(const Constant(1))();
 
+  /// Expense vouchers look like `EXP-2026-000003`.
+  IntColumn get nextExpenseNo => integer().withDefault(const Constant(1))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -307,6 +310,37 @@ class WelfareCases extends Table with SyncColumns {
   TextColumn get paidByName => text().nullable()();
 }
 
+/// What money is spent on. Configurable per organisation.
+class ExpenseCategories extends Table with SyncColumns {
+  TextColumn get name => text()();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+/// Money paid out (other than welfare payouts, which live on the case).
+/// Like payments, never edited or deleted: void with a reason instead.
+@TableIndex(name: 'expenses_paid_on', columns: {#paidOn})
+class Expenses extends Table with SyncColumns {
+  TextColumn get voucherNo => text().unique()();
+  TextColumn get categoryId => text().references(ExpenseCategories, #id)();
+  IntColumn get amount => integer()();
+  TextColumn get description => text()();
+  TextColumn get paidTo => text().nullable()();
+  DateTimeColumn get paidOn => dateTime()();
+  TextColumn get method => textEnum<PaymentMethod>()();
+  TextColumn get reference => text().nullable()();
+  TextColumn get recordedByName => text()();
+
+  /// Set when the expense belongs to an event (Phase 3).
+  TextColumn get eventId => text().nullable()();
+  TextColumn get status => textEnum<PaymentStatus>().withDefault(
+    Constant(PaymentStatus.valid.name),
+  )();
+  TextColumn get voidReason => text().nullable()();
+  TextColumn get voidedBy => text().nullable()();
+  DateTimeColumn get voidedAt => dateTime().nullable()();
+}
+
 const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
 
 @DriftDatabase(
@@ -323,13 +357,15 @@ const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
     Payments,
     WelfareCaseTypes,
     WelfareCases,
+    ExpenseCategories,
+    Expenses,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -341,6 +377,8 @@ class AppDatabase extends _$AppDatabase {
       await _seedContributionTypes();
       await _createWelfareGuards();
       await _seedWelfareCaseTypes();
+      await _createExpenseGuards();
+      await _seedExpenseCategories();
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -365,6 +403,19 @@ class AppDatabase extends _$AppDatabase {
           for (final r in defaultRoles)
             if (r.permissions.contains(Perm.welfarePay))
               r.key: {Perm.welfarePay},
+        });
+      }
+      if (from < 4) {
+        await m.addColumn(orgSettings, orgSettings.nextExpenseNo);
+        await m.createTable(expenseCategories);
+        await m.createTable(expenses);
+        await m.createIndex(expensesPaidOn);
+        await _createExpenseGuards();
+        await _seedExpenseCategories();
+        await _grantNewPermissions({
+          for (final r in defaultRoles)
+            if (r.permissions.contains(Perm.expensesRecord))
+              r.key: {Perm.expensesRecord},
         });
       }
     },
@@ -446,6 +497,37 @@ class AppDatabase extends _$AppDatabase {
         )
       BEGIN SELECT RAISE(ABORT, 'This welfare case can no longer be changed'); END
     ''');
+  }
+
+  Future<void> _createExpenseGuards() async {
+    await customStatement('''
+      CREATE TRIGGER expenses_no_delete BEFORE DELETE ON expenses
+      BEGIN SELECT RAISE(ABORT, 'Expenses cannot be deleted; void them'); END
+    ''');
+    await customStatement('''
+      CREATE TRIGGER expenses_no_edit BEFORE UPDATE ON expenses
+      WHEN NEW.amount IS NOT OLD.amount
+        OR NEW.voucher_no IS NOT OLD.voucher_no
+        OR NEW.category_id IS NOT OLD.category_id
+        OR NEW.paid_on IS NOT OLD.paid_on
+        OR (OLD.status = 'voided' AND NEW.status = 'valid')
+      BEGIN SELECT RAISE(ABORT, 'Expenses cannot be edited; void and re-enter'); END
+    ''');
+  }
+
+  Future<void> _seedExpenseCategories() async {
+    await batch((b) {
+      var order = 0;
+      for (final name in OrgDefaults.expenseCategories) {
+        b.insert(
+          expenseCategories,
+          ExpenseCategoriesCompanion.insert(
+            name: name,
+            sortOrder: Value(order++),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _seedWelfareCaseTypes() async {

@@ -244,6 +244,38 @@ void main() {
     await tapAndWait(find.text('Mark as paid'), find.text('Paid'));
     expect(find.textContaining('standing in'), findsNothing);
 
+    // Expenses, then this month's report.
+    await tapAndWait(find.byTooltip('Back'), find.text('Welfare fund balance'));
+    await tapAndWait(find.byTooltip('Back'), find.text('Expenses'));
+    await tapAndWait(find.text('Expenses'), find.text('Record expense'));
+    await tapAndWait(find.text('Record expense'), find.text('Category'));
+    await tapAndWait(
+      find.text('Category'),
+      find.text('Venue and hall hire').last,
+    );
+    await tapAndWait(
+      find.text('Venue and hall hire').last,
+      find.text('Save expense'),
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'What was it for?'),
+      'Hall for AGM',
+    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '100');
+    await tapAndWait(find.text('Save expense'), find.text('Hall for AGM'));
+    await tapAndWait(find.byTooltip('Reports'), find.text('Closing balance'));
+    await tester.scrollUntilVisible(
+      find.text('Excel'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tapAndWait(find.byTooltip('Back'), find.text('Hall for AGM'));
+    await tapAndWait(find.byTooltip('Back'), find.text('Backup and restore'));
+    await tapAndWait(
+      find.text('Backup and restore'),
+      find.text('Create backup and share'),
+    );
+
     await tester.pumpWidget(const SizedBox());
     // Let snack bars and drift's stream clean-up timers finish.
     await tester.pump(const Duration(seconds: 5));

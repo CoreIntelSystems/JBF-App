@@ -406,34 +406,13 @@ class _MeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final s = home.statement;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
-        Card(
-          color: theme.colorScheme.primaryContainer,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  session.orgName.isEmpty ? OrgDefaults.name : session.orgName,
-                  style: theme.textTheme.labelLarge,
-                ),
-                const SizedBox(height: 4),
-                Text('MEMBER ID CARD', style: theme.textTheme.labelSmall),
-                const SizedBox(height: 12),
-                Text(s.name, style: theme.textTheme.titleLarge),
-                Text(s.memberNo, style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Text('Zone: ${s.zones.isEmpty ? 'None' : s.zones.join(', ')}'),
-                Text('Member since ${formatDate(s.joined)}'),
-                Text('Status: ${capitalize(s.status)}'),
-              ],
-            ),
-          ),
+        _MemberCard(
+          orgName: session.orgName.isEmpty ? OrgDefaults.name : session.orgName,
+          home: home,
         ),
         for (final (at, details) in home.warnings)
           Card(
@@ -484,6 +463,122 @@ class _MeTab extends StatelessWidget {
           style: theme.textTheme.bodySmall,
         ),
       ],
+    );
+  }
+}
+
+/// The member's ID card: the same layout as the printed card.
+class _MemberCard extends StatelessWidget {
+  const _MemberCard({required this.orgName, required this.home});
+
+  final String orgName;
+  final MemberHome home;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = home.statement;
+    final green = Color(OrgDefaults.primaryColor);
+    final gold = Color(OrgDefaults.accentColor);
+    final roles = home.roles.isEmpty ? const ['Member'] : home.roles;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 3,
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            color: green,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Image.asset(OrgDefaults.logoAsset, height: 36),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        orgName.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        'MEMBERSHIP CARD',
+                        style: TextStyle(
+                          color: gold,
+                          fontSize: 11,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 3, color: gold),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.name,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  s.memberNo,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: green,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text('Zone: ${s.zones.isEmpty ? 'None' : s.zones.join(', ')}'),
+                Text('Member since ${formatDate(s.joined)}'),
+                Text('Status: ${capitalize(s.status)}'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (var i = 0; i < roles.length; i++)
+                      Chip(
+                        label: Text(
+                          roles[i],
+                          style: TextStyle(
+                            color: i == 0 ? Colors.white : green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        backgroundColor: i == 0
+                            ? green
+                            : gold.withValues(alpha: 0.2),
+                        side: BorderSide.none,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -789,6 +789,33 @@ class AuthRepository {
     ];
   }
 
+  /// Short role labels for ID cards, by member id: "Zone Mayor (Zone 5)".
+  /// The plain member role and CoreIntel support are left out.
+  Future<Map<String, List<String>>> roleLabels(Iterable<String> ids) async {
+    final wanted = ids.toSet();
+    if (wanted.isEmpty) return {};
+    final zones = {
+      for (final z in await _db.select(_db.zones).get()) z.id: z.name,
+    };
+    final out = <String, List<String>>{};
+    for (final id in wanted) {
+      final labels = <String>[];
+      for (final h in await heldRoles(id)) {
+        if (h.role.level == 'member' || h.role.level == 'system') continue;
+        final names = [
+          for (final z in h.zoneIds)
+            if (zones[z] != null) zones[z]!,
+        ];
+        final label = names.isEmpty
+            ? h.role.name
+            : '${h.role.name} (${names.join(', ')})';
+        if (!labels.contains(label)) labels.add(label);
+      }
+      if (labels.isNotEmpty) out[id] = labels;
+    }
+    return out;
+  }
+
   Stream<List<HeldRole>> watchHeldRoles(String memberId) {
     final q =
         _db.select(_db.roleAssignments).join([

@@ -68,7 +68,10 @@ class _MembersScreenState extends State<MembersScreen> {
     final services = context.read<AppServices>();
     final members = await _repo.watchMembers(_filter).first;
     final org = await services.payments.org();
-    final bytes = await buildIdCardsPdf(members, org);
+    final roles = await services.auth.roleLabels([
+      for (final m in members) m.member.id,
+    ]);
+    final bytes = await buildIdCardsPdf(members, org, roles: roles);
     await Printing.sharePdf(bytes: bytes, filename: 'id-cards.pdf');
   }
 

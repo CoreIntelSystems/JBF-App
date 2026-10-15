@@ -608,7 +608,7 @@ void main() {
     await tester.pageBack();
     await pumpUntil(tester, find.text('Me'));
     await tester.tap(find.text('Me'));
-    await pumpUntil(tester, find.text('MEMBER ID CARD'));
+    await pumpUntil(tester, find.text('MEMBERSHIP CARD'));
     await tester.tap(find.text('Sign out'));
     await pumpUntil(tester, find.text(button));
     services.sync.stopAuto();

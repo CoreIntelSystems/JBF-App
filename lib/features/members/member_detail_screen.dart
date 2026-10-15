@@ -107,8 +107,14 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                 tooltip: 'ID card',
                 icon: const Icon(Icons.badge_outlined),
                 onPressed: () async {
-                  final org = await context.read<AppServices>().payments.org();
-                  final bytes = await buildIdCardsPdf([item], org);
+                  final services = context.read<AppServices>();
+                  final org = await services.payments.org();
+                  final roles = await services.auth.roleLabels([m.id]);
+                  final bytes = await buildIdCardsPdf(
+                    [item],
+                    org,
+                    roles: roles,
+                  );
                   await Printing.sharePdf(
                     bytes: bytes,
                     filename: 'id-card-${m.memberNo}.pdf',

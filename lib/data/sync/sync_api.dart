@@ -545,6 +545,7 @@ class MemberHome {
     required this.directory,
     required this.announcements,
     this.warnings = const [],
+    this.roles = const [],
   });
   final MemberStatement statement;
 
@@ -558,6 +559,9 @@ class MemberHome {
 
   /// Warnings from the Disciplinary Committee: (when, what).
   final List<(DateTime?, String)> warnings;
+
+  /// The executive roles this member holds, for their ID card.
+  final List<String> roles;
 
   static List<Map> _list(Object? v) => (v as List? ?? const []).cast<Map>();
 
@@ -603,6 +607,7 @@ class MemberHome {
     announcements: [
       for (final a in (r['announcements'] as List? ?? const [])) '$a',
     ],
+    roles: [for (final x in (r['roles'] as List? ?? const [])) '$x'],
     warnings: [
       for (final w in _list(r['warnings']))
         (DateTime.tryParse('${w['at']}')?.toLocal(), '${w['details']}'),

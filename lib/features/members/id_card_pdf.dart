@@ -67,7 +67,7 @@ Future<Uint8List> buildIdCardsPdf(
           pw.TextSpan(
             text: value,
             style: pw.TextStyle(
-              fontSize: 7.6,
+              fontSize: 7,
               color: ink,
               fontWeight: pw.FontWeight.bold,
             ),
@@ -81,7 +81,7 @@ Future<Uint8List> buildIdCardsPdf(
     final m = mz.member;
     final pic = photo(m);
     final held = roles[m.id] ?? const <String>[];
-    final shown = held.take(3).toList();
+    final shown = held.take(4).toList();
     final zones = mz.zones.map((z) => z.name).join(', ');
     return pw.Container(
       width: w,
@@ -145,107 +145,112 @@ Future<Uint8List> buildIdCardsPdf(
             pw.Expanded(
               child: pw.Padding(
                 padding: const pw.EdgeInsets.fromLTRB(8, 6, 8, 4),
-                child: pw.Row(
+                child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Container(
-                      width: 60,
-                      height: 78,
-                      decoration: pw.BoxDecoration(
-                        color: PdfColors.grey100,
-                        border: pw.Border.all(color: accent, width: 0.8),
-                        borderRadius: pw.BorderRadius.circular(3),
-                      ),
-                      child: pic == null
-                          ? pw.Center(
-                              child: pw.Text(
-                                m.fullName.isEmpty ? '' : m.fullName[0],
+                    pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Container(
+                          width: 58,
+                          height: 76,
+                          decoration: pw.BoxDecoration(
+                            color: PdfColors.grey100,
+                            border: pw.Border.all(color: accent, width: 0.8),
+                            borderRadius: pw.BorderRadius.circular(3),
+                          ),
+                          child: pic == null
+                              ? pw.Center(
+                                  child: pw.Text(
+                                    m.fullName.isEmpty ? '' : m.fullName[0],
+                                    style: pw.TextStyle(
+                                      fontSize: 22,
+                                      color: primary,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                )
+                              : pw.ClipRRect(
+                                  horizontalRadius: 2.5,
+                                  verticalRadius: 2.5,
+                                  child: pw.Image(pic, fit: pw.BoxFit.cover),
+                                ),
+                        ),
+                        pw.SizedBox(width: 8),
+                        pw.Expanded(
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                m.fullName,
+                                maxLines: 2,
                                 style: pw.TextStyle(
-                                  fontSize: 22,
-                                  color: primary,
+                                  fontSize: 9.5,
+                                  color: ink,
                                   fontWeight: pw.FontWeight.bold,
                                 ),
                               ),
-                            )
-                          : pw.ClipRRect(
-                              horizontalRadius: 2.5,
-                              verticalRadius: 2.5,
-                              child: pw.Image(pic, fit: pw.BoxFit.cover),
-                            ),
-                    ),
-                    pw.SizedBox(width: 8),
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            m.fullName,
-                            maxLines: 2,
-                            style: pw.TextStyle(
-                              fontSize: 10.5,
-                              color: ink,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            m.memberNo,
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              color: primary,
-                              fontWeight: pw.FontWeight.bold,
-                              letterSpacing: 0.6,
-                            ),
-                          ),
-                          pw.SizedBox(height: 2),
-                          if (zones.isNotEmpty) detail('Zone', zones),
-                          detail('Joined', formatDate(m.dateJoined)),
-                          pw.SizedBox(height: 6),
-                          pw.Wrap(
-                            spacing: 3,
-                            runSpacing: 2,
-                            children: [
-                              if (shown.isEmpty)
-                                chip('MEMBER', lead: true)
-                              else
-                                for (var i = 0; i < shown.length; i++)
-                                  chip(shown[i], lead: i == 0),
-                              if (held.length > shown.length)
-                                chip('+${held.length - shown.length} more'),
+                              pw.SizedBox(height: 2),
+                              pw.Text(
+                                m.memberNo,
+                                style: pw.TextStyle(
+                                  fontSize: 10,
+                                  color: primary,
+                                  fontWeight: pw.FontWeight.bold,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                              pw.SizedBox(height: 2),
+                              if (zones.isNotEmpty) detail('Zone', zones),
+                              detail('Joined', formatDate(m.dateJoined)),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    pw.SizedBox(width: 6),
-                    pw.Column(
-                      mainAxisAlignment: pw.MainAxisAlignment.center,
-                      children: [
-                        pw.Container(
-                          padding: const pw.EdgeInsets.all(2),
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border.all(
-                              color: PdfColors.grey300,
-                              width: 0.5,
+                        ),
+                        pw.SizedBox(width: 6),
+                        pw.Column(
+                          mainAxisAlignment: pw.MainAxisAlignment.center,
+                          children: [
+                            pw.Container(
+                              padding: const pw.EdgeInsets.all(2),
+                              decoration: pw.BoxDecoration(
+                                border: pw.Border.all(
+                                  color: PdfColors.grey300,
+                                  width: 0.5,
+                                ),
+                                borderRadius: pw.BorderRadius.circular(3),
+                              ),
+                              child: pw.BarcodeWidget(
+                                barcode: pw.Barcode.qrCode(),
+                                data: MemberQr.encode(m.memberNo),
+                                width: 50,
+                                height: 50,
+                                drawText: false,
+                              ),
                             ),
-                            borderRadius: pw.BorderRadius.circular(3),
-                          ),
-                          child: pw.BarcodeWidget(
-                            barcode: pw.Barcode.qrCode(),
-                            data: MemberQr.encode(m.memberNo),
-                            width: 56,
-                            height: 56,
-                            drawText: false,
-                          ),
+                            pw.SizedBox(height: 2),
+                            pw.Text(
+                              'Scan to check in',
+                              style: const pw.TextStyle(
+                                fontSize: 4.6,
+                                color: muted,
+                              ),
+                            ),
+                          ],
                         ),
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          'Scan to check in',
-                          style: const pw.TextStyle(
-                            fontSize: 4.6,
-                            color: muted,
-                          ),
-                        ),
+                      ],
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Wrap(
+                      spacing: 3,
+                      runSpacing: 2,
+                      children: [
+                        if (shown.isEmpty)
+                          chip('MEMBER', lead: true)
+                        else
+                          for (var i = 0; i < shown.length; i++)
+                            chip(shown[i], lead: i == 0),
+                        if (held.length > shown.length)
+                          chip('+${held.length - shown.length} more'),
                       ],
                     ),
                   ],

@@ -1,4 +1,5 @@
 import 'package:jbf_app/data/sync/sync_api.dart';
+import 'package:jbf_app/domain/password_hasher.dart';
 
 /// The cloud functions of supabase/migrations, in memory.
 class FakeCloud {
@@ -20,6 +21,7 @@ class FakeCloud {
   SyncApi get api => SyncApi(call);
 
   Future<Object?> call(String fn, Map<String, Object?> a) async {
+    if (fn == 'fn:sync-sign-in') return _signIn(a);
     if (fn == 'sync_enroll') {
       final admin = _codes.remove(a['code']);
       if (admin == null) {
@@ -117,6 +119,48 @@ class FakeCloud {
         return newCode(admin: a['admin']! as bool);
     }
     throw UnimplementedError(fn);
+  }
+}
+
+extension on FakeCloud {
+  Future<Object?> _signIn(Map<String, Object?> a) async {
+    if ((a['org']! as String).toUpperCase() != 'JBF') {
+      throw SyncException('No organisation called ${a['org']}.');
+    }
+    if (devices.isEmpty) {
+      throw SyncException('June Borns Family is not online yet.');
+    }
+    final user = _records.values
+        .where(
+          (r) =>
+              r.t == 'users' &&
+              (r.data['username']! as String).toLowerCase() ==
+                  (a['username']! as String).toLowerCase(),
+        )
+        .firstOrNull;
+    final ok =
+        user != null &&
+        user.data['is_active'] == 1 &&
+        await const PasswordHasher().verify(
+          a['password']! as String,
+          user.data['password_hash']! as String,
+        );
+    if (!ok) throw SyncException('Wrong username or password.');
+    var n = 2;
+    while (devices.values.any((d) => d.series == 'P$n')) {
+      n++;
+    }
+    final token = 'tok${_n++}';
+    devices[token] = (id: 'dev${_n++}', admin: false, series: 'P$n');
+    return {
+      'token': token,
+      'device_id': devices[token]!.id,
+      'org_id': 'org1',
+      'org_name': 'June Borns Family',
+      'is_admin': false,
+      'series': 'P$n',
+      'records': _records.length,
+    };
   }
 }
 

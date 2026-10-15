@@ -230,20 +230,45 @@ class SyncService extends Cubit<SyncStatus> {
     required String deviceName,
     String? series,
   }) async {
-    final cleanSeries = series?.trim().toUpperCase();
+    var cleanSeries = series?.trim().toUpperCase();
+    if (cleanSeries != null && cleanSeries.isEmpty) cleanSeries = null;
     final e = await _api.enroll(
       code.trim().toUpperCase(),
       deviceName.trim(),
-      series: cleanSeries == null || cleanSeries.isEmpty ? null : cleanSeries,
+      series: cleanSeries,
     );
+    return _joined(e, deviceName.trim(), cleanSeries);
+  }
+
+  /// Joins by signing in with an officer's own app username and password
+  /// (checked in the cloud against the organisation's users). The cloud
+  /// gives the phone its number series.
+  Future<JoinOutcome> signIn({
+    required String org,
+    required String username,
+    required String password,
+    String? deviceName,
+  }) async {
+    final name = (deviceName ?? '').trim().isEmpty
+        ? "${username.trim()}'s phone"
+        : deviceName!.trim();
+    final e = await _api.signIn(org.trim(), username.trim(), password, name);
+    return _joined(e, name, e.series);
+  }
+
+  Future<JoinOutcome> _joined(
+    Enrollment e,
+    String deviceName,
+    String? series,
+  ) async {
     final creds = SyncCredentials(
       token: e.token,
       deviceId: e.deviceId,
       orgId: e.orgId,
       orgName: e.orgName,
-      deviceName: deviceName.trim(),
+      deviceName: deviceName,
       isAdmin: e.isAdmin,
-      series: cleanSeries == null || cleanSeries.isEmpty ? null : cleanSeries,
+      series: series,
     );
     final hasUsers =
         (await _db.customSelect('SELECT 1 FROM users LIMIT 1').get())
@@ -267,8 +292,7 @@ class SyncService extends Cubit<SyncStatus> {
         throw SyncException(
           'This phone has its own records that did not come from '
           '${e.orgName}\'s main phone ($clash). It was not joined. Use a new '
-          'phone, or restore a backup of the main phone first, then ask for '
-          'a new code.',
+          'phone, or restore a backup of the main phone first.',
         );
       }
       await _resetState(e.orgId);

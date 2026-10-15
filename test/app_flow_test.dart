@@ -389,7 +389,7 @@ void main() {
     // fake-async test zone would wait on stream queries that never resume.
   });
 
-  testWidgets('a new phone joins with a code and goes to sign in', (
+  testWidgets('a new phone signs in online and opens the dashboard', (
     tester,
   ) async {
     FlutterSecureStorage.setMockInitialValues({});
@@ -398,7 +398,7 @@ void main() {
     addTearDown(tester.view.reset);
     final cloud = FakeCloud();
     final mainDb = openInMemoryDatabase();
-    final code = await tester.runAsync(() async {
+    await tester.runAsync(() async {
       await AuthRepository(
         mainDb,
         AuditRepository(mainDb),
@@ -412,9 +412,7 @@ void main() {
       final mainSync = SyncService(mainDb, cloud.api, MemorySyncPrefs());
       await mainSync.load();
       await mainSync.join(code: cloud.newCode(admin: true), deviceName: 'Main');
-      final c = await mainSync.createCode();
       await mainSync.close();
-      return c;
     });
 
     final services = AppServices(
@@ -427,23 +425,26 @@ void main() {
     await tester.pumpWidget(
       JbfApp(services: services, biometrics: _NoBiometrics()),
     );
-    await pumpUntil(tester, find.text('Join your organisation with a code'));
-    await tester.ensureVisible(find.text('Join your organisation with a code'));
-    await tester.tap(find.text('Join your organisation with a code'));
-    await pumpUntil(tester, find.text('Number series'));
+    const button = 'Already set up by your group? Sign in online';
+    await pumpUntil(tester, find.text(button));
+    await tester.ensureVisible(find.text(button));
+    await tester.tap(find.text(button));
+    await pumpUntil(tester, find.text('Organisation'));
     final fields = find.descendant(
       of: find.byType(JoinCloudScreen),
       matching: find.byType(TextFormField),
     );
-    await tester.enterText(fields.at(0), code!.toLowerCase());
-    await tester.enterText(fields.at(1), 'Treasurer');
-    await tester.enterText(fields.at(2), 'T1');
-    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Join'));
+    await tester.enterText(fields.at(1), 'ama');
+    await tester.enterText(fields.at(2), 'secret1');
+    final connect = find.widgetWithText(FilledButton, 'Sign in and connect');
+    await tester.ensureVisible(connect);
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Join'));
-    await pumpUntil(tester, find.text('Sign in'), tries: 600);
-    expect(services.sync.state.credentials?.series, 'T1');
+    await tester.tap(connect);
+    await pumpUntil(tester, find.text('Hello, Ama Owusu'), tries: 600);
+    expect(services.sync.state.credentials?.series, 'P2');
     services.sync.stopAuto();
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 5));
     await tester.runAsync(mainDb.close);
   });
 }

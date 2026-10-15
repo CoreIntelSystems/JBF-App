@@ -64,28 +64,26 @@ and sends them the next time it is online. It syncs when the app opens,
 when you come back to it, every 5 minutes while it is open, and when you
 tap **Sync now**.
 
-**Start (once, on the main phone).**
-1. Open **More > Cloud sync > Join with a code** and enter the first code
-   CoreIntel gave you.
-2. Name the phone (for example "Main phone") and leave **Number series**
-   empty. This phone's records become the organisation's records in the
-   cloud.
+**Start (once, on the main phone).** Open **More > Cloud sync > Sign in
+online**, tap *First phone of your organisation? Use a start code*, and
+enter the start code from CoreIntel. Leave **Number series** empty. This
+phone's records become the organisation's records in the cloud.
 
 **Add a phone.**
-1. On the main phone, open **More > Cloud sync > Add a phone** and choose
-   *Officer phone* (or *Main phone* for someone who may also add phones).
-2. Send the code to the officer (Share or Copy). It works once and
-   expires after 7 days.
-3. On the new phone, install the app and tap **Join your organisation
-   with a code** on the first screen. Enter the code, a name for the
-   phone and a **number series** such as `Z3` or `TR`. Every phone except
-   the first needs its own series.
-4. The phone downloads all records. Sign in with the username and
-   password you created for that officer in **Users and roles**.
+1. On the main phone, create a login for the officer in **More > Users
+   and roles** (and let it sync).
+2. On the officer's phone, install the app and tap **Already set up by
+   your group? Sign in online** on the first screen.
+3. They enter their username and password (organisation `JBF` is filled
+   in). The phone downloads everything and opens the app.
 
-**Number series.** Numbers made on a phone with a series include it, for
-example member `JBF-Z3-000001`, receipt `RCP-Z3-2026-000001`, voucher
-`EXP-Z3-2026-000001` and welfare case `WEL-Z3-2026-0001`, so two phones
+No codes are needed. Five wrong passwords in a row lock that username for
+15 minutes.
+
+**Number series.** Each extra phone is given its own series automatically
+(`P2`, `P3`...). Numbers made on it include the series, for example
+member `JBF-P2-000001`, receipt `RCP-P2-2026-000001`, voucher
+`EXP-P2-2026-000001` and welfare case `WEL-P2-2026-0001`, so two phones
 never give out the same number.
 
 **When two phones change the same record**, the latest change wins.

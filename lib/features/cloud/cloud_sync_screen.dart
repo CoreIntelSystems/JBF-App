@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/format.dart';
+import '../../core/org_config.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/sync/sync_api.dart';
 import '../../data/sync/sync_service.dart';
 import '../auth/auth_cubit.dart';
@@ -41,79 +41,24 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
     }
   }
 
-  Future<void> _addPhone() => _run(() async {
-    final admin = await showDialog<bool>(
-      context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('Add a phone'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const ListTile(
-              title: Text('Officer phone'),
-              subtitle: Text('Records and sees the shared data.'),
-            ),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const ListTile(
-              title: Text('Main phone'),
-              subtitle: Text('Can also add and remove phones.'),
-            ),
-          ),
-        ],
+  Future<void> _addPhone() => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Add a phone'),
+      content: const Text(
+        '1. Create a login for the officer in More > Users and roles.\n'
+        '2. On their phone, install the app and tap "Sign in online".\n'
+        '3. They enter their username and password. The phone downloads '
+        'everything and gets its own number series automatically.',
       ),
-    );
-    if (admin == null) return;
-    final code = await _sync.createCode(admin: admin);
-    if (!mounted) return;
-    final org = _sync.state.credentials?.orgName ?? '';
-    final message =
-        'Your code to join $org on the JBF app: $code\n'
-        'Open the app, tap "Join with a code" and enter it. '
-        'It works once and expires in 7 days.';
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Code for the new phone'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SelectableText(
-              code,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                letterSpacing: 4,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'On the new phone, choose "Join with a code" and enter this '
-              'code. It works once and expires in 7 days. Give each phone '
-              'its own number series, such as Z3 for Zone 3.',
-            ),
-          ],
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('OK'),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: code));
-              Navigator.of(context).pop();
-            },
-            child: const Text('Copy'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              SharePlus.instance.share(ShareParams(text: message)).ignore();
-            },
-            child: const Text('Share'),
-          ),
-        ],
-      ),
-    );
-  });
+      ],
+    ),
+  );
 
   Future<void> _leave() async {
     final ok = await showDialog<bool>(
@@ -228,7 +173,7 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
                 ListTile(
                   leading: const Icon(Icons.add_to_home_screen),
                   title: const Text('Add a phone'),
-                  subtitle: const Text('Get a one-time code for a new phone'),
+                  subtitle: const Text('How officers connect their phones'),
                   enabled: !_working,
                   onTap: _addPhone,
                 ),
@@ -276,29 +221,31 @@ class _NotSetUp extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const Text(
-          'To start, enter the code you were given. The first phone to join '
-          'uploads its records; every other phone joins with a code from '
-          'the main phone.',
+          'Sign in with your own username and password to connect this '
+          'phone. The main phone connects first with the start code from '
+          'CoreIntel.',
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute<void>(builder: (_) => const JoinCloudScreen()),
           ),
-          icon: const Icon(Icons.key),
-          label: const Text('Join with a code'),
+          icon: const Icon(Icons.login),
+          label: const Text('Sign in online'),
         ),
       ],
     );
   }
 }
 
-/// Enter a one-time code to connect this phone to the organisation.
+/// Connects this phone to the organisation: normally by signing in with
+/// the officer's own app username and password; the first phone uses the
+/// start code from CoreIntel.
 class JoinCloudScreen extends StatefulWidget {
   const JoinCloudScreen({super.key, this.fromSetup = false});
 
   /// Joined from the first-run screen: the organisation's users arrive
-  /// with the records, so the next step is signing in.
+  /// with the records, so the officer is signed straight in.
   final bool fromSetup;
 
   @override
@@ -307,15 +254,19 @@ class JoinCloudScreen extends StatefulWidget {
 
 class _JoinCloudScreenState extends State<JoinCloudScreen> {
   final _form = GlobalKey<FormState>();
+  final _org = TextEditingController(text: OrgDefaults.shortName);
+  final _username = TextEditingController();
+  final _password = TextEditingController();
   final _code = TextEditingController();
   final _name = TextEditingController();
   final _series = TextEditingController();
+  bool _useCode = false;
   bool _busy = false;
   String? _error;
 
   @override
   void dispose() {
-    for (final c in [_code, _name, _series]) {
+    for (final c in [_org, _username, _password, _code, _name, _series]) {
       c.dispose();
     }
     super.dispose();
@@ -328,95 +279,142 @@ class _JoinCloudScreenState extends State<JoinCloudScreen> {
       _error = null;
     });
     final sync = context.read<SyncService>();
+    final auth = context.read<AuthCubit>();
     try {
-      final outcome = await sync.join(
-        code: _code.text,
-        deviceName: _name.text,
-        series: _series.text,
-      );
+      final outcome = _useCode
+          ? await sync.join(
+              code: _code.text,
+              deviceName: _name.text,
+              series: _series.text,
+            )
+          : await sync.signIn(
+              org: _org.text,
+              username: _username.text,
+              password: _password.text,
+            );
       sync.startAuto();
       if (!mounted) return;
       final org = sync.state.credentials?.orgName ?? '';
       final message = switch (outcome) {
         JoinOutcome.founded =>
-          'This phone started $org in the cloud. Add other phones from '
-              'More > Cloud sync.',
-        JoinOutcome.received =>
-          'Joined $org. Sign in with the username and password the main '
-              'phone gave you.',
-        JoinOutcome.merged => 'Joined $org. Records are now shared.',
+          'This phone started $org online. Other officers can now sign in '
+              'online on their phones.',
+        JoinOutcome.received => 'Connected to $org. Records are downloaded.',
+        JoinOutcome.merged => 'Connected to $org. Records are now shared.',
       };
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
-      final auth = context.read<AuthCubit>();
       Navigator.of(context).pop();
-      if (widget.fromSetup) await auth.start();
+      if (widget.fromSetup) {
+        await auth.start();
+        if (!_useCode && outcome == JoinOutcome.received) {
+          try {
+            await auth.login(
+              _username.text.trim(),
+              _password.text,
+              LoginMethod.password,
+            );
+          } on AuthException {
+            // The login screen is showing; they can sign in there.
+          }
+        }
+      }
     } on SyncException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } catch (e) {
-      setState(() => _error = 'Could not join: $e');
+      if (mounted) setState(() => _error = 'Could not connect: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
+  String? _required(String? v, String message) =>
+      (v ?? '').trim().isEmpty ? message : null;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Join with a code')),
+      appBar: AppBar(
+        title: Text(_useCode ? 'Start with a code' : 'Sign in online'),
+      ),
       body: Form(
         key: _form,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
-              'Ask the main phone for a code (More > Cloud sync > Add a '
-              'phone). This phone needs internet to join.',
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _code,
-              decoration: const InputDecoration(labelText: 'Code'),
-              textCapitalization: TextCapitalization.characters,
-              autocorrect: false,
-              validator: (v) =>
-                  (v ?? '').trim().isEmpty ? 'Enter the code.' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _name,
-              decoration: const InputDecoration(
-                labelText: 'Name for this phone',
-                hintText: 'e.g. Treasurer, Zone 3 Secretary',
+            if (!_useCode) ...[
+              const Text(
+                'Use the username and password your administrator created '
+                'for you in the app. This phone needs internet to connect; '
+                'after that it also works offline.',
               ),
-              textCapitalization: TextCapitalization.words,
-              validator: (v) =>
-                  (v ?? '').trim().isEmpty ? 'Name this phone.' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _series,
-              decoration: const InputDecoration(
-                labelText: 'Number series',
-                hintText: 'e.g. Z3',
-                helperText:
-                    'Added to member, receipt and voucher numbers made on '
-                    'this phone, so they never clash. Leave empty only on '
-                    'the first (main) phone.',
-                helperMaxLines: 3,
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _org,
+                decoration: const InputDecoration(labelText: 'Organisation'),
+                textCapitalization: TextCapitalization.characters,
+                autocorrect: false,
+                validator: (v) => _required(v, 'Enter the organisation.'),
               ),
-              textCapitalization: TextCapitalization.characters,
-              autocorrect: false,
-              maxLength: 4,
-              validator: (v) {
-                final s = (v ?? '').trim();
-                if (s.isEmpty) return null;
-                return RegExp(r'^[A-Za-z0-9]{1,4}$').hasMatch(s)
-                    ? null
-                    : 'Use 1 to 4 letters or numbers.';
-              },
-            ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _username,
+                decoration: const InputDecoration(labelText: 'Username'),
+                autocorrect: false,
+                validator: (v) => _required(v, 'Enter your username.'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _password,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: (v) =>
+                    (v ?? '').isEmpty ? 'Enter your password.' : null,
+              ),
+            ] else ...[
+              const Text(
+                'Only for the main phone, the first time your organisation '
+                'goes online. Enter the start code from CoreIntel.',
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _code,
+                decoration: const InputDecoration(labelText: 'Start code'),
+                textCapitalization: TextCapitalization.characters,
+                autocorrect: false,
+                validator: (v) => _required(v, 'Enter the code.'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _name,
+                decoration: const InputDecoration(
+                  labelText: 'Name for this phone',
+                  hintText: 'e.g. Main phone',
+                ),
+                textCapitalization: TextCapitalization.words,
+                validator: (v) => _required(v, 'Name this phone.'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _series,
+                decoration: const InputDecoration(
+                  labelText: 'Number series (optional)',
+                  hintText: 'e.g. Z3',
+                  helperText: 'Leave empty on the main phone.',
+                ),
+                textCapitalization: TextCapitalization.characters,
+                autocorrect: false,
+                maxLength: 4,
+                validator: (v) {
+                  final s = (v ?? '').trim();
+                  if (s.isEmpty) return null;
+                  return RegExp(r'^[A-Za-z0-9]{1,4}$').hasMatch(s)
+                      ? null
+                      : 'Use 1 to 4 letters or numbers.';
+                },
+              ),
+            ],
             if (_error != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -432,7 +430,21 @@ class _JoinCloudScreenState extends State<JoinCloudScreen> {
                       dimension: 22,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Join'),
+                  : Text(_useCode ? 'Start' : 'Sign in and connect'),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: _busy
+                  ? null
+                  : () => setState(() {
+                      _useCode = !_useCode;
+                      _error = null;
+                    }),
+              child: Text(
+                _useCode
+                    ? 'Back to signing in online'
+                    : 'First phone of your organisation? Use a start code',
+              ),
             ),
           ],
         ),

@@ -61,6 +61,7 @@ class Enrollment {
     required this.orgName,
     required this.isAdmin,
     required this.records,
+    this.series,
   });
   final String token;
   final String deviceId;
@@ -70,6 +71,19 @@ class Enrollment {
 
   /// How many records the organisation already has in the cloud.
   final int records;
+
+  /// Number series the cloud gave this phone, if any.
+  final String? series;
+
+  factory Enrollment.fromJson(Map r) => Enrollment(
+    token: r['token'] as String,
+    deviceId: r['device_id'] as String,
+    orgId: r['org_id'] as String,
+    orgName: r['org_name'] as String,
+    isAdmin: r['is_admin'] as bool,
+    records: (r['records'] as num).toInt(),
+    series: r['series'] as String?,
+  );
 }
 
 class CloudDevice {
@@ -117,14 +131,25 @@ class SyncApi {
               'series': series,
             }))!
             as Map;
-    return Enrollment(
-      token: r['token'] as String,
-      deviceId: r['device_id'] as String,
-      orgId: r['org_id'] as String,
-      orgName: r['org_name'] as String,
-      isAdmin: r['is_admin'] as bool,
-      records: (r['records'] as num).toInt(),
-    );
+    return Enrollment.fromJson(r);
+  }
+
+  /// Joins by signing in with an officer's app username and password.
+  Future<Enrollment> signIn(
+    String org,
+    String username,
+    String password,
+    String deviceName,
+  ) async {
+    final r =
+        (await _call('fn:sync-sign-in', {
+              'org': org,
+              'username': username,
+              'password': password,
+              'device_name': deviceName,
+            }))!
+            as Map;
+    return Enrollment.fromJson(r);
   }
 
   Future<int> push(String token, List<SyncRow> rows) async {
@@ -182,13 +207,18 @@ class SyncApi {
       _call('sync_revoke_device', {'token': token, 'device': deviceId});
 }
 
-/// Calls `POST /rest/v1/rpc/<function>` on the Supabase project.
+/// Calls `POST /rest/v1/rpc/<function>` on the Supabase project, or the
+/// edge function `fn:<name>` at `/functions/v1/<name>`.
 SyncTransport httpTransport(http.Client client) => (function, args) async {
   final http.Response res;
   try {
     res = await client
         .post(
-          Uri.parse('${CloudConfig.url}/rest/v1/rpc/$function'),
+          Uri.parse(
+            function.startsWith('fn:')
+                ? '${CloudConfig.url}/functions/v1/${function.substring(3)}'
+                : '${CloudConfig.url}/rest/v1/rpc/$function',
+          ),
           headers: {
             'apikey': CloudConfig.publishableKey,
             'Content-Type': 'application/json',

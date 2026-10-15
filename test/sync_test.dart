@@ -312,4 +312,22 @@ void main() {
     expect(other.sync.state.enabled, isFalse);
     await other.close();
   });
+
+  test('a new phone joins by signing in, without a code', () async {
+    final third = Phone(cloud);
+    await third.sync.load();
+    await expectLater(
+      third.sync.signIn(org: 'JBF', username: 'ama', password: 'nope'),
+      throwsA(isA<SyncException>()),
+    );
+    expect(
+      await third.sync.signIn(org: 'jbf', username: 'AMA', password: 'secret1'),
+      JoinOutcome.received,
+    );
+    expect(third.sync.state.credentials?.series, 'P2');
+    final org = await third.db.select(third.db.orgSettings).getSingle();
+    expect(org.deviceSeries, 'P2');
+    expect(await third.db.select(third.db.members).get(), hasLength(1));
+    await third.close();
+  });
 }

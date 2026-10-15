@@ -161,7 +161,9 @@ class _SetupScreenState extends State<SetupScreen> {
                               ),
                             ),
                       icon: const Icon(Icons.cloud_download_outlined),
-                      label: const Text('Join your organisation with a code'),
+                      label: const Text(
+                        'Already set up by your group? Sign in online',
+                      ),
                     ),
                   ],
                 ),

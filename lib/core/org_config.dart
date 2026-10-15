@@ -67,6 +67,26 @@ class OrgDefaults {
         ),
       ];
 
+  /// Seeded leadership positions.
+  static const positions = <(String, PositionLevel)>[
+    ('Founder', PositionLevel.board),
+    ('Director', PositionLevel.board),
+    ('General Secretary', PositionLevel.national),
+    ('Organizer', PositionLevel.national),
+    ('Treasurer', PositionLevel.national),
+    ('Welfare Chairman', PositionLevel.welfare),
+    ('Welfare Secretary', PositionLevel.welfare),
+    ('Welfare Team Member', PositionLevel.welfare),
+    ('Zone Mayor', PositionLevel.zone),
+    ('Zone Deputy Mayor', PositionLevel.zone),
+    ('Zone Secretary', PositionLevel.zone),
+    ('Zone Treasurer', PositionLevel.zone),
+    ('Zone Organizer', PositionLevel.zone),
+    ('Zone Welfare Officer', PositionLevel.zone),
+    ('Auditor', PositionLevel.oversight),
+    ('Electoral Commission', PositionLevel.oversight),
+  ];
+
   /// Seeded welfare case types: (name, description). Benefit amounts start
   /// unset; the Treasurer proposes them and the Welfare Chairman approves.
   static const welfareCaseTypes = <(String, String?)>[

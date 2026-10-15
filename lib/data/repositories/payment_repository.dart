@@ -23,6 +23,7 @@ class PaymentDraft {
     this.period,
     this.reference,
     this.remarks,
+    this.eventId,
   });
 
   final String? memberId;
@@ -33,6 +34,7 @@ class PaymentDraft {
   final String? period;
   final String? reference;
   final String? remarks;
+  final String? eventId;
 }
 
 /// A payment joined with its member and contribution type, for lists and
@@ -220,6 +222,7 @@ class PaymentRepository {
               collectedBy: Value(actor.userId),
               collectorName: collectorName,
               remarks: Value(_clean(d.remarks)),
+              eventId: Value(d.eventId),
               createdBy: Value(actor.userId),
               deviceId: Value(actor.deviceId),
             ),

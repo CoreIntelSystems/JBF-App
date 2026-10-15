@@ -13,10 +13,13 @@ import 'payment_detail_screen.dart';
 
 /// Records money received and issues a receipt.
 class RecordPaymentScreen extends StatefulWidget {
-  const RecordPaymentScreen({super.key, this.member});
+  const RecordPaymentScreen({super.key, this.member, this.event});
 
   /// Pre-selected payer, when opened from a member's page.
   final Member? member;
+
+  /// Set when collecting money for an event.
+  final Event? event;
 
   @override
   State<RecordPaymentScreen> createState() => _RecordPaymentScreenState();
@@ -46,11 +49,16 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
       if (!mounted) return;
       setState(() {
         _types = types;
-        // Most payments are monthly dues, so start there.
-        _type = types
-            .where((t) => t.frequency == ContributionFrequency.monthly)
-            .where((t) => t.appliesToAll)
-            .firstOrNull;
+        // Most payments are monthly dues, so start there; event
+        // collections start at the per-event types.
+        _type = widget.event != null
+            ? types
+                  .where((t) => t.frequency == ContributionFrequency.perEvent)
+                  .lastOrNull
+            : types
+                  .where((t) => t.frequency == ContributionFrequency.monthly)
+                  .where((t) => t.appliesToAll)
+                  .firstOrNull;
       });
       _refreshDues();
     });
@@ -146,6 +154,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
           period: _isMonthly ? _period : null,
           reference: _reference.text,
           remarks: _remarks.text,
+          eventId: widget.event?.id,
         ),
         user.actor(services.deviceId),
         collectorName: user.displayName,
@@ -167,7 +176,13 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
   Widget build(BuildContext context) {
     final types = _types;
     return Scaffold(
-      appBar: AppBar(title: const Text('Record payment')),
+      appBar: AppBar(
+        title: Text(
+          widget.event == null
+              ? 'Record payment'
+              : 'Collect for ${widget.event!.name}',
+        ),
+      ),
       body: types == null
           ? const Center(child: CircularProgressIndicator())
           : Form(

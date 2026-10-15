@@ -8,6 +8,8 @@ import '../audit/audit_log_screen.dart';
 import '../auth/auth_cubit.dart';
 import '../contributions/contribution_types_screen.dart';
 import '../backup/backup_screen.dart';
+import '../events/events_screen.dart';
+import '../executives/executives_screen.dart';
 import '../finance/expenses_screen.dart';
 import '../reminders/reminders_screen.dart';
 import '../reports/reports_screen.dart';
@@ -45,6 +47,19 @@ class MoreScreen extends StatelessWidget {
             subtitle: const Text('Password, PIN and fingerprint'),
             onTap: () => open(const AccountScreen()),
           ),
+          ListTile(
+            leading: const Icon(Icons.event),
+            title: const Text('Events and meetings'),
+            subtitle: const Text('Budgets, collections and attendance'),
+            onTap: () => open(const EventsScreen()),
+          ),
+          if (user?.can(Perm.membersView) ?? false)
+            ListTile(
+              leading: const Icon(Icons.badge_outlined),
+              title: const Text('Executives'),
+              subtitle: const Text('Positions, terms and meeting attendance'),
+              onTap: () => open(const ExecutivesScreen()),
+            ),
           if (user?.canViewWelfare ?? false)
             ListTile(
               leading: const Icon(Icons.volunteer_activism),
@@ -140,7 +155,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.5.0 (Phase 3 preview)',
+              applicationVersion: '0.6.0 (Phase 3 preview)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'All data stays on this device in an encrypted database.',

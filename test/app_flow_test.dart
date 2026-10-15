@@ -181,7 +181,16 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       if (f.evaluate().isEmpty) {
         // Lazy lists only build what is near the screen; it may be above.
-        final list = find.byType(Scrollable).last;
+        // The page's list: the last scrollable that is not inside a text
+        // field (multi-line fields scroll too).
+        final page = find
+            .byType(Scrollable)
+            .evaluate()
+            .where(
+              (e) => e.findAncestorWidgetOfExactType<EditableText>() == null,
+            )
+            .last;
+        final list = find.byElementPredicate((e) => e == page);
         for (final step in [200.0, -200.0]) {
           try {
             await tester.scrollUntilVisible(
@@ -332,6 +341,32 @@ void main() {
       find.byTooltip('Defaulters'),
     );
     await tapAndWait(find.byTooltip('Defaulters'), find.text('Defaulters'));
+
+    // Events: create one and mark attendance.
+    await tapAndWait(find.byTooltip('Back'), find.byTooltip('Defaulters'));
+    await tapAndWait(find.text('More'), find.byType(MoreScreen));
+    await tapAndWait(
+      find.text('Events and meetings'),
+      find.text('No events yet.'),
+    );
+    await tapAndWait(find.text('New event'), find.text('Event name'));
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Event name'),
+      'Family picnic',
+    );
+    await tapAndWait(find.text('Save event'), find.text('Family picnic'));
+    await tapAndWait(find.text('Family picnic'), find.text('Take attendance'));
+    await tapAndWait(find.text('Take attendance'), find.text('Kofi Mensah'));
+    await tapAndWait(
+      find.byTooltip('Present: Kofi Mensah'),
+      find.textContaining('1 present'),
+    );
+    await tapAndWait(find.byTooltip('Back'), find.text('Take attendance'));
+    await tapAndWait(find.byTooltip('Back'), find.text('Meetings'));
+    await tapAndWait(find.text('Meetings'), find.text('New meeting'));
+    await tapAndWait(find.byTooltip('Back'), find.byType(MoreScreen));
+    await tapAndWait(find.text('Executives'), find.text('Appoint'));
+    await tapAndWait(find.text('Appoint'), find.text('Choose member'));
 
     await tester.pumpWidget(const SizedBox());
     // Let snack bars and drift's stream clean-up timers finish.

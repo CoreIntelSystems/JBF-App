@@ -236,6 +236,10 @@ class Payments extends Table with SyncColumns {
   TextColumn get voidReason => text().nullable()();
   TextColumn get voidedBy => text().nullable()();
   DateTimeColumn get voidedAt => dateTime().nullable()();
+
+  /// Set when the money was collected for an event (e.g. a silver
+  /// collection or event contribution).
+  TextColumn get eventId => text().nullable()();
 }
 
 /// Kinds of welfare support, each with a fixed benefit amount. The
@@ -341,6 +345,137 @@ class Expenses extends Table with SyncColumns {
   DateTimeColumn get voidedAt => dateTime().nullable()();
 }
 
+enum EventKind {
+  general('General gathering'),
+  party('Party or celebration'),
+  funeral('Funeral'),
+  outing('Outing or excursion'),
+  fundraiser('Fundraiser'),
+  charity('Charity outreach'),
+  other('Other');
+
+  const EventKind(this.label);
+  final String label;
+}
+
+enum EventStatus {
+  planned('Planned'),
+  held('Held'),
+  cancelled('Cancelled');
+
+  const EventStatus(this.label);
+  final String label;
+}
+
+/// An association event with its budget and logistics. Money collected
+/// and spent for it is linked through payments and expenses.
+@TableIndex(name: 'events_starts_on', columns: {#startsOn})
+class Events extends Table with SyncColumns {
+  TextColumn get name => text()();
+  TextColumn get kind => textEnum<EventKind>()();
+  DateTimeColumn get startsOn => dateTime()();
+  TextColumn get venue => text().nullable()();
+  TextColumn get description => text().nullable()();
+
+  /// Planned spending in pesewas.
+  IntColumn get budget => integer().nullable()();
+  TextColumn get transportNotes => text().nullable()();
+  TextColumn get accommodationNotes => text().nullable()();
+  TextColumn get status =>
+      textEnum<EventStatus>().withDefault(Constant(EventStatus.planned.name))();
+}
+
+enum MeetingKind {
+  general('General meeting'),
+  executive('Executive meeting'),
+  zonal('Zone meeting'),
+  welfare('Welfare team meeting');
+
+  const MeetingKind(this.label);
+  final String label;
+}
+
+@TableIndex(name: 'meetings_held_on', columns: {#heldOn})
+class Meetings extends Table with SyncColumns {
+  TextColumn get title => text()();
+  TextColumn get kind => textEnum<MeetingKind>()();
+
+  /// For zone meetings.
+  TextColumn get zoneId => text().nullable().references(Zones, #id)();
+  DateTimeColumn get heldOn => dateTime()();
+  TextColumn get venue => text().nullable()();
+  TextColumn get agenda => text().nullable()();
+  TextColumn get minutes => text().nullable()();
+}
+
+enum AttendanceStatus {
+  present('Present'),
+  absent('Absent'),
+  excused('Excused');
+
+  const AttendanceStatus(this.label);
+  final String label;
+}
+
+enum AttendanceMethod { manual, qr }
+
+/// Who came to an event or meeting. [occasionId] is the event's or the
+/// meeting's id.
+@TableIndex(
+  name: 'attendance_occasion_member',
+  columns: {#occasionId, #memberId},
+  unique: true,
+)
+@TableIndex(name: 'attendance_member', columns: {#memberId})
+class AttendanceRecords extends Table with SyncColumns {
+  TextColumn get occasionId => text()();
+  TextColumn get memberId => text().references(Members, #id)();
+  TextColumn get status => textEnum<AttendanceStatus>()();
+  TextColumn get method => textEnum<AttendanceMethod>().withDefault(
+    Constant(AttendanceMethod.manual.name),
+  )();
+  TextColumn get recordedByName => text().nullable()();
+}
+
+enum PositionLevel {
+  board('Board'),
+  national('National executive'),
+  welfare('Welfare team'),
+  zone('Zone executive'),
+  oversight('Oversight');
+
+  const PositionLevel(this.label);
+  final String label;
+}
+
+/// Leadership positions, e.g. General Secretary or Zone Mayor.
+class ExecutivePositions extends Table with SyncColumns {
+  TextColumn get title => text()();
+  TextColumn get level => textEnum<PositionLevel>()();
+  TextColumn get responsibilities => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+}
+
+/// A member holding a position for a term. Past terms stay as history.
+@TableIndex(name: 'executives_member', columns: {#memberId})
+class Executives extends Table with SyncColumns {
+  TextColumn get memberId => text().references(Members, #id)();
+  TextColumn get positionId => text().references(ExecutivePositions, #id)();
+
+  /// For zone positions.
+  TextColumn get zoneId => text().nullable().references(Zones, #id)();
+  DateTimeColumn get termStart => dateTime()();
+
+  /// Planned end of the term, if known.
+  DateTimeColumn get termEnd => dateTime().nullable()();
+
+  /// Set when the person leaves the position.
+  DateTimeColumn get endedOn => dateTime().nullable()();
+  TextColumn get endedReason => text().nullable()();
+  TextColumn get responsibilities => text().nullable()();
+}
+
 const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
 
 @DriftDatabase(
@@ -359,13 +494,18 @@ const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
     WelfareCases,
     ExpenseCategories,
     Expenses,
+    Events,
+    Meetings,
+    AttendanceRecords,
+    ExecutivePositions,
+    Executives,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -379,6 +519,7 @@ class AppDatabase extends _$AppDatabase {
       await _seedWelfareCaseTypes();
       await _createExpenseGuards();
       await _seedExpenseCategories();
+      await _seedPositions();
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -416,6 +557,28 @@ class AppDatabase extends _$AppDatabase {
           for (final r in defaultRoles)
             if (r.permissions.contains(Perm.expensesRecord))
               r.key: {Perm.expensesRecord},
+        });
+      }
+      if (from < 5) {
+        // Created with the column already when coming from v1.
+        if (from >= 2) await m.addColumn(payments, payments.eventId);
+        await m.createTable(events);
+        await m.createTable(meetings);
+        await m.createTable(attendanceRecords);
+        await m.createTable(executivePositions);
+        await m.createTable(executives);
+        await m.createIndex(eventsStartsOn);
+        await m.createIndex(meetingsHeldOn);
+        await m.createIndex(attendanceOccasionMember);
+        await m.createIndex(attendanceMember);
+        await m.createIndex(executivesMember);
+        await _seedPositions();
+        await _grantNewPermissions({
+          for (final r in defaultRoles)
+            r.key: r.permissions.intersection({
+              Perm.executivesManage,
+              Perm.attendanceRecord,
+            }),
         });
       }
     },
@@ -523,6 +686,22 @@ class AppDatabase extends _$AppDatabase {
           expenseCategories,
           ExpenseCategoriesCompanion.insert(
             name: name,
+            sortOrder: Value(order++),
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> _seedPositions() async {
+    await batch((b) {
+      var order = 0;
+      for (final (title, level) in OrgDefaults.positions) {
+        b.insert(
+          executivePositions,
+          ExecutivePositionsCompanion.insert(
+            title: title,
+            level: level,
             sortOrder: Value(order++),
           ),
         );

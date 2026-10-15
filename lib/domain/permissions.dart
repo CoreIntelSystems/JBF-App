@@ -36,6 +36,12 @@ abstract final class Perm {
   static const financeView = 'finance.view';
   static const reportsExport = 'reports.export';
   static const eventsManage = 'events.manage';
+
+  /// Mark who attended events and meetings, including by QR scan.
+  static const attendanceRecord = 'attendance.record';
+
+  /// Appoint executives and end their terms.
+  static const executivesManage = 'executives.manage';
   static const electionsManage = 'elections.manage';
   static const backupManage = 'backup.manage';
 
@@ -61,6 +67,8 @@ abstract final class Perm {
     financeView,
     reportsExport,
     eventsManage,
+    attendanceRecord,
+    executivesManage,
     electionsManage,
     backupManage,
   ];
@@ -105,12 +113,15 @@ final defaultRoles = <RoleSeed>[
     Perm.welfarePrepare,
     Perm.welfareApprove,
     Perm.eventsManage,
+    Perm.attendanceRecord,
+    Perm.executivesManage,
     Perm.reportsExport,
     Perm.backupManage,
   }),
   RoleSeed('organizer', 'Organizer', 'national', {
     ..._memberWrite,
     Perm.eventsManage,
+    Perm.attendanceRecord,
   }),
   RoleSeed('treasurer', 'Treasurer', 'national', {
     ..._memberRead,
@@ -136,14 +147,21 @@ final defaultRoles = <RoleSeed>[
   RoleSeed('zone_mayor', 'Zone Mayor', 'zone', {
     ..._memberWrite,
     Perm.membersChangeStatus,
+    Perm.attendanceRecord,
   }),
   RoleSeed('zone_deputy', 'Zone Deputy Mayor', 'zone', _memberWrite),
-  RoleSeed('zone_secretary', 'Zone Secretary', 'zone', _memberWrite),
+  RoleSeed('zone_secretary', 'Zone Secretary', 'zone', {
+    ..._memberWrite,
+    Perm.attendanceRecord,
+  }),
   RoleSeed('zone_treasurer', 'Zone Treasurer', 'zone', {
     ..._memberRead,
     Perm.paymentsRecord,
   }),
-  RoleSeed('zone_organizer', 'Zone Organizer', 'zone', _memberRead),
+  RoleSeed('zone_organizer', 'Zone Organizer', 'zone', {
+    ..._memberRead,
+    Perm.attendanceRecord,
+  }),
   RoleSeed('zone_welfare_officer', 'Zone Welfare Officer', 'zone', {
     ..._memberRead,
     Perm.welfarePrepare,

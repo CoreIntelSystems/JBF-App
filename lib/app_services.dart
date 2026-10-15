@@ -5,6 +5,7 @@ import 'data/database.dart';
 import 'data/repositories/audit_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
+import 'data/repositories/events_repository.dart';
 import 'data/repositories/finance_repository.dart';
 import 'data/repositories/member_repository.dart';
 import 'data/repositories/payment_repository.dart';
@@ -27,6 +28,7 @@ class AppServices {
     payments = PaymentRepository(db, audit);
     welfare = WelfareRepository(db, audit);
     finance = FinanceRepository(db, audit);
+    events = EventsRepository(db, audit);
     batches = CollectionBatches(db, audit);
   }
 
@@ -40,6 +42,7 @@ class AppServices {
   late final PaymentRepository payments;
   late final WelfareRepository welfare;
   late final FinanceRepository finance;
+  late final EventsRepository events;
   late final CollectionBatches batches;
 
   /// Null in tests that do not use a database file.

@@ -10,6 +10,24 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    for (final t in [
+      'executives',
+      'executive_positions',
+      'attendance_records',
+      'meetings',
+      'events',
+    ]) {
+      await db.customStatement('DROP TABLE $t');
+    }
+    await db.customStatement('ALTER TABLE payments DROP COLUMN event_id');
+    await db.customStatement(
+      'DELETE FROM role_permissions WHERE permission IN '
+      "('attendance.record', 'executives.manage')",
+    );
+    if (version >= 4) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     for (final t in ['expenses_no_delete', 'expenses_no_edit']) {
       await db.customStatement('DROP TRIGGER $t');
     }
@@ -67,6 +85,22 @@ void main() {
         .get();
     expect(triggers, hasLength(6));
     expect(await db.select(db.expenseCategories).get(), hasLength(10));
+    expect(await db.select(db.executivePositions).get(), hasLength(16));
+    expect(await db.select(db.events).get(), isEmpty);
+    final attend = await db
+        .customSelect(
+          'SELECT r.key FROM role_permissions p JOIN roles r '
+          "ON r.id = p.role_id WHERE p.permission = 'attendance.record'",
+        )
+        .get();
+    expect(attend.map((r) => r.read<String>('key')).toSet(), {
+      'super_admin',
+      'general_secretary',
+      'organizer',
+      'zone_mayor',
+      'zone_secretary',
+      'zone_organizer',
+    });
     final pay = await db
         .customSelect(
           'SELECT r.key FROM role_permissions p JOIN roles r '
@@ -79,7 +113,7 @@ void main() {
     });
   }
 
-  for (final from in [1, 2, 3]) {
+  for (final from in [1, 2, 3, 4]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

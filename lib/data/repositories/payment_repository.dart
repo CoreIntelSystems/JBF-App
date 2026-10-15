@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../domain/dues.dart';
+import '../access_scope.dart';
 import '../database.dart';
 import 'actor.dart';
 import 'audit_repository.dart';
@@ -98,10 +99,16 @@ class CollectionStats {
 }
 
 class PaymentRepository {
-  PaymentRepository(this._db, this._audit, {DateTime Function()? clock})
-    : _now = clock ?? DateTime.now;
+  PaymentRepository(
+    this._db,
+    this._audit, {
+    DateTime Function()? clock,
+    AccessScope? scope,
+  }) : _now = clock ?? DateTime.now,
+       _scope = scope ?? AccessScope();
 
   final AppDatabase _db;
+  final AccessScope _scope;
   final AuditRepository _audit;
   final DateTime Function() _now;
 
@@ -312,6 +319,7 @@ class PaymentRepository {
 
   Stream<List<PaymentView>> watchRecent({int limit = 100}) {
     final q = _viewQuery()
+      ..where(_scope.member(_db, _db.payments.memberId))
       ..orderBy([
         OrderingTerm.desc(_db.payments.paidOn),
         OrderingTerm.desc(_db.payments.createdAt),
@@ -426,9 +434,11 @@ class PaymentRepository {
   Future<List<(Member, int)>> defaulters() async {
     final types = await _duesTypes();
     if (types.isEmpty) return const [];
-    final members = await (_db.select(
-      _db.members,
-    )..where((m) => m.deletedAt.isNull())).get();
+    final members =
+        await (_db.select(_db.members)
+              ..where((m) => m.deletedAt.isNull())
+              ..where((m) => _scope.member(_db, m.id)))
+            .get();
     final payments = await (_db.select(
       _db.payments,
     )..where((p) => p.memberId.isNotNull())).get();
@@ -469,7 +479,8 @@ class PaymentRepository {
                 ..addColumns([sum])
                 ..where(
                   _db.payments.status.equalsValue(PaymentStatus.valid) &
-                      _db.payments.paidOn.isBiggerOrEqualValue(from),
+                      _db.payments.paidOn.isBiggerOrEqualValue(from) &
+                      _scope.member(_db, _db.payments.memberId),
                 ))
               .getSingle();
       return row.read(sum) ?? 0;
@@ -477,7 +488,10 @@ class PaymentRepository {
 
     final defaulters = await this.defaulters();
     final recentQ = _viewQuery()
-      ..where(_db.payments.status.equalsValue(PaymentStatus.valid))
+      ..where(
+        _db.payments.status.equalsValue(PaymentStatus.valid) &
+            _scope.member(_db, _db.payments.memberId),
+      )
       ..orderBy([
         OrderingTerm.desc(_db.payments.paidOn),
         OrderingTerm.desc(_db.payments.createdAt),

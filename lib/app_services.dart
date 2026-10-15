@@ -1,7 +1,9 @@
 import 'core/reminders.dart';
+import 'data/access_scope.dart';
 import 'data/backup_service.dart';
 import 'data/collection_batch.dart';
 import 'data/database.dart';
+import 'data/repositories/analytics_repository.dart';
 import 'data/repositories/audit_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
@@ -23,12 +25,13 @@ class AppServices {
   }) : audit = AuditRepository(db),
        reminders = reminders ?? MemoryReminders() {
     auth = AuthRepository(db, audit);
-    members = MemberRepository(db, audit);
-    dashboard = DashboardRepository(db);
-    payments = PaymentRepository(db, audit);
-    welfare = WelfareRepository(db, audit);
+    members = MemberRepository(db, audit, scope: scope);
+    dashboard = DashboardRepository(db, scope: scope);
+    payments = PaymentRepository(db, audit, scope: scope);
+    welfare = WelfareRepository(db, audit, scope: scope);
     finance = FinanceRepository(db, audit);
-    events = EventsRepository(db, audit);
+    events = EventsRepository(db, audit, scope: scope);
+    analytics = AnalyticsRepository(db, scope: scope);
     batches = CollectionBatches(db, audit);
   }
 
@@ -36,6 +39,9 @@ class AppServices {
   final SecureStore store;
   final String deviceId;
   final AuditRepository audit;
+
+  /// What the signed-in user may see; set by the sign-in flow.
+  final AccessScope scope = AccessScope();
   late final AuthRepository auth;
   late final MemberRepository members;
   late final DashboardRepository dashboard;
@@ -43,6 +49,7 @@ class AppServices {
   late final WelfareRepository welfare;
   late final FinanceRepository finance;
   late final EventsRepository events;
+  late final AnalyticsRepository analytics;
   late final CollectionBatches batches;
 
   /// Null in tests that do not use a database file.

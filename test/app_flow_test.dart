@@ -367,6 +367,9 @@ void main() {
     await tapAndWait(find.byTooltip('Back'), find.byType(MoreScreen));
     await tapAndWait(find.text('Executives'), find.text('Appoint'));
     await tapAndWait(find.text('Appoint'), find.text('Choose member'));
+    await tapAndWait(find.byTooltip('Back'), find.text('Appoint'));
+    await tapAndWait(find.byTooltip('Back'), find.byType(MoreScreen));
+    await tapAndWait(find.text('Charts'), find.text('Monthly collections'));
 
     await tester.pumpWidget(const SizedBox());
     // Let snack bars and drift's stream clean-up timers finish.

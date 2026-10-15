@@ -5,6 +5,7 @@ import '../../app_services.dart';
 import '../../core/format.dart';
 import '../../data/database.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/member_repository.dart';
 import '../auth/auth_cubit.dart';
 
 /// Lets an administrator give officers their own login and role.
@@ -19,12 +20,16 @@ class _UsersScreenState extends State<UsersScreen> {
   late final AppServices _services = context.read<AppServices>();
   late final Stream<List<UserWithRole>> _users = _services.auth.watchUsers();
   List<Role> _roles = const [];
+  List<Zone> _zones = const [];
 
   @override
   void initState() {
     super.initState();
     _services.auth.roles().then((r) {
       if (mounted) setState(() => _roles = r);
+    });
+    _services.members.zones().then((z) {
+      if (mounted) setState(() => _zones = z);
     });
   }
 
@@ -35,7 +40,8 @@ class _UsersScreenState extends State<UsersScreen> {
     final result = await showModalBottomSheet<_UserFormResult>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _UserForm(roles: _roles, existing: existing),
+      builder: (_) =>
+          _UserForm(roles: _roles, zones: _zones, existing: existing),
     );
     if (result == null || !mounted) return;
     final actor = context.read<AuthCubit>().user!.actor(_services.deviceId);
@@ -46,6 +52,7 @@ class _UsersScreenState extends State<UsersScreen> {
           username: result.username,
           password: result.password!,
           roleId: result.roleId,
+          zoneIds: result.zoneIds,
           actor: actor,
         );
         _toast('User ${result.username} created.');
@@ -54,6 +61,7 @@ class _UsersScreenState extends State<UsersScreen> {
           existing.user.id,
           roleId: result.roleId,
           isActive: result.isActive,
+          zoneIds: result.zoneIds,
           actor: actor,
         );
         if (result.password != null && result.password!.isNotEmpty) {
@@ -92,13 +100,23 @@ class _UsersScreenState extends State<UsersScreen> {
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final u = users[i];
+              final zoneNames = [
+                for (final id in (u.user.zoneIds ?? '').split(','))
+                  for (final z in _zones)
+                    if (z.id == id) zoneDisplayName(z),
+              ];
+              final zoneNote = u.role.level != 'zone'
+                  ? ''
+                  : zoneNames.isEmpty
+                  ? ' · no zone set'
+                  : ' · ${zoneNames.join(', ')}';
               return ListTile(
                 leading: Icon(
                   u.user.isActive ? Icons.person : Icons.person_off,
                 ),
                 title: Text(u.user.displayName),
                 subtitle: Text(
-                  '${u.user.username} · ${u.role.name}'
+                  '${u.user.username} · ${u.role.name}$zoneNote'
                   '${u.user.isActive ? '' : ' · deactivated'}'
                   '${u.user.lastLoginAt == null ? '' : '\nLast sign in ${formatDateTime(u.user.lastLoginAt!)}'}',
                 ),
@@ -120,17 +138,20 @@ class _UserFormResult {
     this.password,
     this.roleId,
     this.isActive,
+    this.zoneIds,
   );
   final String displayName;
   final String username;
   final String? password;
   final String roleId;
   final bool isActive;
+  final List<String> zoneIds;
 }
 
 class _UserForm extends StatefulWidget {
-  const _UserForm({required this.roles, this.existing});
+  const _UserForm({required this.roles, required this.zones, this.existing});
   final List<Role> roles;
+  final List<Zone> zones;
   final UserWithRole? existing;
 
   @override
@@ -148,6 +169,14 @@ class _UserFormState extends State<_UserForm> {
   final _password = TextEditingController();
   late String? _roleId = widget.existing?.role.id;
   late bool _active = widget.existing?.user.isActive ?? true;
+  late final Set<String> _zoneIds = (widget.existing?.user.zoneIds ?? '')
+      .split(',')
+      .where((z) => z.isNotEmpty)
+      .toSet();
+  String? _zoneError;
+
+  bool get _zoneRole =>
+      widget.roles.where((r) => r.id == _roleId).firstOrNull?.level == 'zone';
 
   @override
   void dispose() {
@@ -208,6 +237,33 @@ class _UserFormState extends State<_UserForm> {
                 onChanged: (v) => setState(() => _roleId = v),
                 validator: (v) => v == null ? 'Choose a role.' : null,
               ),
+              if (_zoneRole) ...[
+                const SizedBox(height: 12),
+                const Text('Zones this officer looks after (1 or 2)'),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    for (final z in widget.zones.where((z) => z.isActive))
+                      FilterChip(
+                        label: Text(zoneDisplayName(z)),
+                        selected: _zoneIds.contains(z.id),
+                        onSelected: (on) => setState(() {
+                          _zoneError = null;
+                          on ? _zoneIds.add(z.id) : _zoneIds.remove(z.id);
+                        }),
+                      ),
+                  ],
+                ),
+                if (_zoneError != null)
+                  Text(
+                    _zoneError!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+              ],
               const SizedBox(height: 12),
               TextFormField(
                 controller: _password,
@@ -232,6 +288,10 @@ class _UserFormState extends State<_UserForm> {
               FilledButton(
                 onPressed: () {
                   if (!_form.currentState!.validate()) return;
+                  if (_zoneRole && (_zoneIds.isEmpty || _zoneIds.length > 2)) {
+                    setState(() => _zoneError = 'Choose 1 or 2 zones.');
+                    return;
+                  }
                   Navigator.pop(
                     context,
                     _UserFormResult(
@@ -240,6 +300,7 @@ class _UserFormState extends State<_UserForm> {
                       _password.text.isEmpty ? null : _password.text,
                       _roleId!,
                       _active,
+                      _zoneRole ? _zoneIds.toList() : const [],
                     ),
                   );
                 },

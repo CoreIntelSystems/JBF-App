@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../access_scope.dart';
 import '../database.dart';
 import 'actor.dart';
 import 'audit_repository.dart';
@@ -71,10 +72,16 @@ class WelfareSummary {
 }
 
 class WelfareRepository {
-  WelfareRepository(this._db, this._audit, {DateTime Function()? clock})
-    : _now = clock ?? DateTime.now;
+  WelfareRepository(
+    this._db,
+    this._audit, {
+    DateTime Function()? clock,
+    AccessScope? scope,
+  }) : _now = clock ?? DateTime.now,
+       _scope = scope ?? AccessScope();
 
   final AppDatabase _db;
+  final AccessScope _scope;
   final AuditRepository _audit;
   final DateTime Function() _now;
 
@@ -366,6 +373,7 @@ class WelfareRepository {
     String? memberId,
   }) {
     final q = _viewQuery()
+      ..where(_scope.member(_db, _db.welfareCases.memberId))
       ..orderBy([OrderingTerm.desc(_db.welfareCases.createdAt)]);
     if (status != null) {
       q.where(_db.welfareCases.status.equalsValue(status));

@@ -17,6 +17,7 @@ class AppUser extends Equatable {
     required this.permissions,
     required this.biometricEnabled,
     required this.hasPin,
+    this.zoneScope,
   });
 
   final String id;
@@ -27,6 +28,9 @@ class AppUser extends Equatable {
   final Set<String> permissions;
   final bool biometricEnabled;
   final bool hasPin;
+
+  /// For zone-level roles, the zones this user may see; null for no limit.
+  final Set<String>? zoneScope;
 
   bool can(String permission) => permissions.contains(permission);
 
@@ -43,6 +47,7 @@ class AppUser extends Equatable {
     permissions,
     biometricEnabled,
     hasPin,
+    zoneScope,
   ];
 }
 
@@ -132,6 +137,7 @@ class AuthRepository {
     required String username,
     required String password,
     required String roleId,
+    List<String> zoneIds = const [],
     required Actor actor,
   }) {
     return _insertUser(
@@ -139,6 +145,7 @@ class AuthRepository {
       username: username,
       password: password,
       roleId: roleId,
+      zoneIds: zoneIds,
       actor: actor,
     );
   }
@@ -149,9 +156,11 @@ class AuthRepository {
     required String password,
     String? pin,
     required String roleId,
+    List<String> zoneIds = const [],
     required Actor actor,
   }) async {
     final name = normalizeUsername(username);
+    await _checkZones(roleId, zoneIds);
     if (name.isEmpty) throw AuthException('Enter a username.');
     if (displayName.trim().isEmpty) throw AuthException('Enter a name.');
     final pwError = validatePassword(password);
@@ -178,6 +187,7 @@ class AuthRepository {
               roleId: roleId,
               passwordHash: passwordHash,
               pinHash: Value(pinHash),
+              zoneIds: Value(zoneIds.isEmpty ? null : zoneIds.join(',')),
               createdBy: Value(actor.userId),
               deviceId: Value(actor.deviceId),
             ),
@@ -191,6 +201,7 @@ class AuthRepository {
           'username': name,
           'displayName': user.displayName,
           'roleId': roleId,
+          if (zoneIds.isNotEmpty) 'zoneIds': zoneIds,
         },
       );
       return user.id;
@@ -386,18 +397,23 @@ class AuthRepository {
     String userId, {
     String? roleId,
     bool? isActive,
+    List<String>? zoneIds,
     required Actor actor,
   }) async {
     if (userId == actor.userId && isActive == false) {
       throw AuthException('You cannot deactivate your own account.');
     }
     final before = await _userRow(userId);
+    if (zoneIds != null) await _checkZones(roleId ?? before.roleId, zoneIds);
     await _db.transaction(() async {
       await _touchUser(
         userId,
         UsersCompanion(
           roleId: roleId == null ? const Value.absent() : Value(roleId),
           isActive: isActive == null ? const Value.absent() : Value(isActive),
+          zoneIds: zoneIds == null
+              ? const Value.absent()
+              : Value(zoneIds.isEmpty ? null : zoneIds.join(',')),
         ),
       );
       await _audit.log(
@@ -405,8 +421,16 @@ class AuthRepository {
         'user.update',
         entity: 'users',
         entityId: userId,
-        oldValue: {'roleId': before.roleId, 'isActive': before.isActive},
-        newValue: {'roleId': ?roleId, 'isActive': ?isActive},
+        oldValue: {
+          'roleId': before.roleId,
+          'isActive': before.isActive,
+          'zoneIds': before.zoneIds,
+        },
+        newValue: {
+          'roleId': ?roleId,
+          'isActive': ?isActive,
+          if (zoneIds != null) 'zoneIds': zoneIds.join(','),
+        },
       );
     });
   }
@@ -437,6 +461,25 @@ class AuthRepository {
     });
   }
 
+  /// Zone roles need one or two zones; other roles none.
+  Future<void> _checkZones(String roleId, List<String> zoneIds) async {
+    final role = await (_db.select(
+      _db.roles,
+    )..where((r) => r.id.equals(roleId))).getSingle();
+    if (role.level == 'zone') {
+      if (zoneIds.isEmpty) {
+        throw AuthException('Choose the zone this officer looks after.');
+      }
+      if (zoneIds.length > 2) {
+        throw AuthException('Choose at most 2 zones.');
+      }
+    }
+  }
+
+  static Set<String>? scopeFor(Role role, User user) => role.level == 'zone'
+      ? (user.zoneIds ?? '').split(',').where((z) => z.isNotEmpty).toSet()
+      : null;
+
   Future<User> _userRow(String id) =>
       (_db.select(_db.users)..where((u) => u.id.equals(id))).getSingle();
 
@@ -463,6 +506,7 @@ class AuthRepository {
       permissions: perms.map((p) => p.permission).toSet(),
       biometricEnabled: user.biometricEnabled,
       hasPin: user.pinHash != null,
+      zoneScope: scopeFor(role, user),
     );
   }
 }

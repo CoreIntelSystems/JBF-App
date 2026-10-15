@@ -46,6 +46,16 @@ class AuthCubit extends Cubit<AuthState> {
   AuthRepository get _auth => _services.auth;
   String get _deviceId => _services.deviceId;
 
+  @override
+  void emit(AuthState state) {
+    // Zone leaders only see their own zone(s) everywhere in the app.
+    _services.scope.zoneIds = switch (state) {
+      AuthSignedIn(:final user) => user.zoneScope,
+      _ => null,
+    };
+    super.emit(state);
+  }
+
   AppUser? get user => switch (state) {
     AuthSignedIn(:final user) => user,
     _ => null,

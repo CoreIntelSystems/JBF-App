@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../domain/member_qr.dart';
+import '../access_scope.dart';
 import '../database.dart';
 import 'actor.dart';
 import 'audit_repository.dart';
@@ -97,10 +98,16 @@ class ExecutiveView {
 
 /// Events, meetings, attendance and the executive.
 class EventsRepository {
-  EventsRepository(this._db, this._audit, {DateTime Function()? clock})
-    : _now = clock ?? DateTime.now;
+  EventsRepository(
+    this._db,
+    this._audit, {
+    DateTime Function()? clock,
+    AccessScope? scope,
+  }) : _now = clock ?? DateTime.now,
+       _scope = scope ?? AccessScope();
 
   final AppDatabase _db;
+  final AccessScope _scope;
   final AuditRepository _audit;
   final DateTime Function() _now;
 
@@ -396,6 +403,7 @@ class EventsRepository {
       return (_db.select(_db.members)
             ..where((m) => m.status.equalsValue(MemberStatus.active))
             ..where((m) => m.deletedAt.isNull())
+            ..where((m) => _scope.member(_db, m.id))
             ..orderBy([(m) => OrderingTerm.asc(m.fullName)]))
           .get();
     }

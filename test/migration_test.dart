@@ -10,6 +10,11 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    await db.customStatement('ALTER TABLE users DROP COLUMN zone_ids');
+    if (version >= 5) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     for (final t in [
       'executives',
       'executive_positions',
@@ -113,7 +118,7 @@ void main() {
     });
   }
 
-  for (final from in [1, 2, 3, 4]) {
+  for (final from in [1, 2, 3, 4, 5]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

@@ -4491,6 +4491,17 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _zoneIdsMeta = const VerificationMeta(
+    'zoneIds',
+  );
+  @override
+  late final GeneratedColumn<String> zoneIds = GeneratedColumn<String>(
+    'zone_ids',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4510,6 +4521,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     failedAttempts,
     lockedUntil,
     lastLoginAt,
+    zoneIds,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4648,6 +4660,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
         ),
       );
     }
+    if (data.containsKey('zone_ids')) {
+      context.handle(
+        _zoneIdsMeta,
+        zoneIds.isAcceptableOrUnknown(data['zone_ids']!, _zoneIdsMeta),
+      );
+    }
     return context;
   }
 
@@ -4725,6 +4743,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_login_at'],
       ),
+      zoneIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}zone_ids'],
+      ),
     );
   }
 
@@ -4752,6 +4774,10 @@ class User extends DataClass implements Insertable<User> {
   final int failedAttempts;
   final DateTime? lockedUntil;
   final DateTime? lastLoginAt;
+
+  /// Comma-separated zone ids for zone-level roles: they only see members
+  /// of these zones.
+  final String? zoneIds;
   const User({
     required this.id,
     required this.createdAt,
@@ -4770,6 +4796,7 @@ class User extends DataClass implements Insertable<User> {
     required this.failedAttempts,
     this.lockedUntil,
     this.lastLoginAt,
+    this.zoneIds,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4804,6 +4831,9 @@ class User extends DataClass implements Insertable<User> {
     }
     if (!nullToAbsent || lastLoginAt != null) {
       map['last_login_at'] = Variable<DateTime>(lastLoginAt);
+    }
+    if (!nullToAbsent || zoneIds != null) {
+      map['zone_ids'] = Variable<String>(zoneIds);
     }
     return map;
   }
@@ -4841,6 +4871,9 @@ class User extends DataClass implements Insertable<User> {
       lastLoginAt: lastLoginAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastLoginAt),
+      zoneIds: zoneIds == null && nullToAbsent
+          ? const Value.absent()
+          : Value(zoneIds),
     );
   }
 
@@ -4867,6 +4900,7 @@ class User extends DataClass implements Insertable<User> {
       failedAttempts: serializer.fromJson<int>(json['failedAttempts']),
       lockedUntil: serializer.fromJson<DateTime?>(json['lockedUntil']),
       lastLoginAt: serializer.fromJson<DateTime?>(json['lastLoginAt']),
+      zoneIds: serializer.fromJson<String?>(json['zoneIds']),
     );
   }
   @override
@@ -4890,6 +4924,7 @@ class User extends DataClass implements Insertable<User> {
       'failedAttempts': serializer.toJson<int>(failedAttempts),
       'lockedUntil': serializer.toJson<DateTime?>(lockedUntil),
       'lastLoginAt': serializer.toJson<DateTime?>(lastLoginAt),
+      'zoneIds': serializer.toJson<String?>(zoneIds),
     };
   }
 
@@ -4911,6 +4946,7 @@ class User extends DataClass implements Insertable<User> {
     int? failedAttempts,
     Value<DateTime?> lockedUntil = const Value.absent(),
     Value<DateTime?> lastLoginAt = const Value.absent(),
+    Value<String?> zoneIds = const Value.absent(),
   }) => User(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -4929,6 +4965,7 @@ class User extends DataClass implements Insertable<User> {
     failedAttempts: failedAttempts ?? this.failedAttempts,
     lockedUntil: lockedUntil.present ? lockedUntil.value : this.lockedUntil,
     lastLoginAt: lastLoginAt.present ? lastLoginAt.value : this.lastLoginAt,
+    zoneIds: zoneIds.present ? zoneIds.value : this.zoneIds,
   );
   User copyWithCompanion(UsersCompanion data) {
     return User(
@@ -4961,6 +4998,7 @@ class User extends DataClass implements Insertable<User> {
       lastLoginAt: data.lastLoginAt.present
           ? data.lastLoginAt.value
           : this.lastLoginAt,
+      zoneIds: data.zoneIds.present ? data.zoneIds.value : this.zoneIds,
     );
   }
 
@@ -4983,7 +5021,8 @@ class User extends DataClass implements Insertable<User> {
           ..write('isActive: $isActive, ')
           ..write('failedAttempts: $failedAttempts, ')
           ..write('lockedUntil: $lockedUntil, ')
-          ..write('lastLoginAt: $lastLoginAt')
+          ..write('lastLoginAt: $lastLoginAt, ')
+          ..write('zoneIds: $zoneIds')
           ..write(')'))
         .toString();
   }
@@ -5007,6 +5046,7 @@ class User extends DataClass implements Insertable<User> {
     failedAttempts,
     lockedUntil,
     lastLoginAt,
+    zoneIds,
   );
   @override
   bool operator ==(Object other) =>
@@ -5028,7 +5068,8 @@ class User extends DataClass implements Insertable<User> {
           other.isActive == this.isActive &&
           other.failedAttempts == this.failedAttempts &&
           other.lockedUntil == this.lockedUntil &&
-          other.lastLoginAt == this.lastLoginAt);
+          other.lastLoginAt == this.lastLoginAt &&
+          other.zoneIds == this.zoneIds);
 }
 
 class UsersCompanion extends UpdateCompanion<User> {
@@ -5049,6 +5090,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   final Value<int> failedAttempts;
   final Value<DateTime?> lockedUntil;
   final Value<DateTime?> lastLoginAt;
+  final Value<String?> zoneIds;
   final Value<int> rowid;
   const UsersCompanion({
     this.id = const Value.absent(),
@@ -5068,6 +5110,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     this.failedAttempts = const Value.absent(),
     this.lockedUntil = const Value.absent(),
     this.lastLoginAt = const Value.absent(),
+    this.zoneIds = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   UsersCompanion.insert({
@@ -5088,6 +5131,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     this.failedAttempts = const Value.absent(),
     this.lockedUntil = const Value.absent(),
     this.lastLoginAt = const Value.absent(),
+    this.zoneIds = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : username = Value(username),
        displayName = Value(displayName),
@@ -5111,6 +5155,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     Expression<int>? failedAttempts,
     Expression<DateTime>? lockedUntil,
     Expression<DateTime>? lastLoginAt,
+    Expression<String>? zoneIds,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5131,6 +5176,7 @@ class UsersCompanion extends UpdateCompanion<User> {
       if (failedAttempts != null) 'failed_attempts': failedAttempts,
       if (lockedUntil != null) 'locked_until': lockedUntil,
       if (lastLoginAt != null) 'last_login_at': lastLoginAt,
+      if (zoneIds != null) 'zone_ids': zoneIds,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5153,6 +5199,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     Value<int>? failedAttempts,
     Value<DateTime?>? lockedUntil,
     Value<DateTime?>? lastLoginAt,
+    Value<String?>? zoneIds,
     Value<int>? rowid,
   }) {
     return UsersCompanion(
@@ -5173,6 +5220,7 @@ class UsersCompanion extends UpdateCompanion<User> {
       failedAttempts: failedAttempts ?? this.failedAttempts,
       lockedUntil: lockedUntil ?? this.lockedUntil,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+      zoneIds: zoneIds ?? this.zoneIds,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5231,6 +5279,9 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (lastLoginAt.present) {
       map['last_login_at'] = Variable<DateTime>(lastLoginAt.value);
     }
+    if (zoneIds.present) {
+      map['zone_ids'] = Variable<String>(zoneIds.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5257,6 +5308,7 @@ class UsersCompanion extends UpdateCompanion<User> {
           ..write('failedAttempts: $failedAttempts, ')
           ..write('lockedUntil: $lockedUntil, ')
           ..write('lastLoginAt: $lastLoginAt, ')
+          ..write('zoneIds: $zoneIds, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -19522,6 +19574,7 @@ typedef $$UsersTableCreateCompanionBuilder =
       Value<int> failedAttempts,
       Value<DateTime?> lockedUntil,
       Value<DateTime?> lastLoginAt,
+      Value<String?> zoneIds,
       Value<int> rowid,
     });
 typedef $$UsersTableUpdateCompanionBuilder =
@@ -19543,6 +19596,7 @@ typedef $$UsersTableUpdateCompanionBuilder =
       Value<int> failedAttempts,
       Value<DateTime?> lockedUntil,
       Value<DateTime?> lastLoginAt,
+      Value<String?> zoneIds,
       Value<int> rowid,
     });
 
@@ -19665,6 +19719,11 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
 
   ColumnFilters<DateTime> get lastLoginAt => $composableBuilder(
     column: $table.lastLoginAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get zoneIds => $composableBuilder(
+    column: $table.zoneIds,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19799,6 +19858,11 @@ class $$UsersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get zoneIds => $composableBuilder(
+    column: $table.zoneIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$MembersTableOrderingComposer get memberId {
     final $$MembersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -19912,6 +19976,9 @@ class $$UsersTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get zoneIds =>
+      $composableBuilder(column: $table.zoneIds, builder: (column) => column);
+
   $$MembersTableAnnotationComposer get memberId {
     final $$MembersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -20004,6 +20071,7 @@ class $$UsersTableTableManager
                 Value<int> failedAttempts = const Value.absent(),
                 Value<DateTime?> lockedUntil = const Value.absent(),
                 Value<DateTime?> lastLoginAt = const Value.absent(),
+                Value<String?> zoneIds = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UsersCompanion(
                 id: id,
@@ -20023,6 +20091,7 @@ class $$UsersTableTableManager
                 failedAttempts: failedAttempts,
                 lockedUntil: lockedUntil,
                 lastLoginAt: lastLoginAt,
+                zoneIds: zoneIds,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -20044,6 +20113,7 @@ class $$UsersTableTableManager
                 Value<int> failedAttempts = const Value.absent(),
                 Value<DateTime?> lockedUntil = const Value.absent(),
                 Value<DateTime?> lastLoginAt = const Value.absent(),
+                Value<String?> zoneIds = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UsersCompanion.insert(
                 id: id,
@@ -20063,6 +20133,7 @@ class $$UsersTableTableManager
                 failedAttempts: failedAttempts,
                 lockedUntil: lockedUntil,
                 lastLoginAt: lastLoginAt,
+                zoneIds: zoneIds,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

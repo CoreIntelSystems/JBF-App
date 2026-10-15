@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
+import 'package:jbf_app/data/access_scope.dart';
 import 'package:jbf_app/data/connection.dart';
+import 'package:jbf_app/data/repositories/dashboard_repository.dart';
 import 'package:jbf_app/data/database.dart';
 import 'package:jbf_app/data/repositories/actor.dart';
 import 'package:jbf_app/data/repositories/audit_repository.dart';
@@ -12,7 +14,9 @@ import 'package:jbf_app/data/repositories/welfare_repository.dart';
 import 'package:jbf_app/domain/password_hasher.dart';
 
 class TestEnv {
-  TestEnv({DateTime Function()? clock}) : db = openInMemoryDatabase() {
+  TestEnv({DateTime Function()? clock, AccessScope? scope})
+    : db = openInMemoryDatabase(),
+      scope = scope ?? AccessScope() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     audit = AuditRepository(db);
     auth = AuthRepository(
@@ -20,14 +24,17 @@ class TestEnv {
       audit,
       hasher: const PasswordHasher(iterations: 10),
     );
-    members = MemberRepository(db, audit, clock: clock);
-    payments = PaymentRepository(db, audit, clock: clock);
-    welfare = WelfareRepository(db, audit, clock: clock);
+    members = MemberRepository(db, audit, clock: clock, scope: this.scope);
+    payments = PaymentRepository(db, audit, clock: clock, scope: this.scope);
+    welfare = WelfareRepository(db, audit, clock: clock, scope: this.scope);
     finance = FinanceRepository(db, audit, clock: clock);
-    events = EventsRepository(db, audit, clock: clock);
+    events = EventsRepository(db, audit, clock: clock, scope: this.scope);
+    dashboard = DashboardRepository(db, scope: this.scope);
   }
 
   final AppDatabase db;
+  final AccessScope scope;
+  late final DashboardRepository dashboard;
   late final AuditRepository audit;
   late final AuthRepository auth;
   late final MemberRepository members;

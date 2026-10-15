@@ -6,6 +6,7 @@ import '../../core/org_config.dart';
 import '../../domain/permissions.dart';
 import '../audit/audit_log_screen.dart';
 import '../auth/auth_cubit.dart';
+import '../charts/charts_screen.dart';
 import '../contributions/contribution_types_screen.dart';
 import '../backup/backup_screen.dart';
 import '../events/events_screen.dart';
@@ -74,6 +75,14 @@ class MoreScreen extends StatelessWidget {
               title: const Text('Expenses'),
               subtitle: const Text('Money spent, with vouchers'),
               onTap: () => open(const ExpensesScreen()),
+            ),
+          if ((user?.can(Perm.financeView) ?? false) ||
+              (user?.can(Perm.membersView) ?? false))
+            ListTile(
+              leading: const Icon(Icons.insights),
+              title: const Text('Charts'),
+              subtitle: const Text('Collections, zones, welfare and growth'),
+              onTap: () => open(const ChartsScreen()),
             ),
           if (user?.can(Perm.financeView) ?? false)
             ListTile(
@@ -155,7 +164,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.6.0 (Phase 3 preview)',
+              applicationVersion: '0.7.0 (Phase 3)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'All data stays on this device in an encrypted database.',

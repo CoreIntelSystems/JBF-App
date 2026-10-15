@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../access_scope.dart';
 import '../database.dart';
 
 class ZoneCount {
@@ -24,9 +25,11 @@ class DashboardStats {
 }
 
 class DashboardRepository {
-  DashboardRepository(this._db);
+  DashboardRepository(this._db, {AccessScope? scope})
+    : _scope = scope ?? AccessScope();
 
   final AppDatabase _db;
+  final AccessScope _scope;
 
   /// Live member statistics. Re-emits whenever members or zones change.
   Stream<DashboardStats> watchStats() {
@@ -44,7 +47,10 @@ class DashboardRepository {
     final statusRows =
         await (_db.selectOnly(_db.members)
               ..addColumns([_db.members.status, count])
-              ..where(_db.members.deletedAt.isNull())
+              ..where(
+                _db.members.deletedAt.isNull() &
+                    _scope.member(_db, _db.members.id),
+              )
               ..groupBy([_db.members.status]))
             .get();
     final byStatus = <MemberStatus, int>{
@@ -79,13 +85,17 @@ class DashboardRepository {
     final recent =
         await (_db.select(_db.members)
               ..where((m) => m.deletedAt.isNull())
+              ..where((m) => _scope.member(_db, m.id))
               ..orderBy([(m) => OrderingTerm.desc(m.createdAt)])
               ..limit(5))
             .get();
 
     return DashboardStats(
       byStatus: byStatus,
-      byZone: [for (final z in zones) ZoneCount(z, counts[z.id] ?? 0)],
+      byZone: [
+        for (final z in zones)
+          if (_scope.allowsZone(z.id)) ZoneCount(z, counts[z.id] ?? 0),
+      ],
       recent: recent,
     );
   }

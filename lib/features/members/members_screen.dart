@@ -115,7 +115,10 @@ class _MembersScreenState extends State<MembersScreen> {
           StreamBuilder<List<Zone>>(
             stream: _zones,
             builder: (context, snap) {
-              final zones = snap.data ?? const <Zone>[];
+              final scope = context.read<AppServices>().scope;
+              final zones = (snap.data ?? const <Zone>[])
+                  .where((z) => scope.allowsZone(z.id))
+                  .toList();
               return SizedBox(
                 height: 52,
                 child: ListView(

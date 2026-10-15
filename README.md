@@ -5,32 +5,30 @@ A configurable **CoreIntel Systems** product: organisation name, logo, zones,
 contribution types and roles live in the database, so the same app can be set
 up for another association.
 
-## What's in this release (Phase 1 preview)
+## What's in the app
 
-- **Encrypted local database**: SQLite3 Multiple Ciphers via Drift. The key is
-  generated on first launch and kept in the Android Keystore.
-- **First-run setup** creates the Super Administrator on the device.
-- **Sign in** with password, a 4 to 6 digit PIN, or fingerprint. Five wrong
-  attempts lock the account for 5 minutes.
-- **Roles and permissions** seeded from the JBF spec (Super Admin, Founder,
-  Directors, General Secretary, Organizer, Treasurer, Welfare Chairman and team,
-  zone executives, Auditor, Electoral Commission, Ordinary Member).
-  Monthly dues: Founder, Treasurer or General Secretary. Welfare benefit
-  amounts: set by the Treasurer, approved by the Welfare Chairman, or the
-  General Secretary when the Chairman is away.
-- **Members**: full registration form, auto member IDs (`JBF-000001`),
-  photo, search by name / phone / ID, filters by zone and status,
-  status changes (active, inactive, suspended, deceased).
-- **Zones**: 8 zones seeded; Zone 6 is listed but closed to new members.
-  Every member is in 1 or 2 zones. The form warns on a third, and a database
-  trigger refuses it as well.
-- **Dashboard**: member totals, status breakdown, active members per zone,
-  recent registrations.
-- **Users and roles** screen and an append-only **audit log** (logins, edits,
-  status changes).
+- **Security:** encrypted local database (SQLite3 Multiple Ciphers), key in
+  the Android Keystore; sign in with password, PIN or fingerprint; roles and
+  permissions; zone officers see only their own zone(s); append-only audit
+  log.
+- **Members and zones:** registration, auto member IDs, 1 or 2 zones per
+  member (enforced by a database trigger), statuses, ID cards with QR codes.
+- **Money:** contribution types and monthly dues with arrears, receipts
+  (PDF), meeting collections, voids instead of deletes, defaulters with
+  WhatsApp reminders, expenses with vouchers, financial reports (PDF, Excel,
+  CSV), charts.
+- **Welfare:** fixed benefit amounts (Treasurer proposes, Welfare Chairman
+  approves), cases with approval (General Secretary stands in) and payouts.
+- **Events and meetings:** budgets, collections and spending per event,
+  agendas and minutes, attendance by hand or QR scan, reminders.
+- **Executives:** positions, terms, history and meeting attendance.
+- **Data safety and multi-phone:** password-protected backups, restore on a
+  new phone, daily automatic copies, field phones that send collections to
+  the main phone as files.
 
-Payments, receipts, dues, welfare, events, reports and backup follow in later
-phases (see the build plan).
+Guides: [installation](docs/installation-guide.md),
+[user](docs/user-guide.md), [administrator](docs/admin-guide.md),
+[backup and restore](docs/backup-restore-guide.md).
 
 ## Getting a test APK
 

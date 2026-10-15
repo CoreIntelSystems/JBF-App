@@ -131,6 +131,10 @@ class Users extends Table with SyncColumns {
   IntColumn get failedAttempts => integer().withDefault(const Constant(0))();
   DateTimeColumn get lockedUntil => dateTime().nullable()();
   DateTimeColumn get lastLoginAt => dateTime().nullable()();
+
+  /// Comma-separated zone ids for zone-level roles: they only see members
+  /// of these zones.
+  TextColumn get zoneIds => text().nullable()();
 }
 
 /// Append-only audit trail. The app never edits or deletes these rows.
@@ -505,7 +509,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -580,6 +584,9 @@ class AppDatabase extends _$AppDatabase {
               Perm.attendanceRecord,
             }),
         });
+      }
+      if (from < 6) {
+        await m.addColumn(users, users.zoneIds);
       }
     },
     beforeOpen: (details) async {

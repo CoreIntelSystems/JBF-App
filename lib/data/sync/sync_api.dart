@@ -277,6 +277,118 @@ class SyncApi {
   Future<void> memberResetSignIn(String token, String memberId) =>
       _call('member_reset_sign_in', {'token': token, 'member': memberId});
 
+  /// The chats this person is in. [asName] names the person on phones
+  /// joined before member sign-in.
+  Future<List<ChatChannel>> chatChannels(String token, {String? asName}) async {
+    final r =
+        (await _call('chat_channels', {'token': token, 'as_name': asName}))!
+            as List;
+    return [
+      for (final c in r.cast<Map>())
+        ChatChannel(
+          id: c['id'] as String,
+          name: c['name'] as String,
+          canPost: c['post'] == true,
+          last: c['last'] as String?,
+          lastAt: DateTime.tryParse('${c['last_at']}')?.toLocal(),
+        ),
+    ];
+  }
+
+  Future<List<ChatMessage>> chatMessages(
+    String token,
+    String channel, {
+    DateTime? after,
+    String? asName,
+  }) async {
+    final r =
+        (await _call('chat_messages', {
+              'token': token,
+              'channel': channel,
+              'after': after?.toUtc().toIso8601String(),
+              'as_name': asName,
+            }))!
+            as List;
+    return [
+      for (final m in r.cast<Map>())
+        ChatMessage(
+          id: m['id'] as String,
+          author: m['author'] as String? ?? '',
+          body: m['body'] as String? ?? '',
+          at: DateTime.parse(m['at'] as String).toLocal(),
+          mine: m['mine'] == true,
+        ),
+    ];
+  }
+
+  Future<void> chatSend(
+    String token,
+    String channel,
+    String body, {
+    String? asName,
+  }) => _call('chat_send', {
+    'token': token,
+    'channel': channel,
+    'body': body,
+    'as_name': asName,
+  });
+
+  /// Sends a complaint about a member to the Disciplinary Committee.
+  Future<void> disciplineFile(
+    String token,
+    String memberId,
+    String details, {
+    String? asName,
+  }) => _call('discipline_file', {
+    'token': token,
+    'member': memberId,
+    'details': details,
+    'as_name': asName,
+  });
+
+  Future<List<DisciplineCase>> disciplineList(
+    String token, {
+    String? memberId,
+    String? asName,
+  }) async {
+    final r =
+        (await _call('discipline_list', {
+              'token': token,
+              'member': memberId,
+              'as_name': asName,
+            }))!
+            as List;
+    return [
+      for (final c in r.cast<Map>())
+        DisciplineCase(
+          id: c['id'] as String,
+          memberId: c['member'] as String,
+          memberName: c['member_name'] as String? ?? 'Unknown member',
+          memberNo: c['member_no'] as String?,
+          kind: c['kind'] as String,
+          details: c['details'] as String? ?? '',
+          by: c['by'] as String? ?? '',
+          open: c['status'] == 'open',
+          at: DateTime.parse(c['at'] as String).toLocal(),
+        ),
+    ];
+  }
+
+  /// Sends a warning to a member and/or closes a complaint.
+  Future<void> disciplineWarn(
+    String token,
+    String memberId, {
+    String? warning,
+    String? closeCase,
+    String? asName,
+  }) => _call('discipline_warn', {
+    'token': token,
+    'member': memberId,
+    'details': warning,
+    'close_case': closeCase,
+    'as_name': asName,
+  });
+
   Future<MemberAccountStatus> memberAccountStatus(
     String token,
     String memberId,
@@ -294,6 +406,63 @@ class SyncApi {
       resetBy: r['reset_by'] as String?,
     );
   }
+}
+
+/// A group chat someone is in.
+class ChatChannel {
+  const ChatChannel({
+    required this.id,
+    required this.name,
+    required this.canPost,
+    this.last,
+    this.lastAt,
+  });
+  final String id;
+  final String name;
+  final bool canPost;
+  final String? last;
+  final DateTime? lastAt;
+}
+
+class ChatMessage {
+  const ChatMessage({
+    required this.id,
+    required this.author,
+    required this.body,
+    required this.at,
+    required this.mine,
+  });
+  final String id;
+  final String author;
+  final String body;
+  final DateTime at;
+  final bool mine;
+}
+
+/// A complaint or warning about a member (Disciplinary Committee).
+class DisciplineCase {
+  const DisciplineCase({
+    required this.id,
+    required this.memberId,
+    required this.memberName,
+    required this.kind,
+    required this.details,
+    required this.by,
+    required this.open,
+    required this.at,
+    this.memberNo,
+  });
+  final String id;
+  final String memberId;
+  final String memberName;
+  final String? memberNo;
+
+  /// `complaint` or `warning`.
+  final String kind;
+  final String details;
+  final String by;
+  final bool open;
+  final DateTime at;
 }
 
 /// The outcome of a member ID sign-in: a member session for ordinary
@@ -375,6 +544,7 @@ class MemberHome {
     required this.executives,
     required this.directory,
     required this.announcements,
+    this.warnings = const [],
   });
   final MemberStatement statement;
 
@@ -385,6 +555,9 @@ class MemberHome {
   final List<HomeExecutive> executives;
   final List<HomeDirectoryEntry> directory;
   final List<String> announcements;
+
+  /// Warnings from the Disciplinary Committee: (when, what).
+  final List<(DateTime?, String)> warnings;
 
   static List<Map> _list(Object? v) => (v as List? ?? const []).cast<Map>();
 
@@ -429,6 +602,10 @@ class MemberHome {
     ],
     announcements: [
       for (final a in (r['announcements'] as List? ?? const [])) '$a',
+    ],
+    warnings: [
+      for (final w in _list(r['warnings']))
+        (DateTime.tryParse('${w['at']}')?.toLocal(), '${w['details']}'),
     ],
   );
 }

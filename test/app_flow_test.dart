@@ -455,6 +455,7 @@ void main() {
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     final asked = <Map<String, Object?>>[];
+    final sent = <String>[];
     final api = SyncApi((fn, args) async {
       switch (fn) {
         case 'fn:member-auth':
@@ -522,6 +523,27 @@ void main() {
           };
         case 'member_sign_out':
           return null;
+        case 'chat_channels':
+          return [
+            {'id': 'announcements', 'name': 'Announcements', 'post': false},
+            {'id': 'members', 'name': 'All members', 'post': true},
+          ];
+        case 'chat_messages':
+          expect(args['channel'], 'members');
+          return [
+            for (final (i, body) in sent.indexed)
+              if (args['after'] == null || i == sent.length - 1)
+                {
+                  'id': 'm$i',
+                  'author': 'Kofi Mensah',
+                  'body': body,
+                  'at': '2026-10-15T12:0$i:00Z',
+                  'mine': true,
+                },
+          ];
+        case 'chat_send':
+          sent.add(args['body']! as String);
+          return {'ok': true};
       }
       fail('unexpected $fn');
     });
@@ -570,6 +592,21 @@ void main() {
     await tester.tap(find.text('People'));
     await pumpUntil(tester, find.text('Ama Owusu'));
     expect(find.text('Founder / President'), findsOneWidget);
+    await tester.tap(find.text('Chats').last);
+    await pumpUntil(tester, find.text('All members'));
+    await tester.tap(find.text('All members'));
+    await pumpUntil(tester, find.text('No messages yet.'));
+    // Let the page finish sliding in.
+    await tester.pump(const Duration(seconds: 1));
+    await tester.enterText(find.byKey(const Key('chatText')), 'Hello all');
+    await tester.tap(find.byTooltip('Send'));
+    await pumpUntil(
+      tester,
+      find.descendant(of: find.byType(Card), matching: find.text('Hello all')),
+    );
+    expect(sent, ['Hello all']);
+    await tester.pageBack();
+    await pumpUntil(tester, find.text('Me'));
     await tester.tap(find.text('Me'));
     await pumpUntil(tester, find.text('MEMBER ID CARD'));
     await tester.tap(find.text('Sign out'));

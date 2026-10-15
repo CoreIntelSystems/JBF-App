@@ -7,7 +7,9 @@ import '../../domain/permissions.dart';
 import '../audit/audit_log_screen.dart';
 import '../auth/auth_cubit.dart';
 import '../charts/charts_screen.dart';
+import '../chats/chats_screen.dart';
 import '../contributions/contribution_types_screen.dart';
+import '../discipline/discipline_screen.dart';
 import '../backup/backup_screen.dart';
 import '../cloud/cloud_sync_screen.dart';
 import '../events/events_screen.dart';
@@ -30,6 +32,7 @@ class MoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.select((AuthCubit c) => c.user);
     final themeMode = context.watch<ThemeModeCubit>().state;
+    final chat = officerChatAccess(context);
     void open(Widget page) => Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => page));
@@ -50,6 +53,20 @@ class MoreScreen extends StatelessWidget {
             subtitle: const Text('Password, PIN and fingerprint'),
             onTap: () => open(const AccountScreen()),
           ),
+          if (chat != null)
+            ListTile(
+              leading: const Icon(Icons.forum_outlined),
+              title: const Text('Chats'),
+              subtitle: const Text('Board, council, committees and zones'),
+              onTap: () => open(ChatsScreen(access: chat)),
+            ),
+          if (chat != null && (user?.can(Perm.disciplineHandle) ?? false))
+            ListTile(
+              leading: const Icon(Icons.gavel_outlined),
+              title: const Text('Discipline'),
+              subtitle: const Text('Complaints and warnings'),
+              onTap: () => open(DisciplineScreen(access: chat)),
+            ),
           ListTile(
             leading: const Icon(Icons.event),
             title: const Text('Events and meetings'),
@@ -181,7 +198,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.9.2 (member sign-in and roles)',
+              applicationVersion: '0.10.0 (roles, chats and discipline)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'Data is kept on this device in an encrypted database. '

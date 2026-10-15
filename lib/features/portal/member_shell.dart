@@ -10,6 +10,7 @@ import '../../core/org_config.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/sync/sync_api.dart';
 import '../auth/auth_cubit.dart';
+import '../chats/chats_screen.dart';
 import 'member_statement_screen.dart';
 
 /// The app for an ordinary member on their own phone: their dues, events,
@@ -142,6 +143,10 @@ class _MemberShellState extends State<MemberShell> {
           0 => StatementView(home.statement, header: updated),
           1 => _EventsTab(home),
           2 => _PeopleTab(home),
+          3 => ChatsScreen(
+            access: ChatAccess(widget.session.token),
+            embedded: true,
+          ),
           _ => _MeTab(home: home, session: widget.session),
         },
       );
@@ -152,6 +157,7 @@ class _MemberShellState extends State<MemberShell> {
           0 => 'My dues',
           1 => 'Events and meetings',
           2 => 'People',
+          3 => 'Chats',
           _ => 'Me',
         }),
         actions: [
@@ -189,6 +195,11 @@ class _MemberShellState extends State<MemberShell> {
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
             label: 'People',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.forum_outlined),
+            selectedIcon: Icon(Icons.forum),
+            label: 'Chats',
           ),
           NavigationDestination(
             icon: Icon(Icons.account_circle_outlined),
@@ -424,6 +435,16 @@ class _MeTab extends StatelessWidget {
             ),
           ),
         ),
+        for (final (at, details) in home.warnings)
+          Card(
+            color: theme.colorScheme.errorContainer,
+            child: ListTile(
+              leading: const Icon(Icons.warning_amber_outlined),
+              title: const Text('Warning from the Disciplinary Committee'),
+              subtitle: Text('${formatDate(at)}\n$details'),
+              isThreeLine: true,
+            ),
+          ),
         const SizedBox(height: 8),
         Text('My welfare cases', style: theme.textTheme.titleMedium),
         if (home.welfare.isEmpty)

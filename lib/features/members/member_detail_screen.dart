@@ -11,6 +11,8 @@ import '../auth/auth_cubit.dart';
 import '../payments/member_ledger_section.dart';
 import '../executives/executives_screen.dart';
 import '../welfare/member_welfare_section.dart';
+import '../chats/chats_screen.dart';
+import '../discipline/discipline_screen.dart';
 import 'id_card_pdf.dart';
 import 'member_access_section.dart';
 import 'member_form_screen.dart';
@@ -73,6 +75,11 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     final canEdit = user?.can(Perm.membersEdit) ?? false;
     final canStatus =
         !widget.self && (user?.can(Perm.membersChangeStatus) ?? false);
+    final chat = officerChatAccess(context);
+    final canComplain =
+        !widget.self &&
+        chat != null &&
+        (user?.can(Perm.disciplineFile) ?? false);
     return StreamBuilder<MemberWithZones?>(
       stream: _member,
       builder: (context, snap) {
@@ -148,6 +155,14 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   onPressed: () => _changeStatus(item),
                   icon: const Icon(Icons.swap_horiz),
                   label: const Text('Change status'),
+                ),
+              ],
+              if (canComplain) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => fileComplaint(context, chat, m),
+                  icon: const Icon(Icons.report_outlined),
+                  label: const Text('Send a complaint'),
                 ),
               ],
               MemberLedgerSection(member: m),

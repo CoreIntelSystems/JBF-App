@@ -128,6 +128,23 @@ send your collections to the main phone regularly:
 
 Turn on the monthly dues reminder and pick the day of the month.
 
+## Chats (More > Chats)
+
+Chats need internet. Everyone is in **All members** and reads
+**Announcements** (only the Founder and General Secretary post there).
+Each person is also in the chats for their roles: **Board**, **Leadership
+Council** (all zone executives and the Board), **Secretariat**, **Treasury**,
+**Organizing**, **Welfare**, the **Disciplinary Committee**, and a chat for
+their zone's executives. Members find chats in the **Chats** tab.
+
+## Discipline
+
+A Zone Mayor, Zone Secretary or the General Secretary can open a member and
+tap **Send a complaint**; only the Disciplinary Committee reads it. The
+committee sees every complaint under **More > Discipline**, can send the
+member a warning (the member sees it on their **Me** page), and closes the
+complaint when it is dealt with.
+
 ## Member portal (for ordinary members)
 
 Members can also check their own dues and receipts online at

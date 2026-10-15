@@ -545,7 +545,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -674,6 +674,13 @@ class AppDatabase extends _$AppDatabase {
             key: {Perm.helpersAssign},
         });
         await _insertMissingRoles();
+      }
+      if (from >= 8 && from < 10) {
+        // Announcements.
+        await _addRolePermissions({
+          for (final key in ['super_admin', 'founder', 'general_secretary'])
+            key: {Perm.announce},
+        });
       }
     },
     beforeOpen: (details) async {

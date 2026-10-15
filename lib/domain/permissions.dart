@@ -66,6 +66,9 @@ abstract final class Perm {
   /// helpers; Zone Welfare Officer: welfare helpers). See [helperRoles].
   static const helpersAssign = 'roles.assign_helper';
 
+  /// Post in the Announcements chat, which every member reads.
+  static const announce = 'announce.post';
+
   /// Send a complaint about a member to the Disciplinary Committee.
   static const disciplineFile = 'discipline.file';
 
@@ -105,6 +108,7 @@ abstract final class Perm {
     disciplineFile,
     disciplineHandle,
     helpersAssign,
+    announce,
   ];
 
   /// What each permission lets someone do, for the Roles screen.
@@ -141,6 +145,7 @@ abstract final class Perm {
     disciplineFile: 'Send complaints to the Disciplinary Committee',
     disciplineHandle: 'Handle complaints and send warnings',
     helpersAssign: 'Add helpers in own zone',
+    announce: 'Post announcements to all members',
   };
 }
 
@@ -196,6 +201,7 @@ final defaultRoles = <RoleSeed>[
     Perm.rolesAssign,
     Perm.signInReset,
     Perm.disciplineFile,
+    Perm.announce,
   }),
   RoleSeed('organizer', 'Organizer', 'national', {
     ..._memberWrite,

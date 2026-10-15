@@ -12,6 +12,18 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    // v10: announcements.
+    for (final r in await db.select(db.roles).get()) {
+      final perms = decodePermissions(r.permissions)..remove(Perm.announce);
+      await db.customStatement(
+        'UPDATE roles SET permissions = ? WHERE id = ?',
+        [encodePermissions(perms), r.id],
+      );
+    }
+    if (version >= 9) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     // v9: zone helpers.
     await db.customStatement(
       'DELETE FROM role_permissions WHERE role_id IN (SELECT id FROM roles '
@@ -221,6 +233,17 @@ void main() {
       'welfare_treasurer',
     });
     expect(await db.select(db.roles).get(), hasLength(defaultRoles.length));
+    final announcers = await db
+        .customSelect(
+          'SELECT r.key FROM role_permissions p JOIN roles r ON r.id = p.role_id '
+          'WHERE p.permission = ?',
+          variables: [Variable.withString(Perm.announce)],
+        )
+        .get();
+    expect(
+      {for (final a in announcers) a.read<String>('key')},
+      {'super_admin', 'founder', 'general_secretary'},
+    );
     final helpers = await db
         .customSelect(
           'SELECT r.key FROM role_permissions p JOIN roles r ON r.id = p.role_id '
@@ -238,7 +261,7 @@ void main() {
     );
   }
 
-  for (final from in [1, 2, 3, 4, 5, 6, 7, 8]) {
+  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

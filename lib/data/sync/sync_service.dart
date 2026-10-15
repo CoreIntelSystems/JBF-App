@@ -177,6 +177,9 @@ class SyncService extends Cubit<SyncStatus> {
 
   final AppDatabase _db;
   final SyncApi _api;
+
+  /// The cloud functions, also used for member statements.
+  SyncApi get api => _api;
   final SyncPrefs _prefs;
   Timer? _timer;
   Future<void>? _running;

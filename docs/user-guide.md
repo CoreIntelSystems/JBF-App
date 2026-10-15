@@ -117,3 +117,7 @@ the cloud. Five wrong tries lock that member ID for 15 minutes.
 
 If a member's phone number is wrong or missing, correct it on their
 member page; the portal uses it after the next sync.
+
+Members who install the app can see the same statement there: on the
+first screen, tap **Member? Check my dues** and enter the member ID and
+phone number. They do not need an account, but they do need internet.

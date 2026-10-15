@@ -205,6 +205,124 @@ class SyncApi {
 
   Future<void> revoke(String token, String deviceId) =>
       _call('sync_revoke_device', {'token': token, 'device': deviceId});
+
+  /// A member's own dues and payments, checked with their member ID and
+  /// phone number. Needs no sign-in; the cloud locks repeated wrong tries.
+  Future<MemberStatement> memberStatement(
+    String org,
+    String memberNo,
+    String phone,
+  ) async {
+    final r =
+        (await _call('portal_statement', {
+              'org': org,
+              'member_no': memberNo,
+              'phone': phone,
+            }))!
+            as Map;
+    if (r['error'] is String) throw SyncException(r['error'] as String);
+    return MemberStatement.fromJson(r);
+  }
+}
+
+/// What a member sees about themselves (see portal_statement).
+class MemberStatement {
+  const MemberStatement({
+    required this.name,
+    required this.memberNo,
+    required this.status,
+    required this.joined,
+    required this.zones,
+    required this.dues,
+    required this.payments,
+    this.updated,
+  });
+  final String name;
+  final String memberNo;
+  final String status;
+  final DateTime? joined;
+  final List<String> zones;
+  final List<StatementDues> dues;
+  final List<StatementPayment> payments;
+  final DateTime? updated;
+
+  factory MemberStatement.fromJson(Map r) {
+    final m = r['member'] as Map;
+    return MemberStatement(
+      name: m['name'] as String? ?? '',
+      memberNo: m['member_no'] as String? ?? '',
+      status: m['status'] as String? ?? '',
+      joined: DateTime.tryParse(m['joined'] as String? ?? ''),
+      zones: [for (final z in (m['zones'] as List? ?? const [])) '$z'],
+      dues: [
+        for (final d in (r['dues'] as List? ?? const []).cast<Map>())
+          StatementDues(
+            name: d['name'] as String? ?? 'Dues',
+            monthly: (d['monthly'] as num).toInt(),
+            months: (d['months'] as num).toInt(),
+            expected: (d['expected'] as num).toInt(),
+            paid: (d['paid'] as num).toInt(),
+            outstanding: (d['outstanding'] as num).toInt(),
+            monthsBehind: (d['months_behind'] as num).toInt(),
+            nextUnpaid: d['next_unpaid'] as String?,
+          ),
+      ],
+      payments: [
+        for (final p in (r['payments'] as List? ?? const []).cast<Map>())
+          StatementPayment(
+            receiptNo: p['receipt_no'] as String?,
+            paidOn: DateTime.tryParse(p['paid_on'] as String? ?? ''),
+            type: p['type'] as String?,
+            period: p['period'] as String?,
+            amount: (p['amount'] as num).toInt(),
+            method: p['method'] as String?,
+          ),
+      ],
+      updated: r['updated'] == null
+          ? null
+          : DateTime.tryParse(r['updated'] as String)?.toLocal(),
+    );
+  }
+}
+
+class StatementDues {
+  const StatementDues({
+    required this.name,
+    required this.monthly,
+    required this.months,
+    required this.expected,
+    required this.paid,
+    required this.outstanding,
+    required this.monthsBehind,
+    this.nextUnpaid,
+  });
+  final String name;
+  final int monthly;
+  final int months;
+  final int expected;
+  final int paid;
+  final int outstanding;
+  final int monthsBehind;
+
+  /// First month not yet covered, as `YYYY-MM`.
+  final String? nextUnpaid;
+}
+
+class StatementPayment {
+  const StatementPayment({
+    required this.amount,
+    this.receiptNo,
+    this.paidOn,
+    this.type,
+    this.period,
+    this.method,
+  });
+  final String? receiptNo;
+  final DateTime? paidOn;
+  final String? type;
+  final String? period;
+  final int amount;
+  final String? method;
 }
 
 /// Calls `POST /rest/v1/rpc/<function>` on the Supabase project, or the

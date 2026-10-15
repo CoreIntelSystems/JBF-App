@@ -7,6 +7,7 @@ import 'package:jbf_app/data/connection.dart';
 import 'package:jbf_app/data/repositories/audit_repository.dart';
 import 'package:jbf_app/data/repositories/auth_repository.dart';
 import 'package:jbf_app/data/secure_store.dart';
+import 'package:jbf_app/data/sync/sync_api.dart';
 import 'package:jbf_app/data/sync/sync_service.dart';
 import 'package:jbf_app/domain/password_hasher.dart';
 import 'package:jbf_app/features/auth/biometrics.dart';
@@ -446,5 +447,107 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 5));
     await tester.runAsync(mainDb.close);
+  });
+
+  testWidgets('a member checks their dues without an account', (tester) async {
+    FlutterSecureStorage.setMockInitialValues({});
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final asked = <Map<String, Object?>>[];
+    final api = SyncApi((fn, args) async {
+      expect(fn, 'portal_statement');
+      asked.add(args);
+      if (args['phone'] != '0241234567') {
+        return {
+          'error': 'Member ID and phone number do not match our records.',
+        };
+      }
+      return {
+        'org': 'June Borns Family',
+        'member': {
+          'name': 'Kofi Mensah',
+          'member_no': 'JBF-000001',
+          'status': 'active',
+          'joined': '2026-01-10',
+          'zones': ['Zone 1'],
+        },
+        'dues': [
+          {
+            'name': 'Monthly welfare dues',
+            'monthly': 2000,
+            'months': 10,
+            'expected': 20000,
+            'paid': 6000,
+            'outstanding': 14000,
+            'months_behind': 7,
+            'next_unpaid': '2026-04',
+          },
+        ],
+        'payments': [
+          {
+            'receipt_no': 'RCP-2026-000003',
+            'paid_on': '2026-03-05',
+            'type': 'Monthly welfare dues',
+            'period': '2026-03',
+            'amount': 2000,
+            'method': 'momo',
+          },
+        ],
+        'updated': '2026-10-15T08:00:00+00:00',
+      };
+    });
+    final services = AppServices(
+      db: openInMemoryDatabase(),
+      store: SecureStore(),
+      deviceId: 'member',
+      syncApi: api,
+      syncPrefs: MemorySyncPrefs(),
+    );
+    await tester.pumpWidget(
+      JbfApp(services: services, biometrics: _NoBiometrics()),
+    );
+    const button = 'Member? Check my dues';
+    await pumpUntil(tester, find.text(button));
+    await tester.ensureVisible(find.text(button));
+    await tester.tap(find.text(button));
+    await pumpUntil(tester, find.text('View my statement'));
+    await tester.enterText(
+      find.byKey(const Key('statementMemberNo')),
+      'jbf-000001',
+    );
+    await tester.enterText(
+      find.byKey(const Key('statementPhone')),
+      '0200000000',
+    );
+    await tester.tap(find.text('View my statement'));
+    await pumpUntil(
+      tester,
+      find.text('Member ID and phone number do not match our records.'),
+    );
+    await tester.enterText(
+      find.byKey(const Key('statementPhone')),
+      '0241234567',
+    );
+    await tester.tap(find.text('View my statement'));
+    await pumpUntil(tester, find.text('Kofi Mensah'));
+    expect(asked.last, {
+      'org': 'JBF',
+      'member_no': 'jbf-000001',
+      'phone': '0241234567',
+    });
+    expect(find.text('GHS 140.00'), findsOneWidget);
+    expect(
+      find.textContaining('7 months behind, from Apr 2026'),
+      findsOneWidget,
+    );
+    expect(find.text('RCP-2026-000003'), findsNothing);
+    expect(
+      find.textContaining('Mobile money · RCP-2026-000003'),
+      findsOneWidget,
+    );
+    services.sync.stopAuto();
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 5));
   });
 }

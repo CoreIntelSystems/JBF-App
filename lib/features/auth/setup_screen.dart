@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../backup/backup_screen.dart';
 import '../cloud/cloud_sync_screen.dart';
+import '../portal/member_statement_screen.dart';
 import 'auth_cubit.dart';
 import 'brand_header.dart';
 
@@ -164,6 +165,17 @@ class _SetupScreenState extends State<SetupScreen> {
                       label: const Text(
                         'Already set up by your group? Sign in online',
                       ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const MemberStatementScreen(),
+                              ),
+                            ),
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: const Text('Member? Check my dues'),
                     ),
                   ],
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/org_config.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../portal/member_statement_screen.dart';
 import 'auth_cubit.dart';
 import 'brand_header.dart';
 
@@ -154,7 +155,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const MemberStatementScreen(),
+                              ),
+                            ),
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: const Text('Member? Check my dues'),
+                    ),
+                    const SizedBox(height: 24),
                     Text(
                       'Powered by ${OrgDefaults.poweredBy}',
                       textAlign: TextAlign.center,

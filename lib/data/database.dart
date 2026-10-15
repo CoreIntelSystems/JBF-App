@@ -545,7 +545,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -661,6 +661,19 @@ class AppDatabase extends _$AppDatabase {
         await _upgradeRoles();
         await _seedPositions(onlyMissing: true);
         await createSyncTriggers(customStatement, _columnsOf);
+      }
+      if (from == 8) {
+        // Zone helpers.
+        await _addRolePermissions({
+          for (final key in [
+            'super_admin',
+            'founder',
+            'zone_organizer',
+            'zone_welfare_officer',
+          ])
+            key: {Perm.helpersAssign},
+        });
+        await _insertMissingRoles();
       }
     },
     beforeOpen: (details) async {
@@ -891,9 +904,15 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
     }
+    await _insertMissingRoles();
+  }
+
+  /// Adds seeded roles this database does not have yet.
+  Future<void> _insertMissingRoles() async {
+    final have = {for (final r in await select(roles).get()) r.key};
     // Fixed ids, so phones that upgrade separately add the same records
     // rather than clashing copies.
-    for (final seed in seeds.values) {
+    for (final seed in defaultRoles.where((r) => !have.contains(r.key))) {
       await into(roles).insert(
         RolesCompanion.insert(
           id: Value('role-${seed.key}'),
@@ -901,6 +920,23 @@ class AppDatabase extends _$AppDatabase {
           name: seed.name,
           level: seed.level,
           permissions: Value(encodePermissions(seed.permissions)),
+        ),
+      );
+    }
+  }
+
+  /// Adds permissions to roles' stored lists (the trigger updates
+  /// `role_permissions`).
+  Future<void> _addRolePermissions(Map<String, Set<String>> byRoleKey) async {
+    for (final role in await select(roles).get()) {
+      final add = byRoleKey[role.key];
+      if (add == null) continue;
+      await (update(roles)..where((r) => r.id.equals(role.id))).write(
+        RolesCompanion(
+          permissions: Value(
+            encodePermissions({...decodePermissions(role.permissions), ...add}),
+          ),
+          updatedAt: Value(DateTime.now()),
         ),
       );
     }

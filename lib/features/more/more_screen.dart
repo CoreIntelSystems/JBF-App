@@ -17,6 +17,7 @@ import '../reminders/reminders_screen.dart';
 import '../reports/reports_screen.dart';
 import '../settings/org_settings_screen.dart';
 import '../sync/sync_screen.dart';
+import '../users/roles_screen.dart';
 import '../users/users_screen.dart';
 import '../welfare/welfare_common.dart';
 import '../welfare/welfare_screen.dart';
@@ -126,11 +127,19 @@ class MoreScreen extends StatelessWidget {
               subtitle: const Text('Name, ID and receipt prefixes, colours'),
               onTap: () => open(const OrgSettingsScreen()),
             ),
+          if ((user?.can(Perm.rolesManage) ?? false) ||
+              (user?.can(Perm.zoneRolesAssign) ?? false))
+            ListTile(
+              leading: const Icon(Icons.admin_panel_settings_outlined),
+              title: const Text('Roles'),
+              subtitle: const Text('What each role can do'),
+              onTap: () => open(const RolesScreen()),
+            ),
           if (user?.can(Perm.usersManage) ?? false)
             ListTile(
               leading: const Icon(Icons.manage_accounts),
-              title: const Text('Users and roles'),
-              subtitle: const Text('Give officers their own login'),
+              title: const Text('Old username logins'),
+              subtitle: const Text('Logins made before member sign-in'),
               onTap: () => open(const UsersScreen()),
             ),
           if (user?.can(Perm.auditView) ?? false)
@@ -172,7 +181,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.9.1 (member sign-in and roles)',
+              applicationVersion: '0.9.2 (member sign-in and roles)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'Data is kept on this device in an encrypted database. '

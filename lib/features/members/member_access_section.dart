@@ -28,6 +28,7 @@ class MemberAccessSection extends StatefulWidget {
       user != null &&
       (user.can(Perm.rolesAssign) ||
           user.can(Perm.zoneRolesAssign) ||
+          user.can(Perm.helpersAssign) ||
           user.can(Perm.signInReset));
 
   @override
@@ -171,7 +172,9 @@ class _MemberAccessSectionState extends State<MemberAccessSection> {
             user.zoneScope == null ||
             widget.zones.any((z) => user.zoneScope!.contains(z.id)));
     final canGiveAny =
-        user.can(Perm.rolesAssign) || user.can(Perm.zoneRolesAssign);
+        user.can(Perm.rolesAssign) ||
+        user.can(Perm.zoneRolesAssign) ||
+        user.can(Perm.helpersAssign);
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Column(

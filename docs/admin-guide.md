@@ -26,6 +26,17 @@ use **Roles and access**:
   Mayor or Zone Secretary; needs internet) signs the member out everywhere
   so they activate again with their phone number.
 
+- **Helpers:** a Zone Organizer can make any number of members of their
+  zone Zone Organizing Helpers, and a Zone Welfare Officer can add Zone
+  Welfare Helpers. Helpers are not on the executive council.
+
+## What roles can do (More > Roles)
+
+The Founder can change what any role can do, and add new roles. A Zone
+Mayor can add extra zone roles there, but only with access the Mayor has.
+Changes reach every phone at the next sync, and people get them the next
+time they sign in.
+
 A member with no role only gets their own page. A member with any role
 gets the association's records for that role when they sign in. A phone
 used by someone with only zone roles holds just their zone(s): those
@@ -45,14 +56,15 @@ members are taken off the phone.
 | Welfare Chairman | Prepare and approve welfare cases |
 | Welfare Secretary | See members, prepare welfare cases |
 | Welfare Treasurer | See members, record welfare payouts |
-| Zone Mayor | Their zone's members and attendance, give zone roles, reset sign-ins, file complaints |
+| Zone Mayor | Their zone's members and attendance, give zone roles, add zone roles, reset sign-ins, file complaints |
 | Zone Secretary | Their zone's members and attendance, reset sign-ins, file complaints |
-| Other zone executives | Their zone's members; zone treasurers record payments |
+| Other zone executives | Their zone's members; zone treasurers record payments; zone organizers and welfare officers add helpers |
+| Zone helpers | Their zone's members; organizing helpers take attendance |
 | Disciplinary Committee | See members, handle complaints |
 | Auditor | View finance, reports and the audit log |
 | Electoral Commission | See members |
 
-## Users (More > Users and roles)
+## Old username logins (More > Old username logins)
 
 Older username logins are kept for phones set up before member sign-in.
 Link each one to its member record. To remove access, turn off **Can sign

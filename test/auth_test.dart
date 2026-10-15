@@ -172,4 +172,112 @@ void main() {
       'zone_secretary',
     ]);
   });
+
+  test('zone helpers and zone roles stay inside the zone', () async {
+    final zones = await env.zoneIdsByCode();
+    final founder = await env.auth.createInitialAdmin(
+      displayName: 'Ama',
+      username: 'ama',
+      password: 'secret1',
+      deviceId: 'd1',
+    );
+    final roles = {for (final r in await env.auth.roles()) r.key: r};
+    Future<String> member(String name, int zone) async =>
+        (await env.members.create(
+          env.draft(name, [zones[zone]!]),
+          TestEnv.actor,
+        )).id;
+    final esi = await member('Esi', 1);
+    final kwame = await member('Kwame', 1);
+    final yaa = await member('Yaa', 1);
+    await env.auth.assignRole(
+      memberId: esi,
+      roleId: roles['zone_organizer']!.id,
+      zoneIds: [zones[1]!],
+      by: founder,
+      deviceId: 'd1',
+    );
+    final organizer = await env.auth.loadMemberUser(esi);
+    expect(organizer.roleKeys, {'zone_organizer'});
+
+    // The Zone Organizer adds an organizing helper, but not a welfare one.
+    await env.auth.assignRole(
+      memberId: kwame,
+      roleId: roles['zone_organizing_helper']!.id,
+      zoneIds: [zones[1]!],
+      by: organizer,
+      deviceId: 'd2',
+    );
+    await expectLater(
+      env.auth.assignRole(
+        memberId: yaa,
+        roleId: roles['zone_welfare_helper']!.id,
+        zoneIds: [zones[1]!],
+        by: organizer,
+        deviceId: 'd2',
+      ),
+      throwsA(isA<AuthException>()),
+    );
+    await expectLater(
+      env.auth.assignRole(
+        memberId: yaa,
+        roleId: roles['zone_organizing_helper']!.id,
+        zoneIds: [zones[2]!],
+        by: organizer,
+        deviceId: 'd2',
+      ),
+      throwsA(isA<AuthException>()),
+    );
+    final helper = await env.auth.loadMemberUser(kwame);
+    expect(helper.can(Perm.attendanceRecord), isTrue);
+    expect(helper.zoneScope, {zones[1]});
+
+    // A Zone Mayor adds a zone role with access they hold, and gives it.
+    await env.auth.assignRole(
+      memberId: yaa,
+      roleId: roles['zone_mayor']!.id,
+      zoneIds: [zones[1]!],
+      by: founder,
+      deviceId: 'd1',
+    );
+    final mayor = await env.auth.loadMemberUser(yaa);
+    await expectLater(
+      env.auth.saveRole(
+        name: 'Zone Youth Leader',
+        level: 'zone',
+        permissions: {Perm.membersView, Perm.financeView},
+        by: mayor,
+        deviceId: 'd3',
+      ),
+      throwsA(isA<AuthException>()),
+    );
+    await env.auth.saveRole(
+      name: 'Zone Youth Leader',
+      level: 'zone',
+      permissions: {Perm.dashboardView, Perm.membersView},
+      by: mayor,
+      deviceId: 'd3',
+    );
+    final youth = (await env.auth.roles()).firstWhere(
+      (r) => r.name == 'Zone Youth Leader',
+    );
+    expect(AuthRepository.canEditRole(mayor, youth), isTrue);
+    expect(AuthRepository.canEditRole(mayor, roles['treasurer']!), isFalse);
+    expect(AuthRepository.canEditRole(founder, roles['treasurer']!), isTrue);
+    expect(AuthRepository.canEditRole(founder, roles['super_admin']!), isFalse);
+
+    // The Founder changes what a role can do; holders get it at sign-in.
+    await env.auth.saveRole(
+      existing: roles['zone_organizing_helper'],
+      name: 'Zone Organizing Helper',
+      level: 'zone',
+      permissions: {Perm.dashboardView, Perm.membersView},
+      by: founder,
+      deviceId: 'd1',
+    );
+    expect(
+      (await env.auth.loadMemberUser(kwame)).can(Perm.attendanceRecord),
+      isFalse,
+    );
+  });
 }

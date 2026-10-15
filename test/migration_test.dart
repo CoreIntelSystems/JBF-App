@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jbf_app/data/connection.dart';
 import 'package:jbf_app/data/database.dart';
@@ -11,6 +12,27 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    // v9: zone helpers.
+    await db.customStatement(
+      'DELETE FROM role_permissions WHERE role_id IN (SELECT id FROM roles '
+      "WHERE key IN ('zone_organizing_helper', 'zone_welfare_helper'))",
+    );
+    await db.customStatement(
+      "DELETE FROM roles WHERE key IN ('zone_organizing_helper', "
+      "'zone_welfare_helper')",
+    );
+    for (final r in await db.select(db.roles).get()) {
+      final perms = decodePermissions(r.permissions)
+        ..remove(Perm.helpersAssign);
+      await db.customStatement(
+        'UPDATE roles SET permissions = ? WHERE id = ?',
+        [encodePermissions(perms), r.id],
+      );
+    }
+    if (version >= 8) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     // v8: role assignments, permissions on roles, dues approval.
     await db.customStatement('DROP TABLE role_assignments');
     await db.customStatement('DROP TRIGGER roles_permissions_ins');
@@ -184,6 +206,7 @@ void main() {
       'zone_mayor',
       'zone_secretary',
       'zone_organizer',
+      'zone_organizing_helper',
     });
     final pay = await db
         .customSelect(
@@ -198,13 +221,24 @@ void main() {
       'welfare_treasurer',
     });
     expect(await db.select(db.roles).get(), hasLength(defaultRoles.length));
+    final helpers = await db
+        .customSelect(
+          'SELECT r.key FROM role_permissions p JOIN roles r ON r.id = p.role_id '
+          'WHERE p.permission = ?',
+          variables: [Variable.withString(Perm.helpersAssign)],
+        )
+        .get();
+    expect(
+      {for (final h in helpers) h.read<String>('key')},
+      {'super_admin', 'founder', 'zone_organizer', 'zone_welfare_officer'},
+    );
     expect(
       (await db.select(db.roles).get()).every((r) => r.permissions != null),
       isTrue,
     );
   }
 
-  for (final from in [1, 2, 3, 4, 5, 6, 7]) {
+  for (final from in [1, 2, 3, 4, 5, 6, 7, 8]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

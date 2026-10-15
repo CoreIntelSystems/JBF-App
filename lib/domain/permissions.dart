@@ -62,6 +62,10 @@ abstract final class Perm {
   /// is set directly; with [duesManage] alone it waits for approval.
   static const duesApprove = 'dues.approve';
 
+  /// Give helper roles in the user's own zone (Zone Organizer: organizing
+  /// helpers; Zone Welfare Officer: welfare helpers). See [helperRoles].
+  static const helpersAssign = 'roles.assign_helper';
+
   /// Send a complaint about a member to the Disciplinary Committee.
   static const disciplineFile = 'discipline.file';
 
@@ -100,8 +104,51 @@ abstract final class Perm {
     duesApprove,
     disciplineFile,
     disciplineHandle,
+    helpersAssign,
   ];
+
+  /// What each permission lets someone do, for the Roles screen.
+  static const labels = <String, String>{
+    dashboardView: 'See the dashboard',
+    membersView: 'See members',
+    membersCreate: 'Register members',
+    membersEdit: 'Edit member details',
+    membersChangeStatus: 'Change member status',
+    zonesManage: 'Manage zones',
+    usersManage: 'Manage old username logins',
+    rolesManage: 'Edit roles and what they can do',
+    auditView: 'Read the audit log',
+    settingsManage: 'Organisation settings',
+    paymentsRecord: 'Record payments',
+    paymentsVoid: 'Void payments and expenses',
+    duesManage: 'Set dues amounts',
+    welfarePrepare: 'Prepare welfare cases',
+    welfareSetBenefits: 'Set welfare benefit amounts',
+    welfareApprove: 'Approve welfare cases and amounts',
+    welfarePay: 'Pay out welfare cases',
+    expensesRecord: 'Record expenses',
+    financeView: 'See finance and reports',
+    reportsExport: 'Export reports',
+    eventsManage: 'Manage events and meetings',
+    attendanceRecord: 'Take attendance',
+    executivesManage: 'Appoint executives',
+    electionsManage: 'Run elections',
+    backupManage: 'Backups and field phones',
+    rolesAssign: 'Give any role',
+    zoneRolesAssign: 'Give zone roles in own zone, add zone roles',
+    signInReset: 'Reset members\' sign-ins',
+    duesApprove: 'Approve dues amounts',
+    disciplineFile: 'Send complaints to the Disciplinary Committee',
+    disciplineHandle: 'Handle complaints and send warnings',
+    helpersAssign: 'Add helpers in own zone',
+  };
 }
+
+/// The helper role each zone role may give (no limit on how many).
+const helperRoles = <String, String>{
+  'zone_organizer': 'zone_organizing_helper',
+  'zone_welfare_officer': 'zone_welfare_helper',
+};
 
 /// A role seeded on first run.
 class RoleSeed {
@@ -206,11 +253,19 @@ final defaultRoles = <RoleSeed>[
   RoleSeed('zone_organizer', 'Zone Organizer', 'zone', {
     ..._memberRead,
     Perm.attendanceRecord,
+    Perm.helpersAssign,
   }),
   RoleSeed('zone_welfare_officer', 'Zone Welfare Officer', 'zone', {
     ..._memberRead,
     Perm.welfarePrepare,
+    Perm.helpersAssign,
   }),
+  // Helpers are not on the executive council.
+  RoleSeed('zone_organizing_helper', 'Zone Organizing Helper', 'zone', {
+    ..._memberRead,
+    Perm.attendanceRecord,
+  }),
+  RoleSeed('zone_welfare_helper', 'Zone Welfare Helper', 'zone', _memberRead),
   RoleSeed('discipline_member', 'Disciplinary Committee', 'oversight', {
     ..._memberRead,
     Perm.disciplineHandle,

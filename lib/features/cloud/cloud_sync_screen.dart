@@ -46,10 +46,12 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
     builder: (context) => AlertDialog(
       title: const Text('Add a phone'),
       content: const Text(
-        '1. Create a login for the officer in More > Users and roles.\n'
-        '2. On their phone, install the app and tap "Sign in online".\n'
-        '3. They enter their username and password. The phone downloads '
-        'everything and gets its own number series automatically.',
+        '1. Open the officer\'s member page and give them a role.\n'
+        '2. On their phone, install the app and tap "First time? Activate '
+        'your account".\n'
+        '3. They enter their member ID and phone number and choose a '
+        'password. The phone downloads what their role covers and gets its '
+        'own number series automatically.',
       ),
       actions: [
         FilledButton(

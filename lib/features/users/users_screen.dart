@@ -84,7 +84,7 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Users and roles')),
+      appBar: AppBar(title: const Text('Old username logins')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _roles.isEmpty ? null : () => _edit(),
         icon: const Icon(Icons.person_add_alt),

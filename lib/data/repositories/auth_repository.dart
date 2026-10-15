@@ -25,6 +25,7 @@ class AppUser extends Equatable {
     this.zoneScope,
     this.memberId,
     this.memberAccount = false,
+    this.roleKeys = const {},
   });
 
   final String id;
@@ -47,6 +48,9 @@ class AppUser extends Equatable {
   /// password lives in the cloud; this phone keeps a copy to work offline.
   final bool memberAccount;
 
+  /// Every role this person holds (the [roleKey] is the main one).
+  final Set<String> roleKeys;
+
   bool can(String permission) => permissions.contains(permission);
 
   Actor actor(String deviceId) =>
@@ -65,6 +69,7 @@ class AppUser extends Equatable {
     zoneScope,
     memberId,
     memberAccount,
+    roleKeys,
   ];
 }
 
@@ -878,6 +883,7 @@ class AuthRepository {
       zoneScope: scope,
       memberId: member.id,
       memberAccount: true,
+      roleKeys: {for (final h in officer) h.$1.key},
     );
   }
 
@@ -981,8 +987,117 @@ class AuthRepository {
     if (role.key == 'super_admin') return by.roleKey == 'super_admin';
     if (role.key == 'member') return false;
     if (by.can(Perm.rolesAssign)) return true;
-    return by.can(Perm.zoneRolesAssign) && role.level == 'zone';
+    if (role.level != 'zone') return false;
+    if (by.can(Perm.zoneRolesAssign)) return true;
+    return by.can(Perm.helpersAssign) &&
+        by.roleKeys.any((k) => helperRoles[k] == role.key);
   }
+
+  /// Whether [by] may change what [role] can do: the Founder (or anyone
+  /// with [Perm.rolesManage]) any role but the Super Administrator; a Zone
+  /// Mayor only the zone roles they added.
+  static bool canEditRole(AppUser by, Role role) {
+    if (role.key == 'super_admin') return false;
+    if (by.can(Perm.rolesManage)) return true;
+    return by.can(Perm.zoneRolesAssign) &&
+        role.level == 'zone' &&
+        role.createdBy == by.id;
+  }
+
+  /// Adds a role, or changes one's name and permissions. A Zone Mayor may
+  /// only add zone roles, with permissions they hold themselves.
+  Future<void> saveRole({
+    Role? existing,
+    required String name,
+    required String level,
+    required Set<String> permissions,
+    required AppUser by,
+    required String deviceId,
+  }) async {
+    final full = by.can(Perm.rolesManage);
+    if (existing != null && !canEditRole(by, existing)) {
+      throw AuthException('Your role cannot change that role.');
+    }
+    if (existing == null && !full && !by.can(Perm.zoneRolesAssign)) {
+      throw AuthException('Your role cannot add roles.');
+    }
+    if (!full) {
+      if (level != 'zone') {
+        throw AuthException('You can only add zone roles.');
+      }
+      final extra = permissions.difference(by.permissions);
+      if (extra.isNotEmpty) {
+        throw AuthException(
+          'You can only give access you have yourself '
+          '(${extra.map((p) => Perm.labels[p] ?? p).join(', ')}).',
+        );
+      }
+    }
+    final clean = name.trim();
+    if (clean.isEmpty) throw AuthException('Enter a name for the role.');
+    final taken =
+        await (_db.select(_db.roles)..where(
+              (r) =>
+                  r.name.lower().equals(clean.toLowerCase()) &
+                  r.deletedAt.isNull() &
+                  (existing == null
+                      ? const Constant(true)
+                      : r.id.equals(existing.id).not()),
+            ))
+            .get();
+    if (taken.isNotEmpty) throw AuthException('A role with that name exists.');
+    final encoded = encodePermissions(permissions);
+    await _db.transaction(() async {
+      final String id;
+      if (existing == null) {
+        final row = await _db
+            .into(_db.roles)
+            .insertReturning(
+              RolesCompanion.insert(
+                key: 'custom_${DateTime.now().microsecondsSinceEpoch}',
+                name: clean,
+                level: level,
+                permissions: Value(encoded),
+                createdBy: Value(by.id),
+                deviceId: Value(deviceId),
+              ),
+            );
+        id = row.id;
+      } else {
+        id = existing.id;
+        await (_db.update(_db.roles)..where((r) => r.id.equals(id))).write(
+          RolesCompanion(
+            name: Value(clean),
+            permissions: Value(encoded),
+            updatedAt: Value(_now()),
+          ),
+        );
+      }
+      await _audit.log(
+        by.actor(deviceId),
+        existing == null ? 'role.create' : 'role.update',
+        entity: 'roles',
+        entityId: id,
+        oldValue: existing == null
+            ? null
+            : {
+                'name': existing.name,
+                'permissions': decodePermissions(existing.permissions).toList(),
+              },
+        newValue: {'name': clean, 'permissions': permissions.toList()},
+      );
+    });
+  }
+
+  Stream<List<Role>> watchRoles() =>
+      (_db.select(_db.roles)
+            ..where((r) => r.deletedAt.isNull())
+            ..orderBy([(r) => OrderingTerm.asc(r.name)]))
+          .watch();
+
+  /// A role's permissions, from its stored list.
+  static Set<String> permissionsOf(Role role) =>
+      decodePermissions(role.permissions);
 
   void _checkCanAssign(AppUser by, Role role, List<String> zoneIds) {
     if (!canGive(by, role)) {
@@ -1028,6 +1143,7 @@ class AuthRepository {
       hasPin: user.pinHash != null,
       zoneScope: scopeFor(role, user),
       memberId: user.memberId,
+      roleKeys: {role.key},
     );
   }
 }

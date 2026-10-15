@@ -104,3 +104,16 @@ send your collections to the main phone regularly:
 ## Reminders (More > Reminders)
 
 Turn on the monthly dues reminder and pick the day of the month.
+
+## Member portal (for ordinary members)
+
+Members can check their own dues and receipts online at
+**https://jbf-members.onrender.com**. They enter their member ID (for
+example `JBF-000123`, on their ID card and receipts) and the phone number
+the association has for them. The portal shows their monthly dues (paid,
+owed, and the first unpaid month) and every valid payment with its
+receipt number. It is read-only and shows what the phones have synced to
+the cloud. Five wrong tries lock that member ID for 15 minutes.
+
+If a member's phone number is wrong or missing, correct it on their
+member page; the portal uses it after the next sync.

@@ -18,6 +18,7 @@ class AppUser extends Equatable {
     required this.biometricEnabled,
     required this.hasPin,
     this.zoneScope,
+    this.memberId,
   });
 
   final String id;
@@ -31,6 +32,10 @@ class AppUser extends Equatable {
 
   /// For zone-level roles, the zones this user may see; null for no limit.
   final Set<String>? zoneScope;
+
+  /// The member record of the person behind this account. Executives are
+  /// members too, so they see their own dues alongside their role's work.
+  final String? memberId;
 
   bool can(String permission) => permissions.contains(permission);
 
@@ -48,6 +53,7 @@ class AppUser extends Equatable {
     biometricEnabled,
     hasPin,
     zoneScope,
+    memberId,
   ];
 }
 
@@ -138,6 +144,7 @@ class AuthRepository {
     required String password,
     required String roleId,
     List<String> zoneIds = const [],
+    String? memberId,
     required Actor actor,
   }) {
     return _insertUser(
@@ -146,6 +153,7 @@ class AuthRepository {
       password: password,
       roleId: roleId,
       zoneIds: zoneIds,
+      memberId: memberId,
       actor: actor,
     );
   }
@@ -157,10 +165,12 @@ class AuthRepository {
     String? pin,
     required String roleId,
     List<String> zoneIds = const [],
+    String? memberId,
     required Actor actor,
   }) async {
     final name = normalizeUsername(username);
     await _checkZones(roleId, zoneIds);
+    await _checkMember(memberId);
     if (name.isEmpty) throw AuthException('Enter a username.');
     if (displayName.trim().isEmpty) throw AuthException('Enter a name.');
     final pwError = validatePassword(password);
@@ -188,6 +198,7 @@ class AuthRepository {
               passwordHash: passwordHash,
               pinHash: Value(pinHash),
               zoneIds: Value(zoneIds.isEmpty ? null : zoneIds.join(',')),
+              memberId: Value(memberId),
               createdBy: Value(actor.userId),
               deviceId: Value(actor.deviceId),
             ),
@@ -202,6 +213,7 @@ class AuthRepository {
           'displayName': user.displayName,
           'roleId': roleId,
           if (zoneIds.isNotEmpty) 'zoneIds': zoneIds,
+          'memberId': ?memberId,
         },
       );
       return user.id;
@@ -398,6 +410,9 @@ class AuthRepository {
     String? roleId,
     bool? isActive,
     List<String>? zoneIds,
+
+    /// The member record to link; an empty string unlinks it.
+    String? memberId,
     required Actor actor,
   }) async {
     if (userId == actor.userId && isActive == false) {
@@ -405,6 +420,9 @@ class AuthRepository {
     }
     final before = await _userRow(userId);
     if (zoneIds != null) await _checkZones(roleId ?? before.roleId, zoneIds);
+    if (memberId != null && memberId.isNotEmpty) {
+      await _checkMember(memberId, userId: userId);
+    }
     await _db.transaction(() async {
       await _touchUser(
         userId,
@@ -414,6 +432,9 @@ class AuthRepository {
           zoneIds: zoneIds == null
               ? const Value.absent()
               : Value(zoneIds.isEmpty ? null : zoneIds.join(',')),
+          memberId: memberId == null
+              ? const Value.absent()
+              : Value(memberId.isEmpty ? null : memberId),
         ),
       );
       await _audit.log(
@@ -425,11 +446,13 @@ class AuthRepository {
           'roleId': before.roleId,
           'isActive': before.isActive,
           'zoneIds': before.zoneIds,
+          'memberId': before.memberId,
         },
         newValue: {
           'roleId': ?roleId,
           'isActive': ?isActive,
           if (zoneIds != null) 'zoneIds': zoneIds.join(','),
+          'memberId': ?memberId,
         },
       );
     });
@@ -476,6 +499,26 @@ class AuthRepository {
     }
   }
 
+  /// One account per member.
+  Future<void> _checkMember(String? memberId, {String? userId}) async {
+    if (memberId == null) return;
+    final other =
+        await (_db.select(_db.users)..where(
+              (u) =>
+                  u.memberId.equals(memberId) &
+                  u.deletedAt.isNull() &
+                  (userId == null
+                      ? const Constant(true)
+                      : u.id.equals(userId).not()),
+            ))
+            .getSingleOrNull();
+    if (other != null) {
+      throw AuthException(
+        'That member already has an account (${other.username}).',
+      );
+    }
+  }
+
   static Set<String>? scopeFor(Role role, User user) => role.level == 'zone'
       ? (user.zoneIds ?? '').split(',').where((z) => z.isNotEmpty).toSet()
       : null;
@@ -507,6 +550,7 @@ class AuthRepository {
       biometricEnabled: user.biometricEnabled,
       hasPin: user.pinHash != null,
       zoneScope: scopeFor(role, user),
+      memberId: user.memberId,
     );
   }
 }

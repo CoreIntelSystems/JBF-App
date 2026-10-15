@@ -12,8 +12,15 @@ import 'welfare_screen.dart';
 
 /// Welfare cases on a member's page.
 class MemberWelfareSection extends StatefulWidget {
-  const MemberWelfareSection({super.key, required this.member});
+  const MemberWelfareSection({
+    super.key,
+    required this.member,
+    this.own = false,
+  });
   final Member member;
+
+  /// The signed-in person's own cases, which they may always see.
+  final bool own;
 
   @override
   State<MemberWelfareSection> createState() => _MemberWelfareSectionState();
@@ -28,7 +35,9 @@ class _MemberWelfareSectionState extends State<MemberWelfareSection> {
   @override
   Widget build(BuildContext context) {
     final user = context.select((AuthCubit c) => c.user);
-    if (!(user?.canViewWelfare ?? false)) return const SizedBox.shrink();
+    if (!widget.own && !(user?.canViewWelfare ?? false)) {
+      return const SizedBox.shrink();
+    }
     final canPrepare = user?.can(Perm.welfarePrepare) ?? false;
     return StreamBuilder<List<WelfareCaseView>>(
       stream: _cases,

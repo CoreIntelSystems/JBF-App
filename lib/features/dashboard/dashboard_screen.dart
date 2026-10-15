@@ -63,94 +63,106 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   (user?.can(Perm.paymentsRecord) ?? false))
                 _Collections(_collections),
               if (user?.canViewWelfare ?? false) _WelfareCard(_welfare),
-              // Rows that size to their content, so larger phone text
-              // settings never overflow the tiles.
-              _TileRow([
-                _StatTile(
-                  'Total members',
-                  '${stats.total}',
-                  Icons.groups,
-                  highlight: true,
-                ),
-                _StatTile(
-                  'Active',
-                  '${stats.count(MemberStatus.active)}',
-                  Icons.check_circle_outline,
-                ),
-              ]),
-              const SizedBox(height: 12),
-              _TileRow([
-                _StatTile(
-                  'Inactive / suspended',
-                  '${stats.count(MemberStatus.inactive) + stats.count(MemberStatus.suspended)}',
-                  Icons.pause_circle_outline,
-                ),
-                _StatTile(
-                  'Deceased',
-                  '${stats.count(MemberStatus.deceased)}',
-                  Icons.local_florist_outlined,
-                ),
-              ]),
-              const SizedBox(height: 24),
-              Text(
-                'Active members by zone',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Column(
-                  children: [
-                    for (final zc in stats.byZone)
-                      ListTile(
-                        dense: true,
-                        title: Text(zoneDisplayName(zc.zone)),
-                        subtitle: zc.zone.isActive
-                            ? null
-                            : const Text('Not open yet'),
-                        trailing: Text(
-                          '${zc.members}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Recently registered',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              if (stats.recent.isEmpty)
+              if (!(user?.can(Perm.membersView) ?? false))
                 const Card(
                   child: Padding(
                     padding: EdgeInsets.all(16),
                     child: Text(
-                      'No members yet. Add the first one from '
-                      'the Members tab.',
+                      'Your dues, receipts and welfare cases are on the '
+                      'My dues tab.',
                     ),
                   ),
-                )
-              else
+                ),
+              if (user?.can(Perm.membersView) ?? false) ...[
+                // Rows that size to their content, so larger phone text
+                // settings never overflow the tiles.
+                _TileRow([
+                  _StatTile(
+                    'Total members',
+                    '${stats.total}',
+                    Icons.groups,
+                    highlight: true,
+                  ),
+                  _StatTile(
+                    'Active',
+                    '${stats.count(MemberStatus.active)}',
+                    Icons.check_circle_outline,
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                _TileRow([
+                  _StatTile(
+                    'Inactive / suspended',
+                    '${stats.count(MemberStatus.inactive) + stats.count(MemberStatus.suspended)}',
+                    Icons.pause_circle_outline,
+                  ),
+                  _StatTile(
+                    'Deceased',
+                    '${stats.count(MemberStatus.deceased)}',
+                    Icons.local_florist_outlined,
+                  ),
+                ]),
+                const SizedBox(height: 24),
+                Text(
+                  'Active members by zone',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
                 Card(
                   child: Column(
                     children: [
-                      for (final m in stats.recent)
+                      for (final zc in stats.byZone)
                         ListTile(
-                          title: Text(m.fullName),
-                          subtitle: Text(
-                            '${m.memberNo} · joined ${formatDate(m.dateJoined)}',
-                          ),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  MemberDetailScreen(memberId: m.id),
-                            ),
+                          dense: true,
+                          title: Text(zoneDisplayName(zc.zone)),
+                          subtitle: zc.zone.isActive
+                              ? null
+                              : const Text('Not open yet'),
+                          trailing: Text(
+                            '${zc.members}',
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+                Text(
+                  'Recently registered',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                if (stats.recent.isEmpty)
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'No members yet. Add the first one from '
+                        'the Members tab.',
+                      ),
+                    ),
+                  )
+                else
+                  Card(
+                    child: Column(
+                      children: [
+                        for (final m in stats.recent)
+                          ListTile(
+                            title: Text(m.fullName),
+                            subtitle: Text(
+                              '${m.memberNo} · joined ${formatDate(m.dateJoined)}',
+                            ),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    MemberDetailScreen(memberId: m.id),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
             ],
           );
         },

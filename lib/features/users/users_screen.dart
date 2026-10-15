@@ -7,6 +7,7 @@ import '../../data/database.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/member_repository.dart';
 import '../auth/auth_cubit.dart';
+import '../members/member_picker.dart';
 
 /// Lets an administrator give officers their own login and role.
 class UsersScreen extends StatefulWidget {
@@ -53,6 +54,7 @@ class _UsersScreenState extends State<UsersScreen> {
           password: result.password!,
           roleId: result.roleId,
           zoneIds: result.zoneIds,
+          memberId: result.memberId,
           actor: actor,
         );
         _toast('User ${result.username} created.');
@@ -62,6 +64,7 @@ class _UsersScreenState extends State<UsersScreen> {
           roleId: result.roleId,
           isActive: result.isActive,
           zoneIds: result.zoneIds,
+          memberId: result.memberId ?? '',
           actor: actor,
         );
         if (result.password != null && result.password!.isNotEmpty) {
@@ -139,6 +142,7 @@ class _UserFormResult {
     this.roleId,
     this.isActive,
     this.zoneIds,
+    this.memberId,
   );
   final String displayName;
   final String username;
@@ -146,6 +150,7 @@ class _UserFormResult {
   final String roleId;
   final bool isActive;
   final List<String> zoneIds;
+  final String? memberId;
 }
 
 class _UserForm extends StatefulWidget {
@@ -174,6 +179,37 @@ class _UserFormState extends State<_UserForm> {
       .where((z) => z.isNotEmpty)
       .toSet();
   String? _zoneError;
+  late String? _memberId = widget.existing?.user.memberId;
+  String? _memberLabel;
+
+  @override
+  void initState() {
+    super.initState();
+    final id = _memberId;
+    if (id != null) {
+      context.read<AppServices>().members.getMember(id).then((m) {
+        if (mounted && m != null) {
+          setState(
+            () => _memberLabel = '${m.member.fullName} · ${m.member.memberNo}',
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _pickMember() async {
+    final m = await Navigator.of(
+      context,
+    ).push<Member>(MaterialPageRoute(builder: (_) => const MemberPicker()));
+    if (m == null || !mounted) return;
+    setState(() {
+      _memberId = m.id;
+      _memberLabel = '${m.fullName} · ${m.memberNo}';
+      if (widget.existing == null && _name.text.trim().isEmpty) {
+        _name.text = m.fullName;
+      }
+    });
+  }
 
   bool get _zoneRole =>
       widget.roles.where((r) => r.id == _roleId).firstOrNull?.level == 'zone';
@@ -216,7 +252,30 @@ class _UserFormState extends State<_UserForm> {
                 validator: (v) =>
                     (v ?? '').trim().isEmpty ? 'Enter a name.' : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.badge_outlined),
+                title: const Text('Member record'),
+                subtitle: Text(
+                  _memberLabel ??
+                      (_memberId == null
+                          ? 'Not linked. Link it so they see their own dues.'
+                          : 'Linked'),
+                ),
+                trailing: _memberId == null
+                    ? const Icon(Icons.chevron_right)
+                    : IconButton(
+                        tooltip: 'Unlink',
+                        icon: const Icon(Icons.close),
+                        onPressed: () => setState(() {
+                          _memberId = null;
+                          _memberLabel = null;
+                        }),
+                      ),
+                onTap: _pickMember,
+              ),
+              const SizedBox(height: 4),
               TextFormField(
                 controller: _username,
                 enabled: !editing,
@@ -301,6 +360,7 @@ class _UserFormState extends State<_UserForm> {
                       _roleId!,
                       _active,
                       _zoneRole ? _zoneIds.toList() : const [],
+                      _memberId,
                     ),
                   );
                 },

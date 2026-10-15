@@ -16,9 +16,16 @@ import 'member_form_screen.dart';
 import 'members_screen.dart';
 
 class MemberDetailScreen extends StatefulWidget {
-  const MemberDetailScreen({super.key, required this.memberId});
+  const MemberDetailScreen({
+    super.key,
+    required this.memberId,
+    this.self = false,
+  });
 
   final String memberId;
+
+  /// The signed-in person's own record, shown as their "My dues" tab.
+  final bool self;
 
   @override
   State<MemberDetailScreen> createState() => _MemberDetailScreenState();
@@ -63,7 +70,8 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
   Widget build(BuildContext context) {
     final user = context.select((AuthCubit c) => c.user);
     final canEdit = user?.can(Perm.membersEdit) ?? false;
-    final canStatus = user?.can(Perm.membersChangeStatus) ?? false;
+    final canStatus =
+        !widget.self && (user?.can(Perm.membersChangeStatus) ?? false);
     return StreamBuilder<MemberWithZones?>(
       stream: _member,
       builder: (context, snap) {
@@ -85,7 +93,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
             : null;
         return Scaffold(
           appBar: AppBar(
-            title: Text(m.memberNo),
+            title: Text(widget.self ? 'My dues and record' : m.memberNo),
             actions: [
               IconButton(
                 tooltip: 'ID card',
@@ -142,7 +150,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                 ),
               ],
               MemberLedgerSection(member: m),
-              MemberWelfareSection(member: m),
+              MemberWelfareSection(member: m, own: widget.self),
               MemberPositionsSection(member: m),
               _Section('Zones', [
                 for (final z in item.zones)

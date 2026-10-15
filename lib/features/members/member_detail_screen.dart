@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:printing/printing.dart';
 
 import '../../app_services.dart';
 import '../../core/format.dart';
@@ -9,6 +10,7 @@ import '../../domain/permissions.dart';
 import '../auth/auth_cubit.dart';
 import '../payments/member_ledger_section.dart';
 import '../welfare/member_welfare_section.dart';
+import 'id_card_pdf.dart';
 import 'member_form_screen.dart';
 import 'members_screen.dart';
 
@@ -84,6 +86,18 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
           appBar: AppBar(
             title: Text(m.memberNo),
             actions: [
+              IconButton(
+                tooltip: 'ID card',
+                icon: const Icon(Icons.badge_outlined),
+                onPressed: () async {
+                  final org = await context.read<AppServices>().payments.org();
+                  final bytes = await buildIdCardsPdf([item], org);
+                  await Printing.sharePdf(
+                    bytes: bytes,
+                    filename: 'id-card-${m.memberNo}.pdf',
+                  );
+                },
+              ),
               if (canEdit)
                 IconButton(
                   tooltip: 'Edit',

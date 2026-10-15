@@ -9,7 +9,10 @@ import '../auth/auth_cubit.dart';
 import '../contributions/contribution_types_screen.dart';
 import '../backup/backup_screen.dart';
 import '../finance/expenses_screen.dart';
+import '../reminders/reminders_screen.dart';
 import '../reports/reports_screen.dart';
+import '../settings/org_settings_screen.dart';
+import '../sync/sync_screen.dart';
 import '../users/users_screen.dart';
 import '../welfare/welfare_common.dart';
 import '../welfare/welfare_screen.dart';
@@ -70,6 +73,27 @@ class MoreScreen extends StatelessWidget {
             subtitle: const Text('Monthly dues and other contributions'),
             onTap: () => open(const ContributionTypesScreen()),
           ),
+          if ((user?.can(Perm.paymentsRecord) ?? false) ||
+              (user?.can(Perm.backupManage) ?? false))
+            ListTile(
+              leading: const Icon(Icons.phonelink_ring_outlined),
+              title: const Text('Field phones'),
+              subtitle: const Text('Send or receive collections by file'),
+              onTap: () => open(const SyncScreen()),
+            ),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined),
+            title: const Text('Reminders'),
+            subtitle: const Text('Monthly dues day notification'),
+            onTap: () => open(const RemindersScreen()),
+          ),
+          if (user?.can(Perm.settingsManage) ?? false)
+            ListTile(
+              leading: const Icon(Icons.business_outlined),
+              title: const Text('Organisation settings'),
+              subtitle: const Text('Name, ID and receipt prefixes, colours'),
+              onTap: () => open(const OrgSettingsScreen()),
+            ),
           if (user?.can(Perm.usersManage) ?? false)
             ListTile(
               leading: const Icon(Icons.manage_accounts),
@@ -116,7 +140,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.4.0 (Phase 2 preview)',
+              applicationVersion: '0.5.0 (Phase 3 preview)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'All data stays on this device in an encrypted database.',

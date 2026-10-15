@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:printing/printing.dart';
 
 import '../../app_services.dart';
 import '../../core/format.dart';
@@ -10,6 +11,7 @@ import '../../data/database.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/permissions.dart';
 import '../auth/auth_cubit.dart';
+import 'id_card_pdf.dart';
 import 'member_detail_screen.dart';
 import 'member_form_screen.dart';
 
@@ -62,13 +64,30 @@ class _MembersScreenState extends State<MembersScreen> {
     );
   }
 
+  Future<void> _printCards() async {
+    final services = context.read<AppServices>();
+    final members = await _repo.watchMembers(_filter).first;
+    final org = await services.payments.org();
+    final bytes = await buildIdCardsPdf(members, org);
+    await Printing.sharePdf(bytes: bytes, filename: 'id-cards.pdf');
+  }
+
   @override
   Widget build(BuildContext context) {
     final canCreate =
         context.select((AuthCubit c) => c.user?.can(Perm.membersCreate)) ??
         false;
     return Scaffold(
-      appBar: AppBar(title: const Text('Members')),
+      appBar: AppBar(
+        title: const Text('Members'),
+        actions: [
+          IconButton(
+            tooltip: 'ID cards for this list',
+            icon: const Icon(Icons.badge_outlined),
+            onPressed: _printCards,
+          ),
+        ],
+      ),
       floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.of(context).push(

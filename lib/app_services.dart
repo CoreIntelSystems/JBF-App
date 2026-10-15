@@ -1,4 +1,6 @@
+import 'core/reminders.dart';
 import 'data/backup_service.dart';
+import 'data/collection_batch.dart';
 import 'data/database.dart';
 import 'data/repositories/audit_repository.dart';
 import 'data/repositories/auth_repository.dart';
@@ -16,13 +18,16 @@ class AppServices {
     required this.store,
     required this.deviceId,
     this.backup,
-  }) : audit = AuditRepository(db) {
+    Reminders? reminders,
+  }) : audit = AuditRepository(db),
+       reminders = reminders ?? MemoryReminders() {
     auth = AuthRepository(db, audit);
     members = MemberRepository(db, audit);
     dashboard = DashboardRepository(db);
     payments = PaymentRepository(db, audit);
     welfare = WelfareRepository(db, audit);
     finance = FinanceRepository(db, audit);
+    batches = CollectionBatches(db, audit);
   }
 
   final AppDatabase db;
@@ -35,7 +40,11 @@ class AppServices {
   late final PaymentRepository payments;
   late final WelfareRepository welfare;
   late final FinanceRepository finance;
+  late final CollectionBatches batches;
 
   /// Null in tests that do not use a database file.
   final BackupService? backup;
+
+  /// Local notifications on this phone.
+  final Reminders reminders;
 }

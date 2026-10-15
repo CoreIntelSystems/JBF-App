@@ -42,6 +42,12 @@ class SecureStore {
   Future<void> setLastUsername(String username) =>
       _storage.write(key: _lastUsername, value: username);
 
+  /// Small per-phone settings (phone name, last batch export, reminders).
+  Future<String?> pref(String key) => _storage.read(key: 'pref_$key');
+  Future<void> setPref(String key, String? value) => value == null
+      ? _storage.delete(key: 'pref_$key')
+      : _storage.write(key: 'pref_$key', value: value);
+
   Future<String?> themeMode() => _storage.read(key: _themeMode);
   Future<void> setThemeMode(String mode) =>
       _storage.write(key: _themeMode, value: mode);

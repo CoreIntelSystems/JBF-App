@@ -242,6 +242,23 @@ class PaymentRepository {
     });
   }
 
+  /// Records several payments at once (e.g. dues collected at a monthly
+  /// meeting). All succeed or none do.
+  Future<List<Payment>> recordBatch(
+    List<PaymentDraft> drafts,
+    Actor actor, {
+    required String collectorName,
+  }) {
+    if (drafts.isEmpty) throw PaymentException('Nothing to save.');
+    return _db.transaction(() async {
+      final out = <Payment>[];
+      for (final d in drafts) {
+        out.add(await record(d, actor, collectorName: collectorName));
+      }
+      return out;
+    });
+  }
+
   /// Voids a payment. The row stays for the audit trail.
   Future<void> voidPayment(String id, String reason, Actor actor) async {
     if (reason.trim().length < 3) {

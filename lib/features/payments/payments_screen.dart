@@ -5,6 +5,7 @@ import '../../app_services.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../domain/permissions.dart';
 import '../auth/auth_cubit.dart';
+import 'batch_payment_screen.dart';
 import 'defaulters_screen.dart';
 import 'payment_widgets.dart';
 import 'record_payment_screen.dart';
@@ -30,6 +31,16 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       appBar: AppBar(
         title: const Text('Payments'),
         actions: [
+          if (canRecord)
+            IconButton(
+              tooltip: 'Meeting collection',
+              icon: const Icon(Icons.groups),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const BatchPaymentScreen(),
+                ),
+              ),
+            ),
           IconButton(
             tooltip: 'Defaulters',
             icon: const Icon(Icons.warning_amber_outlined),

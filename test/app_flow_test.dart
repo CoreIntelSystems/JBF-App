@@ -8,6 +8,7 @@ import 'package:jbf_app/data/secure_store.dart';
 import 'package:jbf_app/features/auth/biometrics.dart';
 import 'package:jbf_app/features/dashboard/dashboard_screen.dart';
 import 'package:jbf_app/features/members/member_form_screen.dart';
+import 'package:jbf_app/features/more/more_screen.dart';
 import 'package:jbf_app/features/payments/record_payment_screen.dart';
 
 class _NoBiometrics extends Biometrics {
@@ -179,12 +180,21 @@ void main() {
     Future<void> tapAndWait(Finder f, Finder next) async {
       await tester.pump(const Duration(seconds: 1));
       if (f.evaluate().isEmpty) {
-        // Lazy lists only build what is near the screen.
-        await tester.scrollUntilVisible(
-          f,
-          200,
-          scrollable: find.byType(Scrollable).last,
-        );
+        // Lazy lists only build what is near the screen; it may be above.
+        final list = find.byType(Scrollable).last;
+        for (final step in [200.0, -200.0]) {
+          try {
+            await tester.scrollUntilVisible(
+              f,
+              step,
+              scrollable: list,
+              maxScrolls: 15,
+            );
+            break;
+          } on StateError {
+            // Not that way; try the other direction.
+          }
+        }
       }
       await tester.ensureVisible(f);
       tester
@@ -270,11 +280,58 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     await tapAndWait(find.byTooltip('Back'), find.text('Hall for AGM'));
-    await tapAndWait(find.byTooltip('Back'), find.text('Backup and restore'));
+    await tapAndWait(find.byTooltip('Back'), find.byType(MoreScreen));
     await tapAndWait(
       find.text('Backup and restore'),
       find.text('Create backup and share'),
     );
+    await tapAndWait(find.byTooltip('Back'), find.byType(MoreScreen));
+    await tapAndWait(find.text('Field phones'), find.text('How it works'));
+    await tester.scrollUntilVisible(
+      find.text('Import a collections file'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tapAndWait(find.byTooltip('Back'), find.byType(MoreScreen));
+    await tapAndWait(
+      find.text('Reminders'),
+      find.text('Monthly dues reminder'),
+    );
+    await tapAndWait(
+      find.text('Monthly dues reminder'),
+      find.text('Day of the month'),
+    );
+    expect(await services.reminders.duesDay(), 1);
+    await tapAndWait(
+      find.byTooltip('Back'),
+      find.text('Organisation settings'),
+    );
+    await tapAndWait(
+      find.text('Organisation settings'),
+      find.text('Receipt prefix on this phone'),
+    );
+    await tapAndWait(find.byTooltip('Back'), find.text('Payments'));
+
+    // Meeting collection: tick Kofi and save.
+    await tapAndWait(find.text('Payments'), find.byTooltip('Defaulters'));
+    await tapAndWait(
+      find.byTooltip('Meeting collection'),
+      find.text('Tick the members who paid'),
+    );
+    await tester.enterText(find.widgetWithText(TextField, 'Amount each'), '20');
+    await tapAndWait(find.text('Kofi Mensah'), find.textContaining('Save 1'));
+    await tapAndWait(
+      find.textContaining('Save 1'),
+      find.text('Save 1 payments?'),
+    );
+    await tapAndWait(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Save'),
+      ),
+      find.byTooltip('Defaulters'),
+    );
+    await tapAndWait(find.byTooltip('Defaulters'), find.text('Defaulters'));
 
     await tester.pumpWidget(const SizedBox());
     // Let snack bars and drift's stream clean-up timers finish.

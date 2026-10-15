@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
 import 'app_services.dart';
+import 'core/reminders.dart';
 import 'data/backup_service.dart';
 import 'data/connection.dart';
 import 'core/theme.dart';
@@ -33,6 +34,7 @@ Future<void> main() async {
         store: store,
         deviceId: deviceId,
         backup: backup,
+        reminders: LocalReminders(store),
       ),
       initialThemeMode: ThemeMode.values.firstWhere(
         (m) => m.name == themeMode,

@@ -20,6 +20,43 @@ class ThemeModeCubit extends Cubit<ThemeMode> {
   }
 }
 
+/// Loads cloud sync and keeps it running while the app is open.
+class _CloudSync extends StatefulWidget {
+  const _CloudSync({required this.child});
+  final Widget child;
+
+  @override
+  State<_CloudSync> createState() => _CloudSyncState();
+}
+
+class _CloudSyncState extends State<_CloudSync> {
+  late final _sync = context.read<AppServices>().sync;
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync.load().then((_) {
+      if (_sync.state.enabled) _sync.startAuto();
+    }).ignore();
+    _lifecycle = AppLifecycleListener(
+      onResume: () {
+        if (_sync.state.enabled) _sync.syncNow().ignore();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    _sync.stopAuto();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
 class JbfApp extends StatelessWidget {
   const JbfApp({
     super.key,
@@ -47,26 +84,29 @@ class JbfApp extends StatelessWidget {
           BlocProvider(
             create: (_) => ThemeModeCubit(services, initialThemeMode),
           ),
+          BlocProvider.value(value: services.sync),
         ],
-        child: BlocBuilder<ThemeModeCubit, ThemeMode>(
-          builder: (context, mode) => MaterialApp(
-            title: OrgDefaults.name,
-            debugShowCheckedModeBanner: false,
-            theme: buildTheme(Brightness.light, palette),
-            darkTheme: buildTheme(Brightness.dark, palette),
-            themeMode: mode,
-            home: BlocBuilder<AuthCubit, AuthState>(
-              builder: (context, state) => switch (state) {
-                AuthChecking() => const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                ),
-                AuthNeedsSetup() => const SetupScreen(),
-                AuthSignedOut() => LoginScreen(
-                  key: ValueKey(state),
-                  state: state,
-                ),
-                AuthSignedIn() => const HomeShell(),
-              },
+        child: _CloudSync(
+          child: BlocBuilder<ThemeModeCubit, ThemeMode>(
+            builder: (context, mode) => MaterialApp(
+              title: OrgDefaults.name,
+              debugShowCheckedModeBanner: false,
+              theme: buildTheme(Brightness.light, palette),
+              darkTheme: buildTheme(Brightness.dark, palette),
+              themeMode: mode,
+              home: BlocBuilder<AuthCubit, AuthState>(
+                builder: (context, state) => switch (state) {
+                  AuthChecking() => const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  ),
+                  AuthNeedsSetup() => const SetupScreen(),
+                  AuthSignedOut() => LoginScreen(
+                    key: ValueKey(state),
+                    state: state,
+                  ),
+                  AuthSignedIn() => const HomeShell(),
+                },
+              ),
             ),
           ),
         ),

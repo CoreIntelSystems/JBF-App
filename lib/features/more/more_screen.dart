@@ -9,6 +9,7 @@ import '../auth/auth_cubit.dart';
 import '../charts/charts_screen.dart';
 import '../contributions/contribution_types_screen.dart';
 import '../backup/backup_screen.dart';
+import '../cloud/cloud_sync_screen.dart';
 import '../events/events_screen.dart';
 import '../executives/executives_screen.dart';
 import '../finance/expenses_screen.dart';
@@ -97,6 +98,13 @@ class MoreScreen extends StatelessWidget {
             subtitle: const Text('Monthly dues and other contributions'),
             onTap: () => open(const ContributionTypesScreen()),
           ),
+          if (user?.can(Perm.backupManage) ?? false)
+            ListTile(
+              leading: const Icon(Icons.cloud_sync_outlined),
+              title: const Text('Cloud sync'),
+              subtitle: const Text('Share records with other phones online'),
+              onTap: () => open(const CloudSyncScreen()),
+            ),
           if ((user?.can(Perm.paymentsRecord) ?? false) ||
               (user?.can(Perm.backupManage) ?? false))
             ListTile(
@@ -164,10 +172,12 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.7.0 (Phase 3)',
+              applicationVersion: '0.8.0 (Phase 4: cloud sync)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
-                  'All data stays on this device in an encrypted database.',
+                  'Data is kept on this device in an encrypted database. '
+                  'With cloud sync on, it is also shared with your '
+                  'organisation\'s other phones.',
             ),
           ),
           const Divider(),

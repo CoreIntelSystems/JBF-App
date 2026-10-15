@@ -168,6 +168,28 @@ class $OrgSettingsTable extends OrgSettings
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deviceSeriesMeta = const VerificationMeta(
+    'deviceSeries',
+  );
+  @override
+  late final GeneratedColumn<String> deviceSeries = GeneratedColumn<String>(
+    'device_series',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -184,6 +206,8 @@ class $OrgSettingsTable extends OrgSettings
     nextReceiptNo,
     nextWelfareCaseNo,
     nextExpenseNo,
+    updatedAt,
+    deviceSeries,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -308,6 +332,21 @@ class $OrgSettingsTable extends OrgSettings
         ),
       );
     }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('device_series')) {
+      context.handle(
+        _deviceSeriesMeta,
+        deviceSeries.isAcceptableOrUnknown(
+          data['device_series']!,
+          _deviceSeriesMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -373,6 +412,14 @@ class $OrgSettingsTable extends OrgSettings
         DriftSqlType.int,
         data['${effectivePrefix}next_expense_no'],
       )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      ),
+      deviceSeries: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_series'],
+      ),
     );
   }
 
@@ -405,6 +452,13 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
 
   /// Expense vouchers look like `EXP-2026-000003`.
   final int nextExpenseNo;
+
+  /// When the shared profile (name, prefixes, colours) last changed.
+  final DateTime? updatedAt;
+
+  /// This phone's number series for cloud sync, e.g. `Z3`, so numbers made
+  /// on different phones never clash. Null on the main phone.
+  final String? deviceSeries;
   const OrgSetting({
     required this.id,
     required this.name,
@@ -420,6 +474,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     required this.nextReceiptNo,
     required this.nextWelfareCaseNo,
     required this.nextExpenseNo,
+    this.updatedAt,
+    this.deviceSeries,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -442,6 +498,12 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     map['next_receipt_no'] = Variable<int>(nextReceiptNo);
     map['next_welfare_case_no'] = Variable<int>(nextWelfareCaseNo);
     map['next_expense_no'] = Variable<int>(nextExpenseNo);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    if (!nullToAbsent || deviceSeries != null) {
+      map['device_series'] = Variable<String>(deviceSeries);
+    }
     return map;
   }
 
@@ -465,6 +527,12 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       nextReceiptNo: Value(nextReceiptNo),
       nextWelfareCaseNo: Value(nextWelfareCaseNo),
       nextExpenseNo: Value(nextExpenseNo),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      deviceSeries: deviceSeries == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deviceSeries),
     );
   }
 
@@ -488,6 +556,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       nextReceiptNo: serializer.fromJson<int>(json['nextReceiptNo']),
       nextWelfareCaseNo: serializer.fromJson<int>(json['nextWelfareCaseNo']),
       nextExpenseNo: serializer.fromJson<int>(json['nextExpenseNo']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      deviceSeries: serializer.fromJson<String?>(json['deviceSeries']),
     );
   }
   @override
@@ -508,6 +578,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       'nextReceiptNo': serializer.toJson<int>(nextReceiptNo),
       'nextWelfareCaseNo': serializer.toJson<int>(nextWelfareCaseNo),
       'nextExpenseNo': serializer.toJson<int>(nextExpenseNo),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'deviceSeries': serializer.toJson<String?>(deviceSeries),
     };
   }
 
@@ -526,6 +598,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     int? nextReceiptNo,
     int? nextWelfareCaseNo,
     int? nextExpenseNo,
+    Value<DateTime?> updatedAt = const Value.absent(),
+    Value<String?> deviceSeries = const Value.absent(),
   }) => OrgSetting(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -541,6 +615,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     nextReceiptNo: nextReceiptNo ?? this.nextReceiptNo,
     nextWelfareCaseNo: nextWelfareCaseNo ?? this.nextWelfareCaseNo,
     nextExpenseNo: nextExpenseNo ?? this.nextExpenseNo,
+    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+    deviceSeries: deviceSeries.present ? deviceSeries.value : this.deviceSeries,
   );
   OrgSetting copyWithCompanion(OrgSettingsCompanion data) {
     return OrgSetting(
@@ -574,6 +650,10 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
       nextExpenseNo: data.nextExpenseNo.present
           ? data.nextExpenseNo.value
           : this.nextExpenseNo,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deviceSeries: data.deviceSeries.present
+          ? data.deviceSeries.value
+          : this.deviceSeries,
     );
   }
 
@@ -593,7 +673,9 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
           ..write('receiptPrefix: $receiptPrefix, ')
           ..write('nextReceiptNo: $nextReceiptNo, ')
           ..write('nextWelfareCaseNo: $nextWelfareCaseNo, ')
-          ..write('nextExpenseNo: $nextExpenseNo')
+          ..write('nextExpenseNo: $nextExpenseNo, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deviceSeries: $deviceSeries')
           ..write(')'))
         .toString();
   }
@@ -614,6 +696,8 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
     nextReceiptNo,
     nextWelfareCaseNo,
     nextExpenseNo,
+    updatedAt,
+    deviceSeries,
   );
   @override
   bool operator ==(Object other) =>
@@ -632,7 +716,9 @@ class OrgSetting extends DataClass implements Insertable<OrgSetting> {
           other.receiptPrefix == this.receiptPrefix &&
           other.nextReceiptNo == this.nextReceiptNo &&
           other.nextWelfareCaseNo == this.nextWelfareCaseNo &&
-          other.nextExpenseNo == this.nextExpenseNo);
+          other.nextExpenseNo == this.nextExpenseNo &&
+          other.updatedAt == this.updatedAt &&
+          other.deviceSeries == this.deviceSeries);
 }
 
 class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
@@ -650,6 +736,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
   final Value<int> nextReceiptNo;
   final Value<int> nextWelfareCaseNo;
   final Value<int> nextExpenseNo;
+  final Value<DateTime?> updatedAt;
+  final Value<String?> deviceSeries;
   const OrgSettingsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -665,6 +753,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     this.nextReceiptNo = const Value.absent(),
     this.nextWelfareCaseNo = const Value.absent(),
     this.nextExpenseNo = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deviceSeries = const Value.absent(),
   });
   OrgSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -681,6 +771,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     this.nextReceiptNo = const Value.absent(),
     this.nextWelfareCaseNo = const Value.absent(),
     this.nextExpenseNo = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deviceSeries = const Value.absent(),
   }) : name = Value(name),
        shortName = Value(shortName),
        memberIdPrefix = Value(memberIdPrefix);
@@ -699,6 +791,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     Expression<int>? nextReceiptNo,
     Expression<int>? nextWelfareCaseNo,
     Expression<int>? nextExpenseNo,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? deviceSeries,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -715,6 +809,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
       if (nextReceiptNo != null) 'next_receipt_no': nextReceiptNo,
       if (nextWelfareCaseNo != null) 'next_welfare_case_no': nextWelfareCaseNo,
       if (nextExpenseNo != null) 'next_expense_no': nextExpenseNo,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deviceSeries != null) 'device_series': deviceSeries,
     });
   }
 
@@ -733,6 +829,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     Value<int>? nextReceiptNo,
     Value<int>? nextWelfareCaseNo,
     Value<int>? nextExpenseNo,
+    Value<DateTime?>? updatedAt,
+    Value<String?>? deviceSeries,
   }) {
     return OrgSettingsCompanion(
       id: id ?? this.id,
@@ -749,6 +847,8 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
       nextReceiptNo: nextReceiptNo ?? this.nextReceiptNo,
       nextWelfareCaseNo: nextWelfareCaseNo ?? this.nextWelfareCaseNo,
       nextExpenseNo: nextExpenseNo ?? this.nextExpenseNo,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deviceSeries: deviceSeries ?? this.deviceSeries,
     );
   }
 
@@ -797,6 +897,12 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
     if (nextExpenseNo.present) {
       map['next_expense_no'] = Variable<int>(nextExpenseNo.value);
     }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deviceSeries.present) {
+      map['device_series'] = Variable<String>(deviceSeries.value);
+    }
     return map;
   }
 
@@ -816,7 +922,9 @@ class OrgSettingsCompanion extends UpdateCompanion<OrgSetting> {
           ..write('receiptPrefix: $receiptPrefix, ')
           ..write('nextReceiptNo: $nextReceiptNo, ')
           ..write('nextWelfareCaseNo: $nextWelfareCaseNo, ')
-          ..write('nextExpenseNo: $nextExpenseNo')
+          ..write('nextExpenseNo: $nextExpenseNo, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deviceSeries: $deviceSeries')
           ..write(')'))
         .toString();
   }
@@ -16147,6 +16255,8 @@ typedef $$OrgSettingsTableCreateCompanionBuilder =
       Value<int> nextReceiptNo,
       Value<int> nextWelfareCaseNo,
       Value<int> nextExpenseNo,
+      Value<DateTime?> updatedAt,
+      Value<String?> deviceSeries,
     });
 typedef $$OrgSettingsTableUpdateCompanionBuilder =
     OrgSettingsCompanion Function({
@@ -16164,6 +16274,8 @@ typedef $$OrgSettingsTableUpdateCompanionBuilder =
       Value<int> nextReceiptNo,
       Value<int> nextWelfareCaseNo,
       Value<int> nextExpenseNo,
+      Value<DateTime?> updatedAt,
+      Value<String?> deviceSeries,
     });
 
 class $$OrgSettingsTableFilterComposer
@@ -16242,6 +16354,16 @@ class $$OrgSettingsTableFilterComposer
 
   ColumnFilters<int> get nextExpenseNo => $composableBuilder(
     column: $table.nextExpenseNo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceSeries => $composableBuilder(
+    column: $table.deviceSeries,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -16324,6 +16446,16 @@ class $$OrgSettingsTableOrderingComposer
     column: $table.nextExpenseNo,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceSeries => $composableBuilder(
+    column: $table.deviceSeries,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$OrgSettingsTableAnnotationComposer
@@ -16392,6 +16524,14 @@ class $$OrgSettingsTableAnnotationComposer
     column: $table.nextExpenseNo,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceSeries => $composableBuilder(
+    column: $table.deviceSeries,
+    builder: (column) => column,
+  );
 }
 
 class $$OrgSettingsTableTableManager
@@ -16439,6 +16579,8 @@ class $$OrgSettingsTableTableManager
                 Value<int> nextReceiptNo = const Value.absent(),
                 Value<int> nextWelfareCaseNo = const Value.absent(),
                 Value<int> nextExpenseNo = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<String?> deviceSeries = const Value.absent(),
               }) => OrgSettingsCompanion(
                 id: id,
                 name: name,
@@ -16454,6 +16596,8 @@ class $$OrgSettingsTableTableManager
                 nextReceiptNo: nextReceiptNo,
                 nextWelfareCaseNo: nextWelfareCaseNo,
                 nextExpenseNo: nextExpenseNo,
+                updatedAt: updatedAt,
+                deviceSeries: deviceSeries,
               ),
           createCompanionCallback:
               ({
@@ -16471,6 +16615,8 @@ class $$OrgSettingsTableTableManager
                 Value<int> nextReceiptNo = const Value.absent(),
                 Value<int> nextWelfareCaseNo = const Value.absent(),
                 Value<int> nextExpenseNo = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<String?> deviceSeries = const Value.absent(),
               }) => OrgSettingsCompanion.insert(
                 id: id,
                 name: name,
@@ -16486,6 +16632,8 @@ class $$OrgSettingsTableTableManager
                 nextReceiptNo: nextReceiptNo,
                 nextWelfareCaseNo: nextWelfareCaseNo,
                 nextExpenseNo: nextExpenseNo,
+                updatedAt: updatedAt,
+                deviceSeries: deviceSeries,
               ),
           withReferenceMapper: (p0) => p0
               .map(

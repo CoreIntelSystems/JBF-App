@@ -13,6 +13,8 @@ import 'data/repositories/member_repository.dart';
 import 'data/repositories/payment_repository.dart';
 import 'data/repositories/welfare_repository.dart';
 import 'data/secure_store.dart';
+import 'data/sync/sync_api.dart';
+import 'data/sync/sync_service.dart';
 
 /// Everything the screens need, created once at start-up.
 class AppServices {
@@ -22,8 +24,15 @@ class AppServices {
     required this.deviceId,
     this.backup,
     Reminders? reminders,
+    SyncApi? syncApi,
+    SyncPrefs? syncPrefs,
   }) : audit = AuditRepository(db),
        reminders = reminders ?? MemoryReminders() {
+    sync = SyncService(
+      db,
+      syncApi ?? SyncApi.http(),
+      syncPrefs ?? SecureSyncPrefs(store),
+    );
     auth = AuthRepository(db, audit);
     members = MemberRepository(db, audit, scope: scope);
     dashboard = DashboardRepository(db, scope: scope);
@@ -51,6 +60,9 @@ class AppServices {
   late final EventsRepository events;
   late final AnalyticsRepository analytics;
   late final CollectionBatches batches;
+
+  /// Cloud sync with the organisation's other phones.
+  late final SyncService sync;
 
   /// Null in tests that do not use a database file.
   final BackupService? backup;

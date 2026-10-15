@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../domain/dues.dart';
 import '../access_scope.dart';
+import '../../core/ids.dart';
 import '../database.dart';
 import 'actor.dart';
 import 'audit_repository.dart';
@@ -206,14 +207,17 @@ class PaymentRepository {
     }
     return _db.transaction(() async {
       final org = await _db.select(_db.orgSettings).getSingle();
-      final receiptNo =
-          '${org.receiptPrefix}-${d.paidOn.year}-'
-          '${org.nextReceiptNo.toString().padLeft(6, '0')}';
+      final (receiptNo, next) = await _db.allocateNumber(
+        'payments',
+        'receipt_no',
+        org.nextReceiptNo,
+        (n) =>
+            '${withSeries(org.receiptPrefix, org.deviceSeries)}-'
+            '${d.paidOn.year}-${n.toString().padLeft(6, '0')}',
+      );
       await _db
           .update(_db.orgSettings)
-          .write(
-            OrgSettingsCompanion(nextReceiptNo: Value(org.nextReceiptNo + 1)),
-          );
+          .write(OrgSettingsCompanion(nextReceiptNo: Value(next)));
       final p = await _db
           .into(_db.payments)
           .insertReturning(

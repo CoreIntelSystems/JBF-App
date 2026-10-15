@@ -56,6 +56,54 @@ approves it.
 Every sign-in, edit, payment, void, approval, import and settings change,
 with who, when and on which phone. It cannot be edited or deleted.
 
+## Cloud sync (More > Cloud sync)
+
+Cloud sync shares one up-to-date record between all officers' phones over
+the internet. Every phone still works without internet; it saves changes
+and sends them the next time it is online. It syncs when the app opens,
+when you come back to it, every 5 minutes while it is open, and when you
+tap **Sync now**.
+
+**Start (once, on the main phone).**
+1. Open **More > Cloud sync > Join with a code** and enter the first code
+   CoreIntel gave you.
+2. Name the phone (for example "Main phone") and leave **Number series**
+   empty. This phone's records become the organisation's records in the
+   cloud.
+
+**Add a phone.**
+1. On the main phone, open **More > Cloud sync > Add a phone** and choose
+   *Officer phone* (or *Main phone* for someone who may also add phones).
+2. Send the code to the officer (Share or Copy). It works once and
+   expires after 7 days.
+3. On the new phone, install the app and tap **Join your organisation
+   with a code** on the first screen. Enter the code, a name for the
+   phone and a **number series** such as `Z3` or `TR`. Every phone except
+   the first needs its own series.
+4. The phone downloads all records. Sign in with the username and
+   password you created for that officer in **Users and roles**.
+
+**Number series.** Numbers made on a phone with a series include it, for
+example member `JBF-Z3-000001`, receipt `RCP-Z3-2026-000001`, voucher
+`EXP-Z3-2026-000001` and welfare case `WEL-Z3-2026-0001`, so two phones
+never give out the same number.
+
+**When two phones change the same record**, the latest change wins.
+Payments and expenses keep their original amount, member and date
+whichever phone sends what, and a void can never be undone. Welfare cases
+only move forward (pending, approved or rejected, paid). The audit log
+from every phone is kept.
+
+**Remove a phone** (lost, or the officer left): **More > Cloud sync >
+Phones**, then the bin icon. It stops syncing at once.
+
+**Sync issues.** If a record from another phone cannot be saved (for
+example two phones created the same username), Cloud sync shows a
+warning. Fix it on the main phone; the corrected record arrives on the
+next sync.
+
+With cloud sync on, collections files are no longer needed.
+
 ## Field phones
 
 The main phone (usually the Treasurer's or General Secretary's) holds the

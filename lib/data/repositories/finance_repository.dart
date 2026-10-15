@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/ids.dart';
 import '../database.dart';
 import 'actor.dart';
 import 'audit_repository.dart';
@@ -184,14 +185,17 @@ class FinanceRepository {
     }
     return _db.transaction(() async {
       final org = await _db.select(_db.orgSettings).getSingle();
-      final voucherNo =
-          'EXP-${d.paidOn.year}-'
-          '${org.nextExpenseNo.toString().padLeft(6, '0')}';
+      final (voucherNo, next) = await _db.allocateNumber(
+        'expenses',
+        'voucher_no',
+        org.nextExpenseNo,
+        (n) =>
+            '${withSeries('EXP', org.deviceSeries)}-${d.paidOn.year}-'
+            '${n.toString().padLeft(6, '0')}',
+      );
       await _db
           .update(_db.orgSettings)
-          .write(
-            OrgSettingsCompanion(nextExpenseNo: Value(org.nextExpenseNo + 1)),
-          );
+          .write(OrgSettingsCompanion(nextExpenseNo: Value(next)));
       final e = await _db
           .into(_db.expenses)
           .insertReturning(

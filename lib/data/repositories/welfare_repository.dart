@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../access_scope.dart';
+import '../../core/ids.dart';
 import '../database.dart';
 import 'actor.dart';
 import 'audit_repository.dart';
@@ -225,15 +226,17 @@ class WelfareRepository {
     return _db.transaction(() async {
       final org = await _db.select(_db.orgSettings).getSingle();
       final year = _now().year;
-      final caseNo =
-          'WEL-$year-${org.nextWelfareCaseNo.toString().padLeft(4, '0')}';
+      final (caseNo, next) = await _db.allocateNumber(
+        'welfare_cases',
+        'case_no',
+        org.nextWelfareCaseNo,
+        (n) =>
+            '${withSeries('WEL', org.deviceSeries)}-$year-'
+            '${n.toString().padLeft(4, '0')}',
+      );
       await _db
           .update(_db.orgSettings)
-          .write(
-            OrgSettingsCompanion(
-              nextWelfareCaseNo: Value(org.nextWelfareCaseNo + 1),
-            ),
-          );
+          .write(OrgSettingsCompanion(nextWelfareCaseNo: Value(next)));
       final c = await _db
           .into(_db.welfareCases)
           .insertReturning(

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/repositories/auth_repository.dart';
 import '../backup/backup_screen.dart';
+import '../cloud/cloud_sync_screen.dart';
 import 'auth_cubit.dart';
 import 'brand_header.dart';
 
@@ -149,6 +150,18 @@ class _SetupScreenState extends State<SetupScreen> {
                             ),
                       icon: const Icon(Icons.restore),
                       label: const Text('New phone? Restore from a backup'),
+                    ),
+                    TextButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const JoinCloudScreen(fromSetup: true),
+                              ),
+                            ),
+                      icon: const Icon(Icons.cloud_download_outlined),
+                      label: const Text('Join your organisation with a code'),
                     ),
                   ],
                 ),

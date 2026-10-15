@@ -10,6 +10,37 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    final syncTriggers = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'trigger' "
+          "AND name LIKE 'sync_%'",
+        )
+        .get();
+    for (final t in syncTriggers) {
+      await db.customStatement('DROP TRIGGER ${t.read<String>('name')}');
+    }
+    for (final t in [
+      'sync_outbox',
+      'sync_flags',
+      'sync_state',
+      'sync_issues',
+    ]) {
+      await db.customStatement('DROP TABLE $t');
+    }
+    await db.customStatement('DROP TRIGGER welfare_cases_flow');
+    await db.customStatement('''
+      CREATE TRIGGER welfare_cases_flow BEFORE UPDATE ON welfare_cases
+      WHEN NEW.case_no IS NOT OLD.case_no
+      BEGIN SELECT RAISE(ABORT, 'This welfare case can no longer be changed'); END
+    ''');
+    await db.customStatement('ALTER TABLE org_settings DROP COLUMN updated_at');
+    await db.customStatement(
+      'ALTER TABLE org_settings DROP COLUMN device_series',
+    );
+    if (version >= 6) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     await db.customStatement('ALTER TABLE users DROP COLUMN zone_ids');
     if (version >= 5) {
       await db.customStatement('PRAGMA user_version = $version');
@@ -89,6 +120,21 @@ void main() {
         )
         .get();
     expect(triggers, hasLength(6));
+    final flow = await db
+        .customSelect(
+          "SELECT sql FROM sqlite_master WHERE name = 'welfare_cases_flow'",
+        )
+        .getSingle();
+    expect(flow.read<String>('sql'), contains('applying'));
+    final syncTriggers = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'trigger' "
+          "AND name LIKE 'sync_%'",
+        )
+        .get();
+    // Insert triggers on 19 tables; update and stamp triggers on 17.
+    expect(syncTriggers, hasLength(19 + 17 * 2));
+    expect(org.deviceSeries, isNull);
     expect(await db.select(db.expenseCategories).get(), hasLength(10));
     expect(await db.select(db.executivePositions).get(), hasLength(16));
     expect(await db.select(db.events).get(), isEmpty);
@@ -118,7 +164,7 @@ void main() {
     });
   }
 
-  for (final from in [1, 2, 3, 4, 5]) {
+  for (final from in [1, 2, 3, 4, 5, 6]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

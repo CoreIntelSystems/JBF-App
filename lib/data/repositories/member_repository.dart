@@ -263,12 +263,16 @@ class MemberRepository {
 
     return _db.transaction(() async {
       final org = await _db.select(_db.orgSettings).getSingle();
-      final memberNo = formatMemberNo(org.memberIdPrefix, org.nextMemberNo);
+      final (memberNo, next) = await _db.allocateNumber(
+        'members',
+        'member_no',
+        org.nextMemberNo,
+        (n) =>
+            formatMemberNo(withSeries(org.memberIdPrefix, org.deviceSeries), n),
+      );
       await _db
           .update(_db.orgSettings)
-          .write(
-            OrgSettingsCompanion(nextMemberNo: Value(org.nextMemberNo + 1)),
-          );
+          .write(OrgSettingsCompanion(nextMemberNo: Value(next)));
 
       final member = await _db
           .into(_db.members)

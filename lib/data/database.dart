@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../core/ids.dart';
 import '../core/org_config.dart';
 import '../domain/permissions.dart';
+import 'sync/sync_schema.dart';
 
 part 'database.g.dart';
 
@@ -48,6 +49,13 @@ class OrgSettings extends Table {
 
   /// Expense vouchers look like `EXP-2026-000003`.
   IntColumn get nextExpenseNo => integer().withDefault(const Constant(1))();
+
+  /// When the shared profile (name, prefixes, colours) last changed.
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+
+  /// This phone's number series for cloud sync, e.g. `Z3`, so numbers made
+  /// on different phones never clash. Null on the main phone.
+  TextColumn get deviceSeries => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -509,12 +517,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
+      await createSyncTables(customStatement);
       await _createGuards();
       await _createPaymentGuards();
       await _seed();
@@ -524,8 +533,10 @@ class AppDatabase extends _$AppDatabase {
       await _createExpenseGuards();
       await _seedExpenseCategories();
       await _seedPositions();
+      await createSyncTriggers(customStatement, _columnsOf);
     },
     onUpgrade: (m, from, to) async {
+      if (from < 7) await createSyncTables(customStatement);
       if (from < 2) {
         await m.addColumn(orgSettings, orgSettings.receiptPrefix);
         await m.addColumn(orgSettings, orgSettings.nextReceiptNo);
@@ -588,11 +599,46 @@ class AppDatabase extends _$AppDatabase {
       if (from < 6) {
         await m.addColumn(users, users.zoneIds);
       }
+      if (from < 7) {
+        await m.addColumn(orgSettings, orgSettings.updatedAt);
+        await m.addColumn(orgSettings, orgSettings.deviceSeries);
+        if (from >= 3) {
+          await customStatement('DROP TRIGGER welfare_cases_flow');
+          await _createWelfareFlowGuard();
+        }
+        await createSyncTriggers(customStatement, _columnsOf);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  Future<List<String>> _columnsOf(String table) async => [
+    for (final r in await customSelect('PRAGMA table_info($table)').get())
+      r.read<String>('name'),
+  ];
+
+  /// The first number from [start] that [format] turns into a value not
+  /// yet used in [table].[column], and the counter to store next. Other
+  /// phones' numbers arrive through sync, so a counter alone is not enough.
+  Future<(String, int)> allocateNumber(
+    String table,
+    String column,
+    int start,
+    String Function(int n) format,
+  ) async {
+    var n = start;
+    while (true) {
+      final value = format(n);
+      final taken = await customSelect(
+        'SELECT 1 FROM $table WHERE $column = ? LIMIT 1',
+        variables: [Variable.withString(value)],
+      ).getSingleOrNull();
+      if (taken == null) return (value, n + 1);
+      n++;
+    }
+  }
 
   /// Database-level guards that back up the domain rules, so no code path
   /// (including future imports) can break them.
@@ -655,16 +701,24 @@ class AppDatabase extends _$AppDatabase {
       CREATE TRIGGER welfare_cases_no_delete BEFORE DELETE ON welfare_cases
       BEGIN SELECT RAISE(ABORT, 'Welfare cases cannot be deleted'); END
     ''');
+    await _createWelfareFlowGuard();
+  }
+
+  /// Changes from other phones may skip a step (approved and paid there
+  /// before this phone heard of it), so the guard does not apply to them;
+  /// the cloud keeps cases moving forward instead.
+  Future<void> _createWelfareFlowGuard() async {
     await customStatement('''
       CREATE TRIGGER welfare_cases_flow BEFORE UPDATE ON welfare_cases
-      WHEN (NEW.amount IS NOT OLD.amount AND OLD.status <> 'pending')
+      WHEN ((NEW.amount IS NOT OLD.amount AND OLD.status <> 'pending')
         OR NEW.member_id IS NOT OLD.member_id
         OR NEW.case_no IS NOT OLD.case_no
         OR NOT (
           NEW.status = OLD.status
           OR (OLD.status = 'pending' AND NEW.status IN ('approved', 'rejected'))
           OR (OLD.status = 'approved' AND NEW.status = 'paid')
-        )
+        ))
+        AND (SELECT applying FROM sync_flags WHERE id = 1) = 0
       BEGIN SELECT RAISE(ABORT, 'This welfare case can no longer be changed'); END
     ''');
   }

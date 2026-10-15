@@ -4,12 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jbf_app/app.dart';
 import 'package:jbf_app/app_services.dart';
 import 'package:jbf_app/data/connection.dart';
+import 'package:jbf_app/data/repositories/audit_repository.dart';
+import 'package:jbf_app/data/repositories/auth_repository.dart';
 import 'package:jbf_app/data/secure_store.dart';
+import 'package:jbf_app/data/sync/sync_service.dart';
+import 'package:jbf_app/domain/password_hasher.dart';
 import 'package:jbf_app/features/auth/biometrics.dart';
+import 'package:jbf_app/features/cloud/cloud_sync_screen.dart';
 import 'package:jbf_app/features/dashboard/dashboard_screen.dart';
 import 'package:jbf_app/features/members/member_form_screen.dart';
 import 'package:jbf_app/features/more/more_screen.dart';
 import 'package:jbf_app/features/payments/record_payment_screen.dart';
+
+import 'fake_cloud.dart';
 
 class _NoBiometrics extends Biometrics {
   @override
@@ -18,8 +25,12 @@ class _NoBiometrics extends Biometrics {
 
 /// Pumps until [finder] appears, letting real async work (isolates, the
 /// database) run between frames.
-Future<void> pumpUntil(WidgetTester tester, Finder finder) async {
-  for (var i = 0; i < 100; i++) {
+Future<void> pumpUntil(
+  WidgetTester tester,
+  Finder finder, {
+  int tries = 100,
+}) async {
+  for (var i = 0; i < tries; i++) {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 20)),
     );
@@ -376,5 +387,63 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     // The in-memory database is dropped with the test; closing it from the
     // fake-async test zone would wait on stream queries that never resume.
+  });
+
+  testWidgets('a new phone joins with a code and goes to sign in', (
+    tester,
+  ) async {
+    FlutterSecureStorage.setMockInitialValues({});
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final cloud = FakeCloud();
+    final mainDb = openInMemoryDatabase();
+    final code = await tester.runAsync(() async {
+      await AuthRepository(
+        mainDb,
+        AuditRepository(mainDb),
+        hasher: const PasswordHasher(iterations: 10),
+      ).createInitialAdmin(
+        displayName: 'Ama Owusu',
+        username: 'ama',
+        password: 'secret1',
+        deviceId: 'main',
+      );
+      final mainSync = SyncService(mainDb, cloud.api, MemorySyncPrefs());
+      await mainSync.load();
+      await mainSync.join(code: cloud.newCode(admin: true), deviceName: 'Main');
+      final c = await mainSync.createCode();
+      await mainSync.close();
+      return c;
+    });
+
+    final services = AppServices(
+      db: openInMemoryDatabase(),
+      store: SecureStore(),
+      deviceId: 'new',
+      syncApi: cloud.api,
+      syncPrefs: MemorySyncPrefs(),
+    );
+    await tester.pumpWidget(
+      JbfApp(services: services, biometrics: _NoBiometrics()),
+    );
+    await pumpUntil(tester, find.text('Join your organisation with a code'));
+    await tester.ensureVisible(find.text('Join your organisation with a code'));
+    await tester.tap(find.text('Join your organisation with a code'));
+    await pumpUntil(tester, find.text('Number series'));
+    final fields = find.descendant(
+      of: find.byType(JoinCloudScreen),
+      matching: find.byType(TextFormField),
+    );
+    await tester.enterText(fields.at(0), code!.toLowerCase());
+    await tester.enterText(fields.at(1), 'Treasurer');
+    await tester.enterText(fields.at(2), 'T1');
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Join'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Join'));
+    await pumpUntil(tester, find.text('Sign in'), tries: 600);
+    expect(services.sync.state.credentials?.series, 'T1');
+    services.sync.stopAuto();
+    await tester.runAsync(mainDb.close);
   });
 }

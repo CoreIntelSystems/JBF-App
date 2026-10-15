@@ -95,6 +95,12 @@ class Members extends Table with SyncColumns {
   )();
   DateTimeColumn get statusDate => dateTime().nullable()();
   TextColumn get photoPath => text().nullable()();
+
+  /// Imported from the founding list: the member may correct their own
+  /// name, contact details and zones from their member page. Members
+  /// registered later are updated by the Founder, General Secretary or
+  /// their Zone Secretary.
+  BoolColumn get selfEdit => boolean().withDefault(const Constant(false))();
 }
 
 @TableIndex(name: 'member_zones_member', columns: {#memberId})
@@ -545,7 +551,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -681,6 +687,10 @@ class AppDatabase extends _$AppDatabase {
           for (final key in ['super_admin', 'founder', 'general_secretary'])
             key: {Perm.announce},
         });
+      }
+      if (from < 11) {
+        await m.addColumn(members, members.selfEdit);
+        await createSyncTriggers(customStatement, _columnsOf);
       }
     },
     beforeOpen: (details) async {

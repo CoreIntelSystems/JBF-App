@@ -64,6 +64,22 @@ members are taken off the phone.
 | Auditor | View finance, reports and the audit log |
 | Electoral Commission | See members |
 
+## Importing the member list (Members > upload icon)
+
+Use this once, on the main phone, to register many people from an Excel
+(.xlsx) or CSV list. The first row needs headings: Name, Phone 1, Phone 2,
+Phone 3, and optionally Zone and Zone 2 (zone numbers 1 to 8).
+
+- Names ending "King June" or "Queen June" are tidied and set the gender.
+- Rows with no name, no usable phone, or a number already registered are
+  left out. You can share the list of left-out rows afterwards.
+- People without a zone in the file all go into the zone you choose on the
+  screen, or are left out.
+- Imported members may check and correct their own name, contact details
+  and zone (Me > Edit my details and zones). Members you register later are
+  updated by the Founder, General Secretary or the member's Zone Secretary
+  or Mayor.
+
 ## Old username logins (More > Old username logins)
 
 Older username logins are kept for phones set up before member sign-in.

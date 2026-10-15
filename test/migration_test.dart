@@ -12,6 +12,15 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    // v11: members the founding list may correct for themselves.
+    for (final t in ['ins', 'upd', 'stamp']) {
+      await db.customStatement('DROP TRIGGER IF EXISTS sync_members_$t');
+    }
+    await db.customStatement('ALTER TABLE members DROP COLUMN self_edit');
+    if (version >= 10) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     // v10: announcements.
     for (final r in await db.select(db.roles).get()) {
       final perms = decodePermissions(r.permissions)..remove(Perm.announce);
@@ -172,6 +181,13 @@ void main() {
 
   Future<void> expectCurrent(AppDatabase db) async {
     expect(await db.select(db.zones).get(), hasLength(8));
+    final memberColumns = await db
+        .customSelect('PRAGMA table_info(members)')
+        .get();
+    expect(
+      memberColumns.map((c) => c.read<String>('name')),
+      contains('self_edit'),
+    );
     expect(await db.select(db.contributionTypes).get(), hasLength(7));
     expect(await db.select(db.welfareCaseTypes).get(), hasLength(7));
     final org = await db.select(db.orgSettings).getSingle();
@@ -261,7 +277,7 @@ void main() {
     );
   }
 
-  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

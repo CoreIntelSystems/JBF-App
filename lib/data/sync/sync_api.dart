@@ -270,6 +270,18 @@ class SyncApi {
       ((await _call('member_home', {'token': sessionToken}))! as Map)
           .cast<String, Object?>();
 
+  /// A member from the founding list corrects their own details and
+  /// zones. [zoneIds] null leaves their zones as they are.
+  Future<void> memberUpdateProfile(
+    String sessionToken,
+    Map<String, String?> patch, {
+    List<String>? zoneIds,
+  }) => _call('member_update_profile', {
+    'token': sessionToken,
+    'patch': patch,
+    'zone_ids': zoneIds,
+  });
+
   Future<void> memberSignOut(String sessionToken) =>
       _call('member_sign_out', {'token': sessionToken});
 
@@ -546,6 +558,10 @@ class MemberHome {
     required this.announcements,
     this.warnings = const [],
     this.roles = const [],
+    this.selfEdit = false,
+    this.profile = const {},
+    this.zoneOptions = const [],
+    this.zoneIds = const [],
   });
   final MemberStatement statement;
 
@@ -562,6 +578,18 @@ class MemberHome {
 
   /// The executive roles this member holds, for their ID card.
   final List<String> roles;
+
+  /// The member may correct their own details and zones.
+  final bool selfEdit;
+
+  /// Their current details, by field name (only when [selfEdit]).
+  final Map<String, String> profile;
+
+  /// Zones they can choose from: (id, name).
+  final List<(String, String)> zoneOptions;
+
+  /// Their current zones' ids, main zone first.
+  final List<String> zoneIds;
 
   static List<Map> _list(Object? v) => (v as List? ?? const []).cast<Map>();
 
@@ -608,6 +636,15 @@ class MemberHome {
       for (final a in (r['announcements'] as List? ?? const [])) '$a',
     ],
     roles: [for (final x in (r['roles'] as List? ?? const [])) '$x'],
+    selfEdit: r['self_edit'] == true,
+    profile: {
+      for (final e in ((r['profile'] as Map?) ?? const {}).entries)
+        if (e.value != null) '${e.key}': '${e.value}',
+    },
+    zoneOptions: [
+      for (final z in _list(r['zone_options'])) ('${z['id']}', '${z['name']}'),
+    ],
+    zoneIds: [for (final z in (r['zone_ids'] as List? ?? const [])) '$z'],
     warnings: [
       for (final w in _list(r['warnings']))
         (DateTime.tryParse('${w['at']}')?.toLocal(), '${w['details']}'),

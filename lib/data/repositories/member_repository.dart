@@ -28,6 +28,7 @@ class MemberDraft {
     this.photoPath,
     required this.zoneIds,
     this.primaryZoneId,
+    this.selfEdit,
   });
 
   factory MemberDraft.fromMember(
@@ -76,6 +77,9 @@ class MemberDraft {
   List<String> zoneIds;
   String? primaryZoneId;
 
+  /// Lets the member correct their own details; null leaves it unchanged.
+  bool? selfEdit;
+
   MembersCompanion _companion() => MembersCompanion(
     fullName: Value(fullName.trim()),
     gender: Value(_clean(gender)),
@@ -93,6 +97,7 @@ class MemberDraft {
     emergencyPhone: Value(_clean(emergencyPhone)),
     dateJoined: Value(dateJoined),
     photoPath: Value(photoPath),
+    selfEdit: selfEdit == null ? const Value.absent() : Value(selfEdit!),
   );
 
   static String? _clean(String? v) {

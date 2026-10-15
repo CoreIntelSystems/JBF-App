@@ -1854,6 +1854,21 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _selfEditMeta = const VerificationMeta(
+    'selfEdit',
+  );
+  @override
+  late final GeneratedColumn<bool> selfEdit = GeneratedColumn<bool>(
+    'self_edit',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("self_edit" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1881,6 +1896,7 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
     status,
     statusDate,
     photoPath,
+    selfEdit,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2056,6 +2072,12 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
         photoPath.isAcceptableOrUnknown(data['photo_path']!, _photoPathMeta),
       );
     }
+    if (data.containsKey('self_edit')) {
+      context.handle(
+        _selfEditMeta,
+        selfEdit.isAcceptableOrUnknown(data['self_edit']!, _selfEditMeta),
+      );
+    }
     return context;
   }
 
@@ -2167,6 +2189,10 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
         DriftSqlType.string,
         data['${effectivePrefix}photo_path'],
       ),
+      selfEdit: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}self_edit'],
+      )!,
     );
   }
 
@@ -2205,6 +2231,12 @@ class Member extends DataClass implements Insertable<Member> {
   final MemberStatus status;
   final DateTime? statusDate;
   final String? photoPath;
+
+  /// Imported from the founding list: the member may correct their own
+  /// name, contact details and zones from their member page. Members
+  /// registered later are updated by the Founder, General Secretary or
+  /// their Zone Secretary.
+  final bool selfEdit;
   const Member({
     required this.id,
     required this.createdAt,
@@ -2231,6 +2263,7 @@ class Member extends DataClass implements Insertable<Member> {
     required this.status,
     this.statusDate,
     this.photoPath,
+    required this.selfEdit,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2300,6 +2333,7 @@ class Member extends DataClass implements Insertable<Member> {
     if (!nullToAbsent || photoPath != null) {
       map['photo_path'] = Variable<String>(photoPath);
     }
+    map['self_edit'] = Variable<bool>(selfEdit);
     return map;
   }
 
@@ -2366,6 +2400,7 @@ class Member extends DataClass implements Insertable<Member> {
       photoPath: photoPath == null && nullToAbsent
           ? const Value.absent()
           : Value(photoPath),
+      selfEdit: Value(selfEdit),
     );
   }
 
@@ -2402,6 +2437,7 @@ class Member extends DataClass implements Insertable<Member> {
       ),
       statusDate: serializer.fromJson<DateTime?>(json['statusDate']),
       photoPath: serializer.fromJson<String?>(json['photoPath']),
+      selfEdit: serializer.fromJson<bool>(json['selfEdit']),
     );
   }
   @override
@@ -2435,6 +2471,7 @@ class Member extends DataClass implements Insertable<Member> {
       ),
       'statusDate': serializer.toJson<DateTime?>(statusDate),
       'photoPath': serializer.toJson<String?>(photoPath),
+      'selfEdit': serializer.toJson<bool>(selfEdit),
     };
   }
 
@@ -2464,6 +2501,7 @@ class Member extends DataClass implements Insertable<Member> {
     MemberStatus? status,
     Value<DateTime?> statusDate = const Value.absent(),
     Value<String?> photoPath = const Value.absent(),
+    bool? selfEdit,
   }) => Member(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -2496,6 +2534,7 @@ class Member extends DataClass implements Insertable<Member> {
     status: status ?? this.status,
     statusDate: statusDate.present ? statusDate.value : this.statusDate,
     photoPath: photoPath.present ? photoPath.value : this.photoPath,
+    selfEdit: selfEdit ?? this.selfEdit,
   );
   Member copyWithCompanion(MembersCompanion data) {
     return Member(
@@ -2542,6 +2581,7 @@ class Member extends DataClass implements Insertable<Member> {
           ? data.statusDate.value
           : this.statusDate,
       photoPath: data.photoPath.present ? data.photoPath.value : this.photoPath,
+      selfEdit: data.selfEdit.present ? data.selfEdit.value : this.selfEdit,
     );
   }
 
@@ -2572,7 +2612,8 @@ class Member extends DataClass implements Insertable<Member> {
           ..write('dateJoined: $dateJoined, ')
           ..write('status: $status, ')
           ..write('statusDate: $statusDate, ')
-          ..write('photoPath: $photoPath')
+          ..write('photoPath: $photoPath, ')
+          ..write('selfEdit: $selfEdit')
           ..write(')'))
         .toString();
   }
@@ -2604,6 +2645,7 @@ class Member extends DataClass implements Insertable<Member> {
     status,
     statusDate,
     photoPath,
+    selfEdit,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2633,7 +2675,8 @@ class Member extends DataClass implements Insertable<Member> {
           other.dateJoined == this.dateJoined &&
           other.status == this.status &&
           other.statusDate == this.statusDate &&
-          other.photoPath == this.photoPath);
+          other.photoPath == this.photoPath &&
+          other.selfEdit == this.selfEdit);
 }
 
 class MembersCompanion extends UpdateCompanion<Member> {
@@ -2662,6 +2705,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
   final Value<MemberStatus> status;
   final Value<DateTime?> statusDate;
   final Value<String?> photoPath;
+  final Value<bool> selfEdit;
   final Value<int> rowid;
   const MembersCompanion({
     this.id = const Value.absent(),
@@ -2689,6 +2733,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
     this.status = const Value.absent(),
     this.statusDate = const Value.absent(),
     this.photoPath = const Value.absent(),
+    this.selfEdit = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MembersCompanion.insert({
@@ -2717,6 +2762,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
     this.status = const Value.absent(),
     this.statusDate = const Value.absent(),
     this.photoPath = const Value.absent(),
+    this.selfEdit = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : memberNo = Value(memberNo),
        fullName = Value(fullName),
@@ -2747,6 +2793,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
     Expression<String>? status,
     Expression<DateTime>? statusDate,
     Expression<String>? photoPath,
+    Expression<bool>? selfEdit,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2775,6 +2822,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
       if (status != null) 'status': status,
       if (statusDate != null) 'status_date': statusDate,
       if (photoPath != null) 'photo_path': photoPath,
+      if (selfEdit != null) 'self_edit': selfEdit,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2805,6 +2853,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
     Value<MemberStatus>? status,
     Value<DateTime?>? statusDate,
     Value<String?>? photoPath,
+    Value<bool>? selfEdit,
     Value<int>? rowid,
   }) {
     return MembersCompanion(
@@ -2833,6 +2882,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
       status: status ?? this.status,
       statusDate: statusDate ?? this.statusDate,
       photoPath: photoPath ?? this.photoPath,
+      selfEdit: selfEdit ?? this.selfEdit,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2917,6 +2967,9 @@ class MembersCompanion extends UpdateCompanion<Member> {
     if (photoPath.present) {
       map['photo_path'] = Variable<String>(photoPath.value);
     }
+    if (selfEdit.present) {
+      map['self_edit'] = Variable<bool>(selfEdit.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2951,6 +3004,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
           ..write('status: $status, ')
           ..write('statusDate: $statusDate, ')
           ..write('photoPath: $photoPath, ')
+          ..write('selfEdit: $selfEdit, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -18302,6 +18356,7 @@ typedef $$MembersTableCreateCompanionBuilder =
       Value<MemberStatus> status,
       Value<DateTime?> statusDate,
       Value<String?> photoPath,
+      Value<bool> selfEdit,
       Value<int> rowid,
     });
 typedef $$MembersTableUpdateCompanionBuilder =
@@ -18331,6 +18386,7 @@ typedef $$MembersTableUpdateCompanionBuilder =
       Value<MemberStatus> status,
       Value<DateTime?> statusDate,
       Value<String?> photoPath,
+      Value<bool> selfEdit,
       Value<int> rowid,
     });
 
@@ -18604,6 +18660,11 @@ class $$MembersTableFilterComposer
 
   ColumnFilters<String> get photoPath => $composableBuilder(
     column: $table.photoPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get selfEdit => $composableBuilder(
+    column: $table.selfEdit,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18916,6 +18977,11 @@ class $$MembersTableOrderingComposer
     column: $table.photoPath,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get selfEdit => $composableBuilder(
+    column: $table.selfEdit,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MembersTableAnnotationComposer
@@ -19019,6 +19085,9 @@ class $$MembersTableAnnotationComposer
 
   GeneratedColumn<String> get photoPath =>
       $composableBuilder(column: $table.photoPath, builder: (column) => column);
+
+  GeneratedColumn<bool> get selfEdit =>
+      $composableBuilder(column: $table.selfEdit, builder: (column) => column);
 
   Expression<T> memberZonesRefs<T extends Object>(
     Expression<T> Function($$MemberZonesTableAnnotationComposer a) f,
@@ -19258,6 +19327,7 @@ class $$MembersTableTableManager
                 Value<MemberStatus> status = const Value.absent(),
                 Value<DateTime?> statusDate = const Value.absent(),
                 Value<String?> photoPath = const Value.absent(),
+                Value<bool> selfEdit = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MembersCompanion(
                 id: id,
@@ -19285,6 +19355,7 @@ class $$MembersTableTableManager
                 status: status,
                 statusDate: statusDate,
                 photoPath: photoPath,
+                selfEdit: selfEdit,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -19314,6 +19385,7 @@ class $$MembersTableTableManager
                 Value<MemberStatus> status = const Value.absent(),
                 Value<DateTime?> statusDate = const Value.absent(),
                 Value<String?> photoPath = const Value.absent(),
+                Value<bool> selfEdit = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MembersCompanion.insert(
                 id: id,
@@ -19341,6 +19413,7 @@ class $$MembersTableTableManager
                 status: status,
                 statusDate: statusDate,
                 photoPath: photoPath,
+                selfEdit: selfEdit,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

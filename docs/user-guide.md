@@ -152,3 +152,9 @@ Members can also check their own dues and receipts online at
 It shows what the phones have synced to the cloud. Five wrong tries lock
 that member ID for 15 minutes. If a member's phone number is wrong or
 missing, correct it on their member page.
+
+If you were on the founding member list, your Me page has **Edit my
+details and zones**. Check that your name, phone number and zone are right
+and correct anything that is not, then save. Members registered later are
+updated by their Zone Secretary.
+

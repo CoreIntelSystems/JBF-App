@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jbf_app/app.dart';
 import 'package:jbf_app/app_services.dart';
+import 'package:jbf_app/features/portal/member_profile_screen.dart';
 import 'package:jbf_app/data/connection.dart';
 import 'package:jbf_app/data/repositories/audit_repository.dart';
 import 'package:jbf_app/data/repositories/auth_repository.dart';
@@ -456,8 +457,12 @@ void main() {
     addTearDown(tester.view.reset);
     final asked = <Map<String, Object?>>[];
     final sent = <String>[];
+    final saved = <Map<String, Object?>>[];
     final api = SyncApi((fn, args) async {
       switch (fn) {
+        case 'member_update_profile':
+          saved.add(args);
+          return {'ok': true};
         case 'fn:member-auth':
           asked.add(args);
           if (args['phone'] != '0241234567') {
@@ -520,6 +525,18 @@ void main() {
               },
             ],
             'announcements': [],
+            'roles': ['Zone Secretary (Zone 1)'],
+            'self_edit': true,
+            'profile': {
+              'full_name': 'Kofi Mensah',
+              'phone': '0241234567',
+              'gender': 'Male',
+            },
+            'zone_options': [
+              {'id': 'z1', 'code': 1, 'name': 'Zone 1'},
+              {'id': 'z2', 'code': 2, 'name': 'Zone 2'},
+            ],
+            'zone_ids': ['z1'],
           };
         case 'member_sign_out':
           return null;
@@ -609,8 +626,30 @@ void main() {
     await pumpUntil(tester, find.text('Me'));
     await tester.tap(find.text('Me'));
     await pumpUntil(tester, find.text('MEMBERSHIP CARD'));
-    await tester.tap(find.text('Sign out'));
-    await pumpUntil(tester, find.text(button));
+    expect(find.text('Zone Secretary (Zone 1)'), findsOneWidget);
+    await tester.tap(find.text('Edit my details and zones'));
+    await pumpUntil(tester, find.text('My details'));
+    await tester.enterText(
+      find.byKey(const Key('profile_full_name')),
+      'Kofi A. Mensah',
+    );
+    final form = find
+        .descendant(
+          of: find.byType(MemberProfileScreen),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(find.text('Zone 2'), 200, scrollable: form);
+    await tester.tap(find.text('Zone 2'));
+    await tester.pump();
+    await tester.tap(find.text('Zone 1'));
+    await tester.pump();
+    await tester.tap(find.text('Save').first);
+    await pumpUntil(tester, find.text('MEMBERSHIP CARD'));
+    expect(saved.single['zone_ids'], ['z2']);
+    expect((saved.single['patch']! as Map)['full_name'], 'Kofi A. Mensah');
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Sign out'), findsOneWidget);
     services.sync.stopAuto();
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 5));

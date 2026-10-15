@@ -118,6 +118,7 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
             dateJoined: joined,
             zoneIds: zoneIds,
             primaryZoneId: zoneIds.first,
+            selfEdit: true,
           ),
           actor,
         );

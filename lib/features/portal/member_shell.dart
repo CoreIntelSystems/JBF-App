@@ -11,6 +11,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/sync/sync_api.dart';
 import '../auth/auth_cubit.dart';
 import '../chats/chats_screen.dart';
+import 'member_profile_screen.dart';
 import 'member_statement_screen.dart';
 
 /// The app for an ordinary member on their own phone: their dues, events,
@@ -147,7 +148,7 @@ class _MemberShellState extends State<MemberShell> {
             access: ChatAccess(widget.session.token),
             embedded: true,
           ),
-          _ => _MeTab(home: home, session: widget.session),
+          _ => _MeTab(home: home, session: widget.session, onChanged: _refresh),
         },
       );
     }
@@ -324,9 +325,14 @@ class _PeopleTabState extends State<_PeopleTab> {
 }
 
 class _MeTab extends StatelessWidget {
-  const _MeTab({required this.home, required this.session});
+  const _MeTab({
+    required this.home,
+    required this.session,
+    required this.onChanged,
+  });
   final MemberHome home;
   final MemberSession session;
+  final Future<void> Function() onChanged;
 
   static const _statuses = {
     'pending': 'Waiting for approval',
@@ -445,6 +451,29 @@ class _MeTab extends StatelessWidget {
             trailing: Text(formatMoney(w.amount)),
           ),
         const Divider(height: 32),
+        if (home.selfEdit)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.edit_outlined),
+            title: const Text('Edit my details and zones'),
+            subtitle: const Text('Check your name, phone and zone'),
+            onTap: () async {
+              final saved = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      MemberProfileScreen(home: home, session: session),
+                ),
+              );
+              if (saved == true) await onChanged();
+            },
+          )
+        else
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              'To correct your details, speak to your Zone Secretary.',
+            ),
+          ),
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.password),
@@ -456,11 +485,6 @@ class _MeTab extends StatelessWidget {
           leading: const Icon(Icons.logout),
           title: const Text('Sign out'),
           onTap: () => context.read<AuthCubit>().memberSignOut(),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'To correct your details, speak to your Zone Secretary.',
-          style: theme.textTheme.bodySmall,
         ),
       ],
     );

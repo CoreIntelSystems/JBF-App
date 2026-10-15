@@ -80,6 +80,10 @@ Phone 3, and optionally Zone and Zone 2 (zone numbers 1 to 8).
   After that you, the General Secretary or their Zone Secretary change it. Members you register later are
   updated by the Founder, General Secretary or the member's Zone Secretary
   or Mayor.
+- To tell members their IDs, tap the chat icon at the top of Members (**Send
+  IDs on WhatsApp**). Each person has a Send button that opens WhatsApp with
+  their message ready; you tap send in WhatsApp. People you have opened show
+  a green tick until you leave the screen.
 
 ## Old username logins (More > Old username logins)
 

@@ -15,6 +15,7 @@ import 'id_card_pdf.dart';
 import 'import_members_screen.dart';
 import 'member_detail_screen.dart';
 import 'member_form_screen.dart';
+import 'send_ids_screen.dart';
 
 class MembersScreen extends StatefulWidget {
   const MembersScreen({super.key});
@@ -92,6 +93,16 @@ class _MembersScreenState extends State<MembersScreen> {
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const ImportMembersScreen(),
+                ),
+              ),
+            ),
+          if (canCreate)
+            IconButton(
+              tooltip: 'Send IDs on WhatsApp',
+              icon: const Icon(Icons.chat_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => SendIdsScreen(filter: _filter),
                 ),
               ),
             ),

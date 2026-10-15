@@ -1,7 +1,7 @@
 name: jbf_app
 description: "June Borns Family welfare and membership app. A CoreIntel Systems product."
 publish_to: 'none'
-version: 0.11.2+18
+version: 0.11.3+19
 
 environment:
   sdk: ^3.10.0

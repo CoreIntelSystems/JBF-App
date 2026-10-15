@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jbf_app/data/connection.dart';
 import 'package:jbf_app/data/database.dart';
+import 'package:jbf_app/domain/permissions.dart';
 
 void main() {
   const key =
@@ -10,6 +11,36 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    // v8: role assignments, permissions on roles, dues approval.
+    await db.customStatement('DROP TABLE role_assignments');
+    await db.customStatement('DROP TRIGGER roles_permissions_ins');
+    await db.customStatement('DROP TRIGGER roles_permissions_upd');
+    await db.customStatement('ALTER TABLE roles DROP COLUMN permissions');
+    for (final c in [
+      'proposed_amount',
+      'proposed_by_name',
+      'proposed_at',
+      'approved_by_name',
+    ]) {
+      await db.customStatement('ALTER TABLE contribution_types DROP COLUMN $c');
+    }
+    const newRoles =
+        "('patron', 'welfare_secretary', 'welfare_treasurer', "
+        "'discipline_member', 'ec_secretary')";
+    await db.customStatement(
+      'DELETE FROM role_permissions WHERE role_id IN '
+      '(SELECT id FROM roles WHERE key IN $newRoles)',
+    );
+    await db.customStatement('DELETE FROM roles WHERE key IN $newRoles');
+    await db.customStatement(
+      "DELETE FROM executive_positions WHERE title IN ('Patron', "
+      "'Welfare Treasurer', 'Electoral Commission Secretary', "
+      "'Disciplinary Committee')",
+    );
+    if (version >= 7) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     final syncTriggers = await db
         .customSelect(
           "SELECT name FROM sqlite_master WHERE type = 'trigger' "
@@ -132,11 +163,12 @@ void main() {
           "AND name LIKE 'sync_%'",
         )
         .get();
-    // Insert triggers on 19 tables; update and stamp triggers on 17.
-    expect(syncTriggers, hasLength(19 + 17 * 2));
+    // Insert triggers on the 19 uploaded tables; update and stamp
+    // triggers on the 18 whose rows change.
+    expect(syncTriggers, hasLength(19 + 18 * 2));
     expect(org.deviceSeries, isNull);
     expect(await db.select(db.expenseCategories).get(), hasLength(10));
-    expect(await db.select(db.executivePositions).get(), hasLength(16));
+    expect(await db.select(db.executivePositions).get(), hasLength(20));
     expect(await db.select(db.events).get(), isEmpty);
     final attend = await db
         .customSelect(
@@ -146,6 +178,7 @@ void main() {
         .get();
     expect(attend.map((r) => r.read<String>('key')).toSet(), {
       'super_admin',
+      'founder',
       'general_secretary',
       'organizer',
       'zone_mayor',
@@ -160,11 +193,18 @@ void main() {
         .get();
     expect(pay.map((r) => r.read<String>('key')).toSet(), {
       'super_admin',
+      'founder',
       'treasurer',
+      'welfare_treasurer',
     });
+    expect(await db.select(db.roles).get(), hasLength(defaultRoles.length));
+    expect(
+      (await db.select(db.roles).get()).every((r) => r.permissions != null),
+      isTrue,
+    );
   }
 
-  for (final from in [1, 2, 3, 4, 5, 6]) {
+  for (final from in [1, 2, 3, 4, 5, 6, 7]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

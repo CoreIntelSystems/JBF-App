@@ -133,15 +133,37 @@ class PaymentRepository {
           .get();
 
   /// Creates ([id] null) or updates a contribution type.
+  ///
+  /// With [proposedBy] set, a new amount is not applied: it waits for the
+  /// Founder or General Secretary to approve it (see [approveAmount]).
   Future<String> saveType(
     String? id,
     ContributionTypesCompanion data,
-    Actor actor,
-  ) async {
+    Actor actor, {
+    String? proposedBy,
+  }) async {
     if ((data.name.present && data.name.value.trim().isEmpty)) {
       throw PaymentException('Enter a name.');
     }
     return _db.transaction(() async {
+      final current = id == null ? null : await _type(id);
+      if (proposedBy != null &&
+          data.amount.present &&
+          data.amount.value != current?.amount) {
+        data = data.copyWith(
+          amount: Value(current?.amount),
+          proposedAmount: Value(data.amount.value),
+          proposedByName: Value(proposedBy),
+          proposedAt: Value(_now()),
+        );
+      } else if (data.amount.present && data.amount.value != current?.amount) {
+        data = data.copyWith(
+          proposedAmount: const Value(null),
+          proposedByName: const Value(null),
+          proposedAt: const Value(null),
+          approvedByName: Value(actor.username),
+        );
+      }
       if (id == null) {
         final row = await _db
             .into(_db.contributionTypes)
@@ -176,6 +198,44 @@ class PaymentRepository {
     });
   }
 
+  /// Applies ([approve]) or drops a proposed amount.
+  Future<void> decideAmount(
+    String id, {
+    required bool approve,
+    required String byName,
+    required Actor actor,
+  }) async {
+    await _db.transaction(() async {
+      final t = await _type(id);
+      if (t.proposedAmount == null) {
+        throw PaymentException('There is no new amount waiting.');
+      }
+      await (_db.update(
+        _db.contributionTypes,
+      )..where((r) => r.id.equals(id))).write(
+        ContributionTypesCompanion(
+          amount: approve ? Value(t.proposedAmount) : const Value.absent(),
+          approvedByName: approve ? Value(byName) : const Value.absent(),
+          proposedAmount: const Value(null),
+          proposedByName: const Value(null),
+          proposedAt: const Value(null),
+          updatedAt: Value(_now()),
+        ),
+      );
+      await _audit.log(
+        actor,
+        approve ? 'contribution_type.approve' : 'contribution_type.reject',
+        entity: 'contribution_types',
+        entityId: id,
+        oldValue: {'amount': t.amount},
+        newValue: {
+          'proposedAmount': t.proposedAmount,
+          'proposedBy': t.proposedByName,
+        },
+      );
+    });
+  }
+
   Future<ContributionType> _type(String id) => (_db.select(
     _db.contributionTypes,
   )..where((t) => t.id.equals(id))).getSingle();
@@ -186,6 +246,7 @@ class PaymentRepository {
     'frequency': t.frequency.name,
     'amount': t.amount,
     'isActive': t.isActive,
+    if (t.proposedAmount != null) 'proposedAmount': t.proposedAmount,
   };
 
   // ---- Payments -----------------------------------------------------------

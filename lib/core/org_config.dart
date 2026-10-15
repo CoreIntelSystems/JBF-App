@@ -71,11 +71,13 @@ class OrgDefaults {
   static const positions = <(String, PositionLevel)>[
     ('Founder', PositionLevel.board),
     ('Director', PositionLevel.board),
+    ('Patron', PositionLevel.board),
     ('General Secretary', PositionLevel.national),
     ('Organizer', PositionLevel.national),
     ('Treasurer', PositionLevel.national),
     ('Welfare Chairman', PositionLevel.welfare),
     ('Welfare Secretary', PositionLevel.welfare),
+    ('Welfare Treasurer', PositionLevel.welfare),
     ('Welfare Team Member', PositionLevel.welfare),
     ('Zone Mayor', PositionLevel.zone),
     ('Zone Deputy Mayor', PositionLevel.zone),
@@ -85,6 +87,8 @@ class OrgDefaults {
     ('Zone Welfare Officer', PositionLevel.zone),
     ('Auditor', PositionLevel.oversight),
     ('Electoral Commission', PositionLevel.oversight),
+    ('Electoral Commission Secretary', PositionLevel.oversight),
+    ('Disciplinary Committee', PositionLevel.oversight),
   ];
 
   /// Seeded welfare case types: (name, description). Benefit amounts start

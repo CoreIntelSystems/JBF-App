@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Permission keys checked by the app. Roles map to a set of these keys in
 /// the `role_permissions` table, so each role can be customised later.
 abstract final class Perm {
@@ -45,6 +47,27 @@ abstract final class Perm {
   static const electionsManage = 'elections.manage';
   static const backupManage = 'backup.manage';
 
+  /// Assign and remove roles across the association (Founder, General
+  /// Secretary).
+  static const rolesAssign = 'roles.assign';
+
+  /// Assign zone executive roles in the user's own zone (Zone Mayor).
+  static const zoneRolesAssign = 'roles.assign_zone';
+
+  /// Clear a member's sign-in so they activate again with their phone
+  /// number. Zone roles may only do this in their own zone.
+  static const signInReset = 'signin.reset';
+
+  /// Approve the monthly dues amount. With [duesManage] as well, the amount
+  /// is set directly; with [duesManage] alone it waits for approval.
+  static const duesApprove = 'dues.approve';
+
+  /// Send a complaint about a member to the Disciplinary Committee.
+  static const disciplineFile = 'discipline.file';
+
+  /// Read complaints and reports, and send warnings.
+  static const disciplineHandle = 'discipline.handle';
+
   static const all = <String>[
     dashboardView,
     membersView,
@@ -71,6 +94,12 @@ abstract final class Perm {
     executivesManage,
     electionsManage,
     backupManage,
+    rolesAssign,
+    zoneRolesAssign,
+    signInReset,
+    duesApprove,
+    disciplineFile,
+    disciplineHandle,
   ];
 }
 
@@ -89,18 +118,18 @@ class RoleSeed {
 const _memberRead = {Perm.dashboardView, Perm.membersView};
 const _memberWrite = {..._memberRead, Perm.membersCreate, Perm.membersEdit};
 
-/// Default roles from the JBF specification. Zone roles will be limited to
-/// their own zone(s) once zone-scoped access lands (Phase 3).
+/// Default roles from the JBF access plan (15 October 2026). Zone roles see
+/// only the members of the zone(s) they are assigned to.
 final defaultRoles = <RoleSeed>[
+  // CoreIntel support, and the first account on a new phone.
   RoleSeed('super_admin', 'Super Administrator', 'system', Perm.all.toSet()),
-  RoleSeed('founder', 'Founder', 'board', {
+  RoleSeed('founder', 'Founder / President', 'board', Perm.all.toSet()),
+  RoleSeed('director', 'Director', 'board', {
     ..._memberRead,
-    Perm.duesManage,
     Perm.financeView,
-    Perm.auditView,
     Perm.reportsExport,
   }),
-  RoleSeed('director', 'Director', 'board', {
+  RoleSeed('patron', 'Patron', 'board', {
     ..._memberRead,
     Perm.financeView,
     Perm.reportsExport,
@@ -109,7 +138,7 @@ final defaultRoles = <RoleSeed>[
     ..._memberWrite,
     Perm.membersChangeStatus,
     Perm.zonesManage,
-    Perm.duesManage,
+    Perm.duesApprove,
     Perm.welfarePrepare,
     Perm.welfareApprove,
     Perm.eventsManage,
@@ -117,6 +146,9 @@ final defaultRoles = <RoleSeed>[
     Perm.executivesManage,
     Perm.reportsExport,
     Perm.backupManage,
+    Perm.rolesAssign,
+    Perm.signInReset,
+    Perm.disciplineFile,
   }),
   RoleSeed('organizer', 'Organizer', 'national', {
     ..._memberWrite,
@@ -140,6 +172,14 @@ final defaultRoles = <RoleSeed>[
     Perm.welfarePrepare,
     Perm.welfareApprove,
   }),
+  RoleSeed('welfare_secretary', 'Welfare Secretary', 'welfare', {
+    ..._memberRead,
+    Perm.welfarePrepare,
+  }),
+  RoleSeed('welfare_treasurer', 'Welfare Treasurer', 'welfare', {
+    ..._memberRead,
+    Perm.welfarePay,
+  }),
   RoleSeed('welfare_member', 'Welfare Team Member', 'welfare', {
     ..._memberRead,
     Perm.welfarePrepare,
@@ -148,11 +188,16 @@ final defaultRoles = <RoleSeed>[
     ..._memberWrite,
     Perm.membersChangeStatus,
     Perm.attendanceRecord,
+    Perm.zoneRolesAssign,
+    Perm.signInReset,
+    Perm.disciplineFile,
   }),
   RoleSeed('zone_deputy', 'Zone Deputy Mayor', 'zone', _memberWrite),
   RoleSeed('zone_secretary', 'Zone Secretary', 'zone', {
     ..._memberWrite,
     Perm.attendanceRecord,
+    Perm.signInReset,
+    Perm.disciplineFile,
   }),
   RoleSeed('zone_treasurer', 'Zone Treasurer', 'zone', {
     ..._memberRead,
@@ -166,15 +211,33 @@ final defaultRoles = <RoleSeed>[
     ..._memberRead,
     Perm.welfarePrepare,
   }),
+  RoleSeed('discipline_member', 'Disciplinary Committee', 'oversight', {
+    ..._memberRead,
+    Perm.disciplineHandle,
+  }),
   RoleSeed('auditor', 'Auditor', 'oversight', {
     ..._memberRead,
     Perm.financeView,
     Perm.auditView,
     Perm.reportsExport,
   }),
-  RoleSeed('electoral_commission', 'JBF Electoral Commission', 'oversight', {
+  RoleSeed(
+    'electoral_commission',
+    'Electoral Commission Chairperson',
+    'oversight',
+    {..._memberRead, Perm.electionsManage},
+  ),
+  RoleSeed('ec_secretary', 'Electoral Commission Secretary', 'oversight', {
     ..._memberRead,
     Perm.electionsManage,
   }),
   RoleSeed('member', 'Ordinary Member', 'member', {Perm.dashboardView}),
 ];
+
+/// The stored form of a role's permissions (see `roles.permissions`).
+String encodePermissions(Iterable<String> permissions) =>
+    jsonEncode(permissions.toSet().toList()..sort());
+
+Set<String> decodePermissions(String? stored) => stored == null
+    ? <String>{}
+    : {for (final p in jsonDecode(stored) as List) p as String};

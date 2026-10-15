@@ -34,6 +34,7 @@ class _ContributionTypesScreenState extends State<ContributionTypesScreen> {
   Widget build(BuildContext context) {
     final user = context.select((AuthCubit c) => c.user);
     final canEdit = user?.can(Perm.duesManage) ?? false;
+    final canApprove = user?.can(Perm.duesApprove) ?? false;
     return Scaffold(
       appBar: AppBar(title: const Text('Contribution types')),
       floatingActionButton: canEdit
@@ -57,8 +58,9 @@ class _ContributionTypesScreenState extends State<ContributionTypesScreen> {
                 const ListTile(
                   leading: Icon(Icons.info_outline),
                   title: Text(
-                    'Only the Founder, Treasurer or General Secretary can '
-                    'change these.',
+                    'Only the Founder or Treasurer can change these. A new '
+                    'amount from the Treasurer is approved by the Founder '
+                    'or General Secretary.',
                   ),
                 ),
               for (final t in items)
@@ -86,9 +88,80 @@ class _ContributionTypesScreenState extends State<ContributionTypesScreen> {
                   ),
                   onTap: canEdit ? () => _edit(t) : null,
                 ),
+              for (final t in items.where((t) => t.proposedAmount != null))
+                _Proposal(type: t, canApprove: canApprove),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// A new amount waiting for approval.
+class _Proposal extends StatelessWidget {
+  const _Proposal({required this.type, required this.canApprove});
+  final ContributionType type;
+  final bool canApprove;
+
+  Future<void> _decide(BuildContext context, bool approve) async {
+    final services = context.read<AppServices>();
+    final user = context.read<AuthCubit>().user!;
+    try {
+      await services.payments.decideAmount(
+        type.id,
+        approve: approve,
+        byName: user.displayName,
+        actor: user.actor(services.deviceId),
+      );
+    } on PaymentException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = type;
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${t.name}: new amount waiting for approval',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${formatMoney(t.proposedAmount!)} '
+              '(now ${t.amount == null ? 'not set' : formatMoney(t.amount!)}), '
+              'proposed by ${t.proposedByName ?? 'the Treasurer'}'
+              '${t.proposedAt == null ? '' : ' on ${formatDate(t.proposedAt)}'}.',
+            ),
+            if (canApprove) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  FilledButton(
+                    onPressed: () => _decide(context, true),
+                    child: const Text('Approve'),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: () => _decide(context, false),
+                    child: const Text('Reject'),
+                  ),
+                ],
+              ),
+            ] else
+              const Text('The Founder or General Secretary approves it.'),
+          ],
+        ),
       ),
     );
   }
@@ -159,6 +232,7 @@ class _ContributionTypeFormState extends State<ContributionTypeForm> {
           notes: Value(notes.isEmpty ? null : notes),
         ),
         user.actor(services.deviceId),
+        proposedBy: user.can(Perm.duesApprove) ? null : user.displayName,
       );
       if (mounted) Navigator.of(context).pop();
     } on PaymentException catch (e) {

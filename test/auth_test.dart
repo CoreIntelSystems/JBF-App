@@ -157,15 +157,19 @@ void main() {
           r.key,
     ]..sort();
 
-    expect(await holders(Perm.duesManage), [
+    expect(await holders(Perm.duesManage), ['founder', 'treasurer']);
+    expect(await holders(Perm.duesApprove), ['founder', 'general_secretary']);
+    expect(await holders(Perm.welfareSetBenefits), ['founder', 'treasurer']);
+    expect(await holders(Perm.welfareApprove), [
       'founder',
       'general_secretary',
-      'treasurer',
-    ]);
-    expect(await holders(Perm.welfareSetBenefits), ['treasurer']);
-    expect(await holders(Perm.welfareApprove), [
-      'general_secretary',
       'welfare_chairman',
+    ]);
+    expect(await holders(Perm.signInReset), [
+      'founder',
+      'general_secretary',
+      'zone_mayor',
+      'zone_secretary',
     ]);
   });
 }

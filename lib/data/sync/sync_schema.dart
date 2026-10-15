@@ -11,6 +11,7 @@ class SyncTable {
     this.localOnly = const {},
     this.only,
     this.insertOnly = false,
+    this.uploaded = true,
   });
 
   final String name;
@@ -29,8 +30,13 @@ class SyncTable {
   /// When set, only these columns (plus the key) are shared.
   final Set<String>? only;
 
-  /// Rows are added but never changed (audit trail, role permissions).
+  /// Rows are added but never changed (audit trail).
   final bool insertOnly;
+
+  /// False for tables this version only reads from the cloud. Role
+  /// permissions now travel inside `roles.permissions`; older phones'
+  /// records are still applied so a phone joining early gets them.
+  final bool uploaded;
 
   bool shares(String column) =>
       !localOnly.contains(column) &&
@@ -68,6 +74,7 @@ const syncTables = <SyncTable>[
     keyColumns: ['role_id', 'permission'],
     stamp: null,
     insertOnly: true,
+    uploaded: false,
   ),
   SyncTable(
     'users',
@@ -78,6 +85,7 @@ const syncTables = <SyncTable>[
       'biometric_enabled',
     },
   ),
+  SyncTable('role_assignments'),
   SyncTable('audit_logs', stamp: 'at', insertOnly: true),
   SyncTable('contribution_types'),
   SyncTable('payments'),
@@ -152,6 +160,7 @@ Future<void> createSyncTriggers(
     await exec('DROP TRIGGER IF EXISTS sync_${t.name}_ins');
     await exec('DROP TRIGGER IF EXISTS sync_${t.name}_upd');
     await exec('DROP TRIGGER IF EXISTS sync_${t.name}_stamp');
+    if (!t.uploaded) continue;
     await exec('''
       CREATE TRIGGER sync_${t.name}_ins AFTER INSERT ON ${t.name}
       WHEN $_recording

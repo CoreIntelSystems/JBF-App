@@ -461,7 +461,7 @@ class SyncService extends Cubit<SyncStatus> {
   /// Queues every shared record on this phone for upload.
   Future<void> enqueueAll() async {
     await _db.transaction(() async {
-      for (final t in syncTables) {
+      for (final t in syncTables.where((t) => t.uploaded)) {
         await _db.customStatement(
           'INSERT INTO sync_outbox (tbl, row_key, ver) '
           "SELECT '${t.name}', ${t.keyExpr(t.name)}, 1 FROM ${t.name} "

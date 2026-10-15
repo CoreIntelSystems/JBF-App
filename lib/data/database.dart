@@ -116,6 +116,26 @@ class Roles extends Table with SyncColumns {
   TextColumn get name => text()();
   TextColumn get level => text()();
   BoolColumn get isSystem => boolean().withDefault(const Constant(false))();
+
+  /// The role's permission keys as a JSON array. A trigger copies them into
+  /// `role_permissions`, so a role edited on one phone changes everywhere.
+  TextColumn get permissions => text().nullable()();
+}
+
+/// A role given to a member. A person may hold several; their access is
+/// all of them together. Zone roles name the zone(s) they cover.
+@TableIndex(name: 'role_assignments_member', columns: {#memberId})
+class RoleAssignments extends Table with SyncColumns {
+  TextColumn get memberId => text().references(Members, #id)();
+  TextColumn get roleId => text().references(Roles, #id)();
+
+  /// Comma-separated zone ids, for zone roles.
+  TextColumn get zoneIds => text().nullable()();
+  DateTimeColumn get startsOn => dateTime().clientDefault(() => DateTime.now())();
+
+  /// The role ends at the start of this day, if set.
+  DateTimeColumn get endsOn => dateTime().nullable()();
+  TextColumn get assignedByName => text().nullable()();
 }
 
 class RolePermissions extends Table {
@@ -208,6 +228,12 @@ class ContributionTypes extends Table with SyncColumns {
   /// recorded (Phase 3).
   BoolColumn get appliesToAll => boolean().withDefault(const Constant(true))();
   TextColumn get notes => text().nullable()();
+
+  /// A new amount waiting for the Founder or General Secretary to approve.
+  IntColumn get proposedAmount => integer().nullable()();
+  TextColumn get proposedByName => text().nullable()();
+  DateTimeColumn get proposedAt => dateTime().nullable()();
+  TextColumn get approvedByName => text().nullable()();
 }
 
 enum PaymentMethod {
@@ -499,6 +525,7 @@ const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
     Roles,
     RolePermissions,
     Users,
+    RoleAssignments,
     AuditLogs,
     ContributionTypes,
     Payments,
@@ -517,13 +544,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await createSyncTables(customStatement);
+      await _createRolePermissionsTrigger();
       await _createGuards();
       await _createPaymentGuards();
       await _seed();
@@ -606,6 +634,22 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('DROP TRIGGER welfare_cases_flow');
           await _createWelfareFlowGuard();
         }
+        // Sync triggers are created by the v8 step below.
+      }
+      if (from < 8) {
+        await m.addColumn(roles, roles.permissions);
+        // Created with these already when coming from v1.
+        if (from >= 2) {
+          await m.addColumn(contributionTypes, contributionTypes.proposedAmount);
+          await m.addColumn(contributionTypes, contributionTypes.proposedByName);
+          await m.addColumn(contributionTypes, contributionTypes.proposedAt);
+          await m.addColumn(contributionTypes, contributionTypes.approvedByName);
+        }
+        await m.createTable(roleAssignments);
+        await m.createIndex(roleAssignmentsMember);
+        await _createRolePermissionsTrigger();
+        await _upgradeRoles();
+        await _seedPositions(onlyMissing: true);
         await createSyncTriggers(customStatement, _columnsOf);
       }
     },
@@ -754,10 +798,17 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  Future<void> _seedPositions() async {
+  Future<void> _seedPositions({bool onlyMissing = false}) async {
+    final have = onlyMissing
+        ? {for (final p in await select(executivePositions).get()) p.title}
+        : const <String>{};
     await batch((b) {
       var order = 0;
       for (final (title, level) in OrgDefaults.positions) {
+        if (have.contains(title)) {
+          order++;
+          continue;
+        }
         b.insert(
           executivePositions,
           ExecutivePositionsCompanion.insert(
@@ -786,18 +837,72 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  /// Keeps `role_permissions` in step with each role's permission list.
+  Future<void> _createRolePermissionsTrigger() async {
+    for (final event in ['INSERT', 'UPDATE OF permissions']) {
+      final name = event == 'INSERT' ? 'ins' : 'upd';
+      await customStatement('DROP TRIGGER IF EXISTS roles_permissions_$name');
+      await customStatement('''
+        CREATE TRIGGER roles_permissions_$name AFTER $event ON roles
+        WHEN NEW.permissions IS NOT NULL
+        BEGIN
+          DELETE FROM role_permissions WHERE role_id = NEW.id;
+          INSERT OR IGNORE INTO role_permissions (role_id, permission)
+            SELECT NEW.id, value FROM json_each(NEW.permissions);
+        END
+      ''');
+    }
+  }
+
+  /// v8: the roles of the access plan. Seeded roles take their new
+  /// permissions; any other role keeps the ones it had.
+  Future<void> _upgradeRoles() async {
+    final seeds = {for (final r in defaultRoles) r.key: r};
+    for (final role in await select(roles).get()) {
+      final seed = seeds.remove(role.key);
+      final perms =
+          seed?.permissions ??
+          {
+            for (final p in await (select(
+              rolePermissions,
+            )..where((p) => p.roleId.equals(role.id))).get())
+              p.permission,
+          };
+      await (update(roles)..where((r) => r.id.equals(role.id))).write(
+        RolesCompanion(
+          name: seed == null ? const Value.absent() : Value(seed.name),
+          permissions: Value(encodePermissions(perms)),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    }
+    for (final seed in seeds.values) {
+      await into(roles).insert(
+        RolesCompanion.insert(
+          key: seed.key,
+          name: seed.name,
+          level: seed.level,
+          permissions: Value(encodePermissions(seed.permissions)),
+        ),
+      );
+    }
+  }
+
   /// Adds permissions introduced after a database was created to the
   /// matching seeded roles, leaving any customised roles otherwise intact.
   Future<void> _grantNewPermissions(Map<String, Set<String>> byRoleKey) async {
     for (final MapEntry(key: roleKey, value: perms) in byRoleKey.entries) {
-      final role = await (select(
-        roles,
-      )..where((r) => r.key.equals(roleKey))).getSingleOrNull();
+      // Plain SQL: older schemas lack columns the generated row class has.
+      final role = await customSelect(
+        'SELECT id FROM roles WHERE key = ?',
+        variables: [Variable.withString(roleKey)],
+      ).getSingleOrNull();
       if (role == null) continue;
+      final roleId = role.read<String>('id');
       await batch((b) {
         b.insertAll(rolePermissions, [
           for (final p in perms)
-            RolePermissionsCompanion.insert(roleId: role.id, permission: p),
+            RolePermissionsCompanion.insert(roleId: roleId, permission: p),
         ], mode: InsertMode.insertOrIgnore);
       });
     }
@@ -844,21 +949,19 @@ class AppDatabase extends _$AppDatabase {
         );
       }
     });
-    for (final seed in defaultRoles) {
-      final role = await into(roles).insertReturning(
-        RolesCompanion.insert(
-          key: seed.key,
-          name: seed.name,
-          level: seed.level,
-          isSystem: Value(seed.key == 'super_admin'),
-        ),
-      );
-      await batch((b) {
-        b.insertAll(rolePermissions, [
-          for (final p in seed.permissions)
-            RolePermissionsCompanion.insert(roleId: role.id, permission: p),
-        ]);
-      });
-    }
+    await batch((b) {
+      for (final seed in defaultRoles) {
+        b.insert(
+          roles,
+          RolesCompanion.insert(
+            key: seed.key,
+            name: seed.name,
+            level: seed.level,
+            isSystem: Value(seed.key == 'super_admin'),
+            permissions: Value(encodePermissions(seed.permissions)),
+          ),
+        );
+      }
+    });
   }
 }

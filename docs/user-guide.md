@@ -10,9 +10,32 @@ The app has four tabs at the bottom: **Dashboard**, **Members**,
 
 ## Signing in
 
-Sign in with your username and password, or your PIN, or your fingerprint
-once you have turned it on under **More > My login and security**. After
-five wrong attempts the account is locked for five minutes.
+Everyone signs in with their **member ID** (on their ID card and receipts)
+and a password. Executives are members too, so they use the same member
+ID.
+
+- **First time:** tap **First time? Activate your account**, enter your
+  member ID and the phone number the association has for you, and choose a
+  password. You need internet for this.
+- **After that:** sign in with your member ID and password. On a phone that
+  holds the association's records, the phone keeps a copy so you can sign
+  in offline. You can also set a PIN or fingerprint under **More > My login
+  and security**.
+- **Forgot your password?** Ask your Zone Secretary or Zone Mayor (or the
+  Founder or General Secretary) to reset your sign-in, then activate again.
+- After five wrong attempts the sign-in is locked for a while.
+
+What the app shows depends on your role:
+
+- **Members** see their own page: their dues and receipts, upcoming events
+  and general meetings, the executives and a list of members (names and
+  zones only), their welfare cases and their ID card. It is read-only and
+  works offline with the last copy downloaded.
+- **Executives** get this phone joined to the association's records, with
+  only the tabs and buttons their role allows. Zone executives only see
+  their own zone(s). Their own dues are under the **My dues** tab.
+
+Older username logins still work.
 
 ## Dashboard
 
@@ -107,17 +130,8 @@ Turn on the monthly dues reminder and pick the day of the month.
 
 ## Member portal (for ordinary members)
 
-Members can check their own dues and receipts online at
-**https://jbf-members.onrender.com**. They enter their member ID (for
-example `JBF-000123`, on their ID card and receipts) and the phone number
-the association has for them. The portal shows their monthly dues (paid,
-owed, and the first unpaid month) and every valid payment with its
-receipt number. It is read-only and shows what the phones have synced to
-the cloud. Five wrong tries lock that member ID for 15 minutes.
-
-If a member's phone number is wrong or missing, correct it on their
-member page; the portal uses it after the next sync.
-
-Members who install the app can see the same statement there: on the
-first screen, tap **Member? Check my dues** and enter the member ID and
-phone number. They do not need an account, but they do need internet.
+Members can also check their own dues and receipts online at
+**https://jbf-members.onrender.com** with their member ID and phone number.
+It shows what the phones have synced to the cloud. Five wrong tries lock
+that member ID for 15 minutes. If a member's phone number is wrong or
+missing, correct it on their member page.

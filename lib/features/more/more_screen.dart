@@ -172,7 +172,7 @@ class MoreScreen extends StatelessWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: OrgDefaults.name,
-              applicationVersion: '0.8.1 (Phase 4: cloud sync)',
+              applicationVersion: '0.9.0 (member sign-in and roles)',
               applicationLegalese:
                   'Powered by ${OrgDefaults.poweredBy}.\n'
                   'Data is kept on this device in an encrypted database. '

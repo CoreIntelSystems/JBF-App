@@ -13,34 +13,52 @@ The app is a configurable CoreIntel Systems product: zones, contribution
 types, welfare case types, expense categories and positions are all data,
 not code, so another association can use the same app.
 
-## Users and roles (More > Users and roles)
+## Roles and sign-ins (on each member's page)
 
-- Give every officer their own login. Do not share logins: every change is
-  recorded in the audit log under the person who made it.
-- **Add user:** full name, username, role and a temporary password. Ask
-  them to change it under **More > My login and security**.
-- **Zone roles** (Zone Mayor, Deputy, Secretary, Treasurer, Organizer,
-  Welfare Officer) must be given 1 or 2 zones. They only see members,
-  payments, defaulters, welfare cases and charts for those zones.
-- To remove access, edit the user and turn off **Can sign in**. Users are
-  never deleted so the history stays readable.
+Access comes from roles, not from executive positions. Open a member and
+use **Roles and access**:
 
-Main permissions by role:
+- **Give a role:** the Founder and General Secretary can give any role. A
+  Zone Mayor can give zone roles in their own zone. Zone roles need 1 or 2
+  zones; zone executives only see those zones.
+- **Remove a role** ends its access from now on, on every phone.
+- **Reset sign-in** (Founder, General Secretary, or the member's own Zone
+  Mayor or Zone Secretary; needs internet) signs the member out everywhere
+  so they activate again with their phone number.
+
+A member with no role only gets their own page. A member with any role
+gets the association's records for that role when they sign in.
 
 | Role | Can |
 | --- | --- |
-| Super Administrator | Everything |
-| Founder | View finance, set dues, audit log, export reports |
-| General Secretary | Members, zones, dues, welfare cases and stand-in approval, events, attendance, executives, backups |
-| Treasurer | Payments and voids, dues, welfare benefit amounts and payouts, expenses, reports, backups |
-| Welfare Chairman | Prepare and approve welfare cases and benefit amounts |
-| Zone officers | Their zone's members; zone treasurers record payments; mayors, secretaries and organizers take attendance |
+| Super Administrator | Everything (CoreIntel support) |
+| Founder / President | Everything |
+| Director, Patron | View members, finance and reports |
+| General Secretary | Members, zones, approve dues amounts, welfare stand-in approval, events, attendance, executives, give roles, reset sign-ins, file complaints |
+| Treasurer | Payments and voids, propose dues amounts, welfare benefit amounts and payouts, expenses, reports |
+| Organizer | Events and attendance |
+| Welfare Chairman | Prepare and approve welfare cases |
+| Welfare Secretary | See members, prepare welfare cases |
+| Welfare Treasurer | See members, record welfare payouts |
+| Zone Mayor | Their zone's members and attendance, give zone roles, reset sign-ins, file complaints |
+| Zone Secretary | Their zone's members and attendance, reset sign-ins, file complaints |
+| Other zone executives | Their zone's members; zone treasurers record payments |
+| Disciplinary Committee | See members, handle complaints |
 | Auditor | View finance, reports and the audit log |
+| Electoral Commission | See members |
+
+## Users (More > Users and roles)
+
+Older username logins are kept for phones set up before member sign-in.
+Link each one to its member record. To remove access, turn off **Can sign
+in**. New executives do not need a username: give them a role instead.
 
 ## Dues and contribution types (More > Contribution types)
 
-Set the **Monthly welfare dues** amount here (Founder, Treasurer or General
-Secretary). Arrears are counted from each member's join date. Other types:
+Set the **Monthly welfare dues** amount here. The Founder can change it
+directly. When the Treasurer changes it, the new amount waits until the
+Founder or General Secretary approves it. Dues stop while a member is
+suspended. Arrears are counted from each member's join date. Other types:
 silver collection and event contributions (one-off, no arrears), emergency
 levy, charity, executive council dues and voluntary donations. Add new
 types as needed; old ones can be switched off but not deleted.

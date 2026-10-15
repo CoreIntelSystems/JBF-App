@@ -131,7 +131,8 @@ class RoleAssignments extends Table with SyncColumns {
 
   /// Comma-separated zone ids, for zone roles.
   TextColumn get zoneIds => text().nullable()();
-  DateTimeColumn get startsOn => dateTime().clientDefault(() => DateTime.now())();
+  DateTimeColumn get startsOn =>
+      dateTime().clientDefault(() => DateTime.now())();
 
   /// The role ends at the start of this day, if set.
   DateTimeColumn get endsOn => dateTime().nullable()();
@@ -640,10 +641,19 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(roles, roles.permissions);
         // Created with these already when coming from v1.
         if (from >= 2) {
-          await m.addColumn(contributionTypes, contributionTypes.proposedAmount);
-          await m.addColumn(contributionTypes, contributionTypes.proposedByName);
+          await m.addColumn(
+            contributionTypes,
+            contributionTypes.proposedAmount,
+          );
+          await m.addColumn(
+            contributionTypes,
+            contributionTypes.proposedByName,
+          );
           await m.addColumn(contributionTypes, contributionTypes.proposedAt);
-          await m.addColumn(contributionTypes, contributionTypes.approvedByName);
+          await m.addColumn(
+            contributionTypes,
+            contributionTypes.approvedByName,
+          );
         }
         await m.createTable(roleAssignments);
         await m.createIndex(roleAssignmentsMember);
@@ -812,6 +822,11 @@ class AppDatabase extends _$AppDatabase {
         b.insert(
           executivePositions,
           ExecutivePositionsCompanion.insert(
+            id: onlyMissing
+                ? Value(
+                    'position-${title.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '-')}',
+                  )
+                : const Value.absent(),
             title: title,
             level: level,
             sortOrder: Value(order++),
@@ -876,9 +891,12 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
     }
+    // Fixed ids, so phones that upgrade separately add the same records
+    // rather than clashing copies.
     for (final seed in seeds.values) {
       await into(roles).insert(
         RolesCompanion.insert(
+          id: Value('role-${seed.key}'),
           key: seed.key,
           name: seed.name,
           level: seed.level,

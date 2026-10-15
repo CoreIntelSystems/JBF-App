@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../domain/password_hasher.dart';
+import '../../domain/permissions.dart';
 import '../database.dart';
+import '../sync/sync_api.dart';
+import '../sync/sync_service.dart';
 import 'actor.dart';
 import 'audit_repository.dart';
 
@@ -19,6 +24,7 @@ class AppUser extends Equatable {
     required this.hasPin,
     this.zoneScope,
     this.memberId,
+    this.memberAccount = false,
   });
 
   final String id;
@@ -37,6 +43,10 @@ class AppUser extends Equatable {
   /// members too, so they see their own dues alongside their role's work.
   final String? memberId;
 
+  /// Signed in with a member ID (rather than an old username login). Its
+  /// password lives in the cloud; this phone keeps a copy to work offline.
+  final bool memberAccount;
+
   bool can(String permission) => permissions.contains(permission);
 
   Actor actor(String deviceId) =>
@@ -54,6 +64,7 @@ class AppUser extends Equatable {
     hasPin,
     zoneScope,
     memberId,
+    memberAccount,
   ];
 }
 
@@ -73,19 +84,47 @@ class UserWithRole {
 
 enum LoginMethod { password, pin, biometric }
 
+/// Checks a member's password in the cloud ([newPassword] changes it).
+/// Throws [SyncException].
+typedef MemberPasswordCheck =
+    Future<void> Function(
+      String memberNo,
+      String password, {
+      String? newPassword,
+    });
+
+/// A role someone holds, for the member page.
+class HeldRole {
+  const HeldRole(this.assignment, this.role);
+  final RoleAssignment assignment;
+  final Role role;
+
+  List<String> get zoneIds =>
+      (assignment.zoneIds ?? '').split(',').where((z) => z.isNotEmpty).toList();
+}
+
 class AuthRepository {
   AuthRepository(
     this._db,
     this._audit, {
     PasswordHasher hasher = const PasswordHasher(),
     DateTime Function()? clock,
+    SyncPrefs? memberCredentials,
+    this.cloudCheck,
   }) : _hasher = hasher,
-       _now = clock ?? DateTime.now;
+       _now = clock ?? DateTime.now,
+       _creds = memberCredentials ?? MemorySyncPrefs();
 
   final AppDatabase _db;
   final AuditRepository _audit;
   final PasswordHasher _hasher;
   final DateTime Function() _now;
+
+  /// This phone's copies of member passwords, PINs and fingerprint choice.
+  final SyncPrefs _creds;
+
+  /// Confirms a member's password online; null when there is no cloud.
+  MemberPasswordCheck? cloudCheck;
 
   static const maxFailedAttempts = 5;
   static const lockoutDuration = Duration(minutes: 5);
@@ -232,11 +271,17 @@ class AuthRepository {
     final user = await (_db.select(
       _db.users,
     )..where((u) => u.username.equals(name))).getSingleOrNull();
+    if (user == null) {
+      final member = await _memberByNo(username);
+      if (member != null) {
+        return _memberLogin(member, secret, method, deviceId);
+      }
+    }
     final actor = Actor(userId: user?.id, username: name, deviceId: deviceId);
 
     if (user == null || !user.isActive || user.deletedAt != null) {
       await _audit.log(actor, 'login.failed', newValue: {'reason': 'unknown'});
-      throw AuthException('Wrong username or password.');
+      throw AuthException('Wrong member ID or password.');
     }
     final now = _now();
     if (user.lockedUntil != null && user.lockedUntil!.isAfter(now)) {
@@ -288,7 +333,7 @@ class AuthRepository {
                   '${lockoutDuration.inMinutes} minutes.'
             : method == LoginMethod.pin
             ? 'Wrong PIN.'
-            : 'Wrong username or password.',
+            : 'Wrong member ID or password.',
       );
     }
 
@@ -324,6 +369,9 @@ class AuthRepository {
     String next, {
     required String deviceId,
   }) async {
+    if (user.memberAccount) {
+      return _memberChangePassword(user, current, next, deviceId);
+    }
     final row = await _userRow(user.id);
     if (!await _hasher.verify(current, row.passwordHash)) {
       throw AuthException('Current password is wrong.');
@@ -353,6 +401,16 @@ class AuthRepository {
       if (err != null) throw AuthException(err);
     }
     final hash = pin == null ? null : await _hasher.hash(pin);
+    if (user.memberAccount) {
+      await _updateCreds(user.id, (c) => c..['pin'] = hash);
+      await _audit.log(
+        user.actor(deviceId),
+        pin == null ? 'user.pin_remove' : 'user.pin_set',
+        entity: 'members',
+        entityId: user.id,
+      );
+      return loadMemberUser(user.id);
+    }
     await _db.transaction(() async {
       await _touchUser(user.id, UsersCompanion(pinHash: Value(hash)));
       await _audit.log(
@@ -370,6 +428,10 @@ class AuthRepository {
     bool enabled, {
     required String deviceId,
   }) async {
+    if (user.memberAccount) {
+      await _updateCreds(user.id, (c) => c..['bio'] = enabled);
+      return loadMemberUser(user.id);
+    }
     await _db.transaction(() async {
       await _touchUser(
         user.id,
@@ -386,6 +448,8 @@ class AuthRepository {
   }
 
   Future<bool> biometricEnabledFor(String username) async {
+    final member = await _memberByNo(username);
+    if (member != null) return (await _readCreds(member.id))['bio'] == true;
     final row =
         await (_db.select(_db.users)
               ..where((u) => u.username.equals(normalizeUsername(username))))
@@ -516,6 +580,419 @@ class AuthRepository {
       throw AuthException(
         'That member already has an account (${other.username}).',
       );
+    }
+  }
+
+  // ---- Member ID sign-in -------------------------------------------------
+
+  Future<Member?> _memberByNo(String memberNo) {
+    final no = memberNo.trim().toUpperCase();
+    if (no.isEmpty) return Future.value();
+    return (_db.select(_db.members)
+          ..where((m) => m.memberNo.upper().equals(no) & m.deletedAt.isNull()))
+        .getSingleOrNull();
+  }
+
+  Future<Map<String, Object?>> _readCreds(String memberId) async {
+    final raw = await _creds.read('member_cred_$memberId');
+    return raw == null
+        ? <String, Object?>{}
+        : (jsonDecode(raw) as Map).cast<String, Object?>();
+  }
+
+  Future<void> _updateCreds(
+    String memberId,
+    Map<String, Object?> Function(Map<String, Object?>) change,
+  ) async {
+    final next = change(await _readCreds(memberId));
+    await _creds.write('member_cred_$memberId', jsonEncode(next));
+  }
+
+  /// Keeps a copy of a member's password on this phone (after the cloud
+  /// confirmed it) so they can sign in offline.
+  Future<void> rememberMemberPassword(String memberId, String password) async {
+    final hash = await _hasher.hash(password);
+    await _updateCreds(memberId, (c) => c..['pw'] = hash);
+  }
+
+  /// Forgets a member's saved password, PIN and fingerprint on this phone.
+  Future<void> forgetMember(String memberId) =>
+      _creds.write('member_cred_$memberId', null);
+
+  Future<AppUser> _memberLogin(
+    Member member,
+    String secret,
+    LoginMethod method,
+    String deviceId,
+  ) async {
+    final actor = Actor(
+      userId: member.id,
+      username: member.memberNo,
+      deviceId: deviceId,
+    );
+    final creds = await _readCreds(member.id);
+    final now = _now();
+    final lockedUntil = DateTime.tryParse('${creds['locked_until']}');
+    if (lockedUntil != null && lockedUntil.isAfter(now)) {
+      final mins = lockedUntil.difference(now).inMinutes + 1;
+      throw AuthException(
+        'Too many wrong attempts. Try again in $mins minute(s).',
+      );
+    }
+    final user = await loadMemberUser(member.id);
+    if (user.permissions.isEmpty) {
+      throw AuthException(
+        'This phone holds the association\'s records and is only for '
+        'executives. Sign in on your own phone to see your dues.',
+      );
+    }
+
+    var ok = false;
+    switch (method) {
+      case LoginMethod.password:
+        final saved = creds['pw'] as String?;
+        ok = saved != null && await _hasher.verify(secret, saved);
+        final check = cloudCheck;
+        if (!ok && check != null) {
+          // First sign-in on this phone, or the password was changed on
+          // another phone: ask the cloud.
+          try {
+            await check(member.memberNo, secret);
+            ok = true;
+            await rememberMemberPassword(member.id, secret);
+          } on SyncException catch (e) {
+            if (e.offline && saved == null) {
+              throw AuthException(
+                'Connect to the internet the first time you sign in on '
+                'this phone.',
+              );
+            }
+            if (!e.offline && !e.message.startsWith('Wrong')) {
+              throw AuthException(e.message);
+            }
+          }
+        }
+      case LoginMethod.pin:
+        final pin = creds['pin'] as String?;
+        if (pin == null) throw AuthException('No PIN is set for this user.');
+        ok = await _hasher.verify(secret, pin);
+      case LoginMethod.biometric:
+        if (creds['bio'] != true) {
+          throw AuthException('Fingerprint login is off for this user.');
+        }
+        ok = true;
+    }
+
+    if (!ok) {
+      final attempts = ((creds['fails'] as num?)?.toInt() ?? 0) + 1;
+      final locked = attempts >= maxFailedAttempts;
+      await _updateCreds(
+        member.id,
+        (c) => c
+          ..['fails'] = locked ? 0 : attempts
+          ..['locked_until'] = locked
+              ? now.add(lockoutDuration).toIso8601String()
+              : null,
+      );
+      await _audit.log(
+        actor,
+        'login.failed',
+        entity: 'members',
+        entityId: member.id,
+        newValue: {'method': method.name, 'locked': locked},
+      );
+      throw AuthException(
+        locked
+            ? 'Too many wrong attempts. Try again in '
+                  '${lockoutDuration.inMinutes} minutes.'
+            : method == LoginMethod.pin
+            ? 'Wrong PIN.'
+            : 'Wrong member ID or password.',
+      );
+    }
+    await _updateCreds(
+      member.id,
+      (c) => c
+        ..remove('fails')
+        ..remove('locked_until'),
+    );
+    await _audit.log(
+      actor,
+      'login.success',
+      entity: 'members',
+      entityId: member.id,
+      newValue: {'method': method.name},
+    );
+    return loadMemberUser(member.id);
+  }
+
+  Future<AppUser> _memberChangePassword(
+    AppUser user,
+    String current,
+    String next,
+    String deviceId,
+  ) async {
+    final err = validatePassword(next);
+    if (err != null) throw AuthException(err);
+    final check = cloudCheck;
+    if (check == null) {
+      throw AuthException('Connect to the internet to change your password.');
+    }
+    try {
+      await check(user.username, current, newPassword: next);
+    } on SyncException catch (e) {
+      throw AuthException(
+        e.offline
+            ? 'Connect to the internet to change your password.'
+            : e.message.startsWith('Wrong')
+            ? 'Current password is wrong.'
+            : e.message,
+      );
+    }
+    await rememberMemberPassword(user.id, next);
+    await _audit.log(
+      user.actor(deviceId),
+      'user.password_change',
+      entity: 'members',
+      entityId: user.id,
+    );
+    return loadMemberUser(user.id);
+  }
+
+  /// The roles a member holds today: assigned roles plus any old username
+  /// login linked to them.
+  Future<List<HeldRole>> heldRoles(String memberId) async {
+    final now = _now();
+    final q =
+        _db.select(_db.roleAssignments).join([
+            innerJoin(
+              _db.roles,
+              _db.roles.id.equalsExp(_db.roleAssignments.roleId),
+            ),
+          ])
+          ..where(
+            _db.roleAssignments.memberId.equals(memberId) &
+                _db.roleAssignments.deletedAt.isNull() &
+                _db.roleAssignments.startsOn.isSmallerOrEqualValue(now) &
+                (_db.roleAssignments.endsOn.isNull() |
+                    _db.roleAssignments.endsOn.isBiggerThanValue(now)),
+          )
+          ..orderBy([OrderingTerm.asc(_db.roleAssignments.startsOn)]);
+    return [
+      for (final r in await q.get())
+        HeldRole(r.readTable(_db.roleAssignments), r.readTable(_db.roles)),
+    ];
+  }
+
+  Stream<List<HeldRole>> watchHeldRoles(String memberId) {
+    final q =
+        _db.select(_db.roleAssignments).join([
+            innerJoin(
+              _db.roles,
+              _db.roles.id.equalsExp(_db.roleAssignments.roleId),
+            ),
+          ])
+          ..where(
+            _db.roleAssignments.memberId.equals(memberId) &
+                _db.roleAssignments.deletedAt.isNull(),
+          )
+          ..orderBy([OrderingTerm.asc(_db.roleAssignments.startsOn)]);
+    return q.watch().map((rows) {
+      final now = _now();
+      return [
+        for (final r in rows)
+          if (r.readTable(_db.roleAssignments) case final a
+              when !a.startsOn.isAfter(now) &&
+                  (a.endsOn == null || a.endsOn!.isAfter(now)))
+            HeldRole(a, r.readTable(_db.roles)),
+      ];
+    });
+  }
+
+  Future<Set<String>> _rolePermissions(Role role) async {
+    if (role.permissions != null) return decodePermissions(role.permissions);
+    final rows = await (_db.select(
+      _db.rolePermissions,
+    )..where((p) => p.roleId.equals(role.id))).get();
+    return {for (final p in rows) p.permission};
+  }
+
+  /// The signed-in user for a member: the permissions of every role they
+  /// hold. Zone executives are limited to their zones unless they also
+  /// hold a wider role.
+  Future<AppUser> loadMemberUser(String memberId) async {
+    final member = await (_db.select(
+      _db.members,
+    )..where((m) => m.id.equals(memberId))).getSingle();
+    final held = <(Role, List<String>)>[
+      for (final h in await heldRoles(memberId)) (h.role, h.zoneIds),
+    ];
+    final linked =
+        await (_db.select(_db.users)..where(
+              (u) =>
+                  u.memberId.equals(memberId) &
+                  u.isActive.equals(true) &
+                  u.deletedAt.isNull(),
+            ))
+            .get();
+    for (final u in linked) {
+      final role = await (_db.select(
+        _db.roles,
+      )..where((r) => r.id.equals(u.roleId))).getSingle();
+      held.add((
+        role,
+        (u.zoneIds ?? '').split(',')..removeWhere((z) => z.isEmpty),
+      ));
+    }
+    final officer = [
+      for (final h in held)
+        if (h.$1.key != 'member') h,
+    ];
+    final perms = <String>{};
+    final permsByRole = <Role, Set<String>>{};
+    for (final (role, _) in officer) {
+      final p = permsByRole[role] ??= await _rolePermissions(role);
+      perms.addAll(p);
+    }
+    officer.sort(
+      (a, b) => permsByRole[b.$1]!.length.compareTo(permsByRole[a.$1]!.length),
+    );
+    final Set<String>? scope =
+        officer.isEmpty || officer.any((h) => h.$1.level != 'zone')
+        ? null
+        : {for (final h in officer) ...h.$2};
+    final names = <String>[];
+    for (final (role, _) in officer) {
+      if (!names.contains(role.name)) names.add(role.name);
+    }
+    final creds = await _readCreds(memberId);
+    return AppUser(
+      id: member.id,
+      username: member.memberNo,
+      displayName: member.fullName,
+      roleKey: officer.isEmpty ? 'member' : officer.first.$1.key,
+      roleName: names.isEmpty ? 'Member' : names.join(', '),
+      permissions: perms,
+      biometricEnabled: creds['bio'] == true,
+      hasPin: creds['pin'] != null,
+      zoneScope: scope,
+      memberId: member.id,
+      memberAccount: true,
+    );
+  }
+
+  /// Gives a member a role. Holders of [Perm.rolesAssign] may give any
+  /// role; Zone Mayors ([Perm.zoneRolesAssign]) only zone roles in their
+  /// own zones.
+  Future<void> assignRole({
+    required String memberId,
+    required String roleId,
+    List<String> zoneIds = const [],
+    required AppUser by,
+    required String deviceId,
+  }) async {
+    final role = await (_db.select(
+      _db.roles,
+    )..where((r) => r.id.equals(roleId))).getSingle();
+    _checkCanAssign(by, role, zoneIds);
+    if (role.level == 'zone') {
+      if (zoneIds.isEmpty) {
+        throw AuthException('Choose the zone this role looks after.');
+      }
+      if (zoneIds.length > 2) throw AuthException('Choose at most 2 zones.');
+    }
+    final dup = (await heldRoles(memberId)).any(
+      (h) =>
+          h.role.id == roleId &&
+          (role.level != 'zone' ||
+              h.zoneIds.toSet().containsAll(zoneIds.toSet())),
+    );
+    if (dup) throw AuthException('They already hold that role.');
+    final actor = by.actor(deviceId);
+    await _db.transaction(() async {
+      final a = await _db
+          .into(_db.roleAssignments)
+          .insertReturning(
+            RoleAssignmentsCompanion.insert(
+              memberId: memberId,
+              roleId: roleId,
+              zoneIds: Value(
+                role.level == 'zone' && zoneIds.isNotEmpty
+                    ? zoneIds.join(',')
+                    : null,
+              ),
+              startsOn: Value(_now()),
+              assignedByName: Value(by.displayName),
+              createdBy: Value(by.id),
+              deviceId: Value(deviceId),
+            ),
+          );
+      await _audit.log(
+        actor,
+        'role.assign',
+        entity: 'role_assignments',
+        entityId: a.id,
+        newValue: {
+          'memberId': memberId,
+          'role': role.key,
+          if (zoneIds.isNotEmpty) 'zoneIds': zoneIds,
+        },
+      );
+    });
+  }
+
+  /// Ends a role from now on.
+  Future<void> endRole(
+    HeldRole held, {
+    required AppUser by,
+    required String deviceId,
+  }) async {
+    _checkCanAssign(by, held.role, held.zoneIds);
+    if (held.assignment.memberId == by.memberId &&
+        held.role.key == by.roleKey &&
+        by.can(Perm.rolesAssign)) {
+      throw AuthException(
+        'You cannot remove your own main role. Ask another officer.',
+      );
+    }
+    await _db.transaction(() async {
+      await (_db.update(
+        _db.roleAssignments,
+      )..where((a) => a.id.equals(held.assignment.id))).write(
+        RoleAssignmentsCompanion(
+          endsOn: Value(_now()),
+          updatedAt: Value(_now()),
+        ),
+      );
+      await _audit.log(
+        by.actor(deviceId),
+        'role.end',
+        entity: 'role_assignments',
+        entityId: held.assignment.id,
+        oldValue: {'memberId': held.assignment.memberId, 'role': held.role.key},
+      );
+    });
+  }
+
+  /// Roles [by] may give: any (except Super Administrator, which only
+  /// CoreIntel support gives) with [Perm.rolesAssign]; zone roles with
+  /// [Perm.zoneRolesAssign].
+  static bool canGive(AppUser by, Role role) {
+    if (role.key == 'super_admin') return by.roleKey == 'super_admin';
+    if (role.key == 'member') return false;
+    if (by.can(Perm.rolesAssign)) return true;
+    return by.can(Perm.zoneRolesAssign) && role.level == 'zone';
+  }
+
+  void _checkCanAssign(AppUser by, Role role, List<String> zoneIds) {
+    if (!canGive(by, role)) {
+      throw AuthException('Your role cannot give or remove that role.');
+    }
+    final scope = by.zoneScope;
+    if (!by.can(Perm.rolesAssign) &&
+        scope != null &&
+        zoneIds.any((z) => !scope.contains(z))) {
+      throw AuthException('You can only give roles in your own zone.');
     }
   }
 

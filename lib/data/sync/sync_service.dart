@@ -259,6 +259,11 @@ class SyncService extends Cubit<SyncStatus> {
     return _joined(e, name, e.series);
   }
 
+  /// Joins with an enrollment the cloud gave an officer who signed in with
+  /// their member ID.
+  Future<JoinOutcome> joinEnrollment(Enrollment e, String deviceName) =>
+      _joined(e, deviceName, e.series);
+
   Future<JoinOutcome> _joined(
     Enrollment e,
     String deviceName,
@@ -385,6 +390,13 @@ class SyncService extends Cubit<SyncStatus> {
   Future<List<CloudDevice>> devices() => _api.devices(_token);
 
   Future<void> removeDevice(String deviceId) => _api.revoke(_token, deviceId);
+
+  /// Clears a member's sign-in so they activate again with their phone.
+  Future<void> resetMemberSignIn(String memberId) =>
+      _api.memberResetSignIn(_token, memberId);
+
+  Future<MemberAccountStatus> memberAccountStatus(String memberId) =>
+      _api.memberAccountStatus(_token, memberId);
 
   Future<List<SyncIssue>> issues() async => [
     for (final r

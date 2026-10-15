@@ -20,8 +20,43 @@ class FakeCloud {
 
   SyncApi get api => SyncApi(call);
 
+  /// Member passwords (plain, for tests) by member key.
+  final memberPasswords = <String, String>{};
+  final memberSessions = <String, String>{};
+
   Future<Object?> call(String fn, Map<String, Object?> a) async {
     if (fn == 'fn:sync-sign-in') return _signIn(a);
+    if (fn == 'fn:member-auth') return _memberAuth(a);
+    if (fn == 'member_home') {
+      final key = memberSessions[a['token']];
+      if (key == null) throw SyncException('Please sign in again.');
+      final m = _records['members|$key']!.data;
+      return {
+        'org': 'June Borns Family',
+        'member': {
+          'name': m['full_name'],
+          'member_no': m['member_no'],
+          'status': m['status'],
+          'joined': '2026-01-01',
+          'zones': <String>[],
+        },
+        'dues': <Object>[],
+        'payments': <Object>[],
+        'officer': _isOfficer(key),
+        'welfare': <Object>[],
+        'events': <Object>[],
+        'executives': <Object>[],
+        'directory': [
+          for (final r in _records.values)
+            if (r.t == 'members') {'name': r.data['full_name'], 'zones': []},
+        ],
+        'announcements': <Object>[],
+      };
+    }
+    if (fn == 'member_sign_out') {
+      memberSessions.remove(a['token']);
+      return null;
+    }
     if (fn == 'sync_enroll') {
       final admin = _codes.remove(a['code']);
       if (admin == null) {
@@ -112,6 +147,12 @@ class FakeCloud {
           'last_seq': last,
           'more': _records.values.any((r) => r.seq > last),
         };
+      case 'member_reset_sign_in':
+        memberPasswords.remove(a['member']);
+        memberSessions.removeWhere((_, k) => k == a['member']);
+        return {'ok': true};
+      case 'member_account_status':
+        return {'activated': memberPasswords.containsKey(a['member'])};
       case 'sync_create_code':
         if (!d.admin) {
           throw SyncException('Only the main phone can add phones.');
@@ -123,6 +164,89 @@ class FakeCloud {
 }
 
 extension on FakeCloud {
+  bool _isOfficer(String memberKey) => _records.values.any(
+    (r) =>
+        (r.t == 'role_assignments' &&
+            r.data['member_id'] == memberKey &&
+            r.data['ends_on'] == null &&
+            r.data['deleted_at'] == null) ||
+        (r.t == 'users' &&
+            r.data['member_id'] == memberKey &&
+            r.data['is_active'] == 1),
+  );
+
+  Future<Object?> _memberAuth(Map<String, Object?> a) async {
+    final no = (a['member_no']! as String).trim().toUpperCase();
+    final m = _records.values
+        .where(
+          (r) =>
+              r.t == 'members' &&
+              (r.data['member_no']! as String).toUpperCase() == no,
+        )
+        .firstOrNull;
+    final key = m?.k;
+    String digits(Object? v) {
+      final d = '${v ?? ''}'.replaceAll(RegExp(r'\D'), '');
+      return d.length > 9 ? d.substring(d.length - 9) : d;
+    }
+
+    switch (a['action']) {
+      case 'activate':
+        if (key == null ||
+            digits(a['phone']).length != 9 ||
+            digits(a['phone']) != digits(m!.data['phone'])) {
+          throw SyncException(
+            'Member ID and phone number do not match our records.',
+          );
+        }
+        memberPasswords[key] = a['new_password']! as String;
+      case 'sign_in' || 'change_password':
+        if (key != null && !memberPasswords.containsKey(key)) {
+          throw SyncException(
+            'Activate your account first with your member ID and phone '
+            'number.',
+          );
+        }
+        if (key == null || memberPasswords[key] != a['password']) {
+          throw SyncException('Wrong member ID or password.');
+        }
+        if (a['action'] == 'change_password') {
+          memberPasswords[key] = a['new_password']! as String;
+          return {'kind': 'checked'};
+        }
+    }
+    if (a['check'] == true) return {'kind': 'checked'};
+    if (_isOfficer(key!)) {
+      var n = 2;
+      while (devices.values.any((d) => d.series == 'P$n')) {
+        n++;
+      }
+      final token = 'tok${_n++}';
+      devices[token] = (id: 'dev${_n++}', admin: false, series: 'P$n');
+      return {
+        'kind': 'officer',
+        'member_key': key,
+        'token': token,
+        'device_id': devices[token]!.id,
+        'org_id': 'org1',
+        'org_name': 'June Borns Family',
+        'is_admin': false,
+        'series': 'P$n',
+        'records': _records.length,
+      };
+    }
+    final token = 'mem${_n++}';
+    memberSessions[token] = key;
+    return {
+      'kind': 'member',
+      'token': token,
+      'member_key': key,
+      'member_no': m!.data['member_no'],
+      'name': m.data['full_name'],
+      'org_name': 'June Borns Family',
+    };
+  }
+
   Future<Object?> _signIn(Map<String, Object?> a) async {
     if ((a['org']! as String).toUpperCase() != 'JBF') {
       throw SyncException('No organisation called ${a['org']}.');

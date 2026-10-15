@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app_services.dart';
+import '../../core/org_config.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/sync/sync_api.dart';
 import 'biometrics.dart';
 
 sealed class AuthState extends Equatable {
@@ -37,6 +41,15 @@ class AuthSignedIn extends AuthState {
   List<Object?> get props => [user];
 }
 
+/// An ordinary member signed in on their own phone. Their records stay in
+/// the cloud; this phone keeps only a copy of what they may see.
+class AuthMemberSession extends AuthState {
+  const AuthMemberSession(this.session);
+  final MemberSession session;
+  @override
+  List<Object?> get props => [session.token];
+}
+
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit(this._services, this._biometrics) : super(const AuthChecking());
 
@@ -61,7 +74,17 @@ class AuthCubit extends Cubit<AuthState> {
     _ => null,
   };
 
+  static const _sessionKey = 'member_session';
+
   Future<void> start() async {
+    final raw = await _services.prefs.read(_sessionKey);
+    if (raw != null) {
+      final session = MemberAuthResult.fromJson(jsonDecode(raw) as Map);
+      if (session is MemberSession) {
+        emit(AuthMemberSession(session));
+        return;
+      }
+    }
     if (!await _auth.hasUsers()) {
       emit(const AuthNeedsSetup());
       return;
@@ -105,6 +128,57 @@ class AuthCubit extends Cubit<AuthState> {
     );
     await _services.store.setLastUsername(user.username);
     emit(AuthSignedIn(user));
+  }
+
+  /// Signs in online with a member ID, or activates the account the first
+  /// time with the member's phone number and a new password. Executives get
+  /// this phone joined to the association's records; other members get
+  /// their own page. Throws [SyncException] or [AuthException].
+  Future<void> memberOnline({
+    required String memberNo,
+    required String password,
+    String? phone,
+  }) async {
+    final activate = phone != null;
+    final api = _services.sync.api;
+    final r = await api.memberAuth(
+      action: activate ? 'activate' : 'sign_in',
+      org: OrgDefaults.shortName,
+      memberNo: memberNo.trim(),
+      password: activate ? null : password,
+      newPassword: activate ? password : null,
+      phone: phone,
+    );
+    switch (r) {
+      case MemberSession():
+        await _services.prefs.write(_sessionKey, jsonEncode(r.toJson()));
+        emit(AuthMemberSession(r));
+      case OfficerSignIn(:final enrollment, :final memberKey):
+        await _services.sync.joinEnrollment(
+          enrollment,
+          "${memberNo.trim().toUpperCase()}'s phone",
+        );
+        _services.sync.startAuto();
+        await _auth.rememberMemberPassword(memberKey, password);
+        await login(memberNo, password, LoginMethod.password);
+      case MemberChecked():
+        throw AuthException('Please try again.');
+    }
+  }
+
+  /// Ends a member session on this phone.
+  Future<void> memberSignOut() async {
+    final s = state;
+    if (s is AuthMemberSession) {
+      try {
+        await _services.sync.api.memberSignOut(s.session.token);
+      } on SyncException {
+        // Offline: the cloud session simply goes unused.
+      }
+    }
+    await _services.prefs.write(_sessionKey, null);
+    await _services.prefs.write('member_home', null);
+    await start();
   }
 
   /// Returns false if the fingerprint check was cancelled or failed.

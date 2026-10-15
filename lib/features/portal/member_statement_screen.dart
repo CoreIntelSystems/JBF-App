@@ -77,7 +77,9 @@ class _MemberStatementScreenState extends State<MemberStatementScreen> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
-            child: s == null ? _form(context) : _StatementView(s, _another),
+            child: s == null
+                ? _form(context)
+                : StatementView(s, onAnother: _another),
           ),
         ),
       ),
@@ -141,11 +143,17 @@ class _MemberStatementScreenState extends State<MemberStatementScreen> {
   );
 }
 
-class _StatementView extends StatelessWidget {
-  const _StatementView(this.s, this.onAnother);
+/// A member's dues and payments.
+class StatementView extends StatelessWidget {
+  const StatementView(this.s, {super.key, this.onAnother, this.header});
 
   final MemberStatement s;
-  final VoidCallback onAnother;
+
+  /// Shown as "Check another member" when set.
+  final VoidCallback? onAnother;
+
+  /// Shown above the statement.
+  final Widget? header;
 
   static const _methods = {
     'cash': 'Cash',
@@ -173,8 +181,10 @@ class _StatementView extends StatelessWidget {
     );
 
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
+        ?header,
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -270,10 +280,11 @@ class _StatementView extends StatelessWidget {
               style: text.bodySmall,
             ),
           ),
-        TextButton(
-          onPressed: onAnother,
-          child: const Text('Check another member'),
-        ),
+        if (onAnother != null)
+          TextButton(
+            onPressed: onAnother,
+            child: const Text('Check another member'),
+          ),
       ],
     );
   }

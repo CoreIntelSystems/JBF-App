@@ -223,6 +223,246 @@ class SyncApi {
     if (r['error'] is String) throw SyncException(r['error'] as String);
     return MemberStatement.fromJson(r);
   }
+
+  /// Member ID sign-in (see supabase/functions/member-auth). [action] is
+  /// `activate` (first time, checked with [phone]), `sign_in` or
+  /// `change_password`. With [check] the password is only confirmed.
+  Future<MemberAuthResult> memberAuth({
+    required String action,
+    required String org,
+    required String memberNo,
+    String? password,
+    String? newPassword,
+    String? phone,
+    String? deviceName,
+    bool check = false,
+  }) async {
+    final r =
+        (await _call('fn:member-auth', {
+              'action': action,
+              'org': org,
+              'member_no': memberNo,
+              'password': ?password,
+              'new_password': ?newPassword,
+              'phone': ?phone,
+              'device_name': ?deviceName,
+              'check': check,
+            }))!
+            as Map;
+    return MemberAuthResult.fromJson(r);
+  }
+
+  /// Everything a member sees in the app, as JSON (cached for offline use).
+  Future<Map<String, Object?>> memberHome(String sessionToken) async =>
+      ((await _call('member_home', {'token': sessionToken}))! as Map)
+          .cast<String, Object?>();
+
+  Future<void> memberSignOut(String sessionToken) =>
+      _call('member_sign_out', {'token': sessionToken});
+
+  /// An officer clears a member's password so they activate again.
+  Future<void> memberResetSignIn(String token, String memberId) =>
+      _call('member_reset_sign_in', {'token': token, 'member': memberId});
+
+  Future<MemberAccountStatus> memberAccountStatus(
+    String token,
+    String memberId,
+  ) async {
+    final r =
+        (await _call('member_account_status', {
+              'token': token,
+              'member': memberId,
+            }))!
+            as Map;
+    return MemberAccountStatus(
+      activated: r['activated'] == true,
+      activatedAt: DateTime.tryParse('${r['activated_at']}')?.toLocal(),
+      resetAt: DateTime.tryParse('${r['reset_at']}')?.toLocal(),
+      resetBy: r['reset_by'] as String?,
+    );
+  }
+}
+
+/// The outcome of a member ID sign-in: a member session for ordinary
+/// members, a synced phone for people with an executive role, or just a
+/// confirmed password.
+sealed class MemberAuthResult {
+  const MemberAuthResult();
+
+  factory MemberAuthResult.fromJson(Map r) => switch (r['kind']) {
+    'member' => MemberSession(
+      token: r['token'] as String,
+      memberKey: r['member_key'] as String,
+      memberNo: r['member_no'] as String? ?? '',
+      name: r['name'] as String? ?? '',
+      orgName: r['org_name'] as String? ?? '',
+    ),
+    'officer' => OfficerSignIn(
+      Enrollment.fromJson(r),
+      r['member_key'] as String,
+    ),
+    _ => const MemberChecked(),
+  };
+}
+
+class MemberChecked extends MemberAuthResult {
+  const MemberChecked();
+}
+
+class OfficerSignIn extends MemberAuthResult {
+  const OfficerSignIn(this.enrollment, this.memberKey);
+  final Enrollment enrollment;
+  final String memberKey;
+}
+
+class MemberSession extends MemberAuthResult {
+  const MemberSession({
+    required this.token,
+    required this.memberKey,
+    required this.memberNo,
+    required this.name,
+    required this.orgName,
+  });
+  final String token;
+  final String memberKey;
+  final String memberNo;
+  final String name;
+  final String orgName;
+
+  Map<String, Object?> toJson() => {
+    'kind': 'member',
+    'token': token,
+    'member_key': memberKey,
+    'member_no': memberNo,
+    'name': name,
+    'org_name': orgName,
+  };
+}
+
+class MemberAccountStatus {
+  const MemberAccountStatus({
+    required this.activated,
+    this.activatedAt,
+    this.resetAt,
+    this.resetBy,
+  });
+  final bool activated;
+  final DateTime? activatedAt;
+  final DateTime? resetAt;
+  final String? resetBy;
+}
+
+/// What an ordinary member sees in the app (see member_home).
+class MemberHome {
+  const MemberHome({
+    required this.statement,
+    required this.officer,
+    required this.welfare,
+    required this.events,
+    required this.executives,
+    required this.directory,
+    required this.announcements,
+  });
+  final MemberStatement statement;
+
+  /// The member has been given an executive role since signing in.
+  final bool officer;
+  final List<HomeWelfareCase> welfare;
+  final List<HomeEvent> events;
+  final List<HomeExecutive> executives;
+  final List<HomeDirectoryEntry> directory;
+  final List<String> announcements;
+
+  static List<Map> _list(Object? v) => (v as List? ?? const []).cast<Map>();
+
+  factory MemberHome.fromJson(Map r) => MemberHome(
+    statement: MemberStatement.fromJson(r),
+    officer: r['officer'] == true,
+    welfare: [
+      for (final w in _list(r['welfare']))
+        HomeWelfareCase(
+          caseNo: w['case_no'] as String? ?? '',
+          type: w['type'] as String?,
+          status: w['status'] as String? ?? '',
+          amount: (w['amount'] as num?)?.toInt() ?? 0,
+          occurredOn: DateTime.tryParse('${w['occurred_on']}'),
+          beneficiary: w['beneficiary'] as String?,
+        ),
+    ],
+    events: [
+      for (final e in _list(r['events']))
+        HomeEvent(
+          name: e['name'] as String? ?? '',
+          meeting: e['kind'] == 'meeting',
+          date: DateTime.tryParse('${e['date']}'),
+          venue: e['venue'] as String?,
+          description: e['description'] as String?,
+        ),
+    ],
+    executives: [
+      for (final x in _list(r['executives']))
+        HomeExecutive(
+          name: x['name'] as String? ?? '',
+          position: x['position'] as String? ?? '',
+          zone: x['zone'] as String?,
+        ),
+    ],
+    directory: [
+      for (final d in _list(r['directory']))
+        HomeDirectoryEntry(
+          name: d['name'] as String? ?? '',
+          zones: [for (final z in (d['zones'] as List? ?? const [])) '$z'],
+        ),
+    ],
+    announcements: [
+      for (final a in (r['announcements'] as List? ?? const [])) '$a',
+    ],
+  );
+}
+
+class HomeWelfareCase {
+  const HomeWelfareCase({
+    required this.caseNo,
+    required this.status,
+    required this.amount,
+    this.type,
+    this.occurredOn,
+    this.beneficiary,
+  });
+  final String caseNo;
+  final String? type;
+  final String status;
+  final int amount;
+  final DateTime? occurredOn;
+  final String? beneficiary;
+}
+
+class HomeEvent {
+  const HomeEvent({
+    required this.name,
+    required this.meeting,
+    this.date,
+    this.venue,
+    this.description,
+  });
+  final String name;
+  final bool meeting;
+  final DateTime? date;
+  final String? venue;
+  final String? description;
+}
+
+class HomeExecutive {
+  const HomeExecutive({required this.name, required this.position, this.zone});
+  final String name;
+  final String position;
+  final String? zone;
+}
+
+class HomeDirectoryEntry {
+  const HomeDirectoryEntry({required this.name, required this.zones});
+  final String name;
+  final List<String> zones;
 }
 
 /// What a member sees about themselves (see portal_statement).

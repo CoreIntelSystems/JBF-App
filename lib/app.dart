@@ -9,6 +9,7 @@ import 'features/auth/biometrics.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/setup_screen.dart';
 import 'features/home/home_shell.dart';
+import 'features/portal/member_shell.dart';
 
 class ThemeModeCubit extends Cubit<ThemeMode> {
   ThemeModeCubit(this._services, super.initial);
@@ -105,6 +106,10 @@ class JbfApp extends StatelessWidget {
                     state: state,
                   ),
                   AuthSignedIn() => const HomeShell(),
+                  AuthMemberSession(:final session) => MemberShell(
+                    key: ValueKey(session.token),
+                    session: session,
+                  ),
                 },
               ),
             ),

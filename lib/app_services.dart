@@ -1,3 +1,4 @@
+import 'core/org_config.dart';
 import 'core/reminders.dart';
 import 'data/access_scope.dart';
 import 'data/backup_service.dart';
@@ -27,13 +28,22 @@ class AppServices {
     SyncApi? syncApi,
     SyncPrefs? syncPrefs,
   }) : audit = AuditRepository(db),
-       reminders = reminders ?? MemoryReminders() {
-    sync = SyncService(
+       reminders = reminders ?? MemoryReminders(),
+       prefs = syncPrefs ?? SecureSyncPrefs(store) {
+    sync = SyncService(db, syncApi ?? SyncApi.http(), prefs);
+    auth = AuthRepository(
       db,
-      syncApi ?? SyncApi.http(),
-      syncPrefs ?? SecureSyncPrefs(store),
+      audit,
+      memberCredentials: prefs,
+      cloudCheck: (memberNo, password, {newPassword}) => sync.api.memberAuth(
+        action: newPassword == null ? 'sign_in' : 'change_password',
+        org: OrgDefaults.shortName,
+        memberNo: memberNo,
+        password: password,
+        newPassword: newPassword,
+        check: true,
+      ),
     );
-    auth = AuthRepository(db, audit);
     members = MemberRepository(db, audit, scope: scope);
     dashboard = DashboardRepository(db, scope: scope);
     payments = PaymentRepository(db, audit, scope: scope);
@@ -48,6 +58,9 @@ class AppServices {
   final SecureStore store;
   final String deviceId;
   final AuditRepository audit;
+
+  /// Small per-phone values kept outside the database.
+  final SyncPrefs prefs;
 
   /// What the signed-in user may see; set by the sign-in flow.
   final AccessScope scope = AccessScope();

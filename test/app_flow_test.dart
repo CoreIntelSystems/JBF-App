@@ -426,7 +426,7 @@ void main() {
     await tester.pumpWidget(
       JbfApp(services: services, biometrics: _NoBiometrics()),
     );
-    const button = 'Already set up by your group? Sign in online';
+    const button = 'Sign in online with an old username';
     await pumpUntil(tester, find.text(button));
     await tester.ensureVisible(find.text(button));
     await tester.tap(find.text(button));
@@ -449,53 +449,81 @@ void main() {
     await tester.runAsync(mainDb.close);
   });
 
-  testWidgets('a member checks their dues without an account', (tester) async {
+  testWidgets('a member activates and sees their own page', (tester) async {
     FlutterSecureStorage.setMockInitialValues({});
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     final asked = <Map<String, Object?>>[];
     final api = SyncApi((fn, args) async {
-      expect(fn, 'portal_statement');
-      asked.add(args);
-      if (args['phone'] != '0241234567') {
-        return {
-          'error': 'Member ID and phone number do not match our records.',
-        };
+      switch (fn) {
+        case 'fn:member-auth':
+          asked.add(args);
+          if (args['phone'] != '0241234567') {
+            throw SyncException(
+              'Member ID and phone number do not match our records.',
+            );
+          }
+          return {
+            'kind': 'member',
+            'token': 'mtok',
+            'member_key': 'm1',
+            'member_no': 'JBF-000001',
+            'name': 'Kofi Mensah',
+            'org_name': 'June Borns Family',
+          };
+        case 'member_home':
+          expect(args['token'], 'mtok');
+          return {
+            'org': 'June Borns Family',
+            'member': {
+              'name': 'Kofi Mensah',
+              'member_no': 'JBF-000001',
+              'status': 'active',
+              'joined': '2026-01-10',
+              'zones': ['Zone 1'],
+            },
+            'dues': [
+              {
+                'name': 'Monthly welfare dues',
+                'monthly': 2000,
+                'months': 10,
+                'expected': 20000,
+                'paid': 6000,
+                'outstanding': 14000,
+                'months_behind': 7,
+                'next_unpaid': '2026-04',
+              },
+            ],
+            'payments': [
+              {
+                'receipt_no': 'RCP-2026-000003',
+                'paid_on': '2026-03-05',
+                'type': 'Monthly welfare dues',
+                'period': '2026-03',
+                'amount': 2000,
+                'method': 'momo',
+              },
+            ],
+            'updated': '2026-10-15T08:00:00+00:00',
+            'officer': false,
+            'welfare': [],
+            'events': [],
+            'executives': [
+              {'name': 'Ama Owusu', 'position': 'Founder / President'},
+            ],
+            'directory': [
+              {
+                'name': 'Kofi Mensah',
+                'zones': ['Zone 1'],
+              },
+            ],
+            'announcements': [],
+          };
+        case 'member_sign_out':
+          return null;
       }
-      return {
-        'org': 'June Borns Family',
-        'member': {
-          'name': 'Kofi Mensah',
-          'member_no': 'JBF-000001',
-          'status': 'active',
-          'joined': '2026-01-10',
-          'zones': ['Zone 1'],
-        },
-        'dues': [
-          {
-            'name': 'Monthly welfare dues',
-            'monthly': 2000,
-            'months': 10,
-            'expected': 20000,
-            'paid': 6000,
-            'outstanding': 14000,
-            'months_behind': 7,
-            'next_unpaid': '2026-04',
-          },
-        ],
-        'payments': [
-          {
-            'receipt_no': 'RCP-2026-000003',
-            'paid_on': '2026-03-05',
-            'type': 'Monthly welfare dues',
-            'period': '2026-03',
-            'amount': 2000,
-            'method': 'momo',
-          },
-        ],
-        'updated': '2026-10-15T08:00:00+00:00',
-      };
+      fail('unexpected $fn');
     });
     final services = AppServices(
       db: openInMemoryDatabase(),
@@ -507,45 +535,45 @@ void main() {
     await tester.pumpWidget(
       JbfApp(services: services, biometrics: _NoBiometrics()),
     );
-    const button = 'Member? Check my dues';
+    const button = 'First time? Activate your account';
     await pumpUntil(tester, find.text(button));
-    await tester.ensureVisible(find.text(button));
     await tester.tap(find.text(button));
-    await pumpUntil(tester, find.text('View my statement'));
-    await tester.enterText(
-      find.byKey(const Key('statementMemberNo')),
-      'jbf-000001',
-    );
-    await tester.enterText(
-      find.byKey(const Key('statementPhone')),
-      '0200000000',
-    );
-    await tester.tap(find.text('View my statement'));
+    await pumpUntil(tester, find.text('Activate and sign in'));
+    await tester.enterText(find.byKey(const Key('memberNo')), 'jbf-000001');
+    await tester.enterText(find.byKey(const Key('memberPhone')), '0200000000');
+    await tester.enterText(find.byKey(const Key('memberPassword')), 'kofi123');
+    await tester.enterText(find.byKey(const Key('memberConfirm')), 'kofi123');
+    await tester.tap(find.text('Activate and sign in'));
     await pumpUntil(
       tester,
       find.text('Member ID and phone number do not match our records.'),
     );
-    await tester.enterText(
-      find.byKey(const Key('statementPhone')),
-      '0241234567',
-    );
-    await tester.tap(find.text('View my statement'));
-    await pumpUntil(tester, find.text('Kofi Mensah'));
+    await tester.enterText(find.byKey(const Key('memberPhone')), '0241234567');
+    await tester.tap(find.text('Activate and sign in'));
+    await pumpUntil(tester, find.text('GHS 140.00'));
     expect(asked.last, {
+      'action': 'activate',
       'org': 'JBF',
       'member_no': 'jbf-000001',
+      'new_password': 'kofi123',
       'phone': '0241234567',
+      'check': false,
     });
-    expect(find.text('GHS 140.00'), findsOneWidget);
     expect(
       find.textContaining('7 months behind, from Apr 2026'),
       findsOneWidget,
     );
-    expect(find.text('RCP-2026-000003'), findsNothing);
     expect(
       find.textContaining('Mobile money · RCP-2026-000003'),
       findsOneWidget,
     );
+    await tester.tap(find.text('People'));
+    await pumpUntil(tester, find.text('Ama Owusu'));
+    expect(find.text('Founder / President'), findsOneWidget);
+    await tester.tap(find.text('Me'));
+    await pumpUntil(tester, find.text('MEMBER ID CARD'));
+    await tester.tap(find.text('Sign out'));
+    await pumpUntil(tester, find.text(button));
     services.sync.stopAuto();
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 5));

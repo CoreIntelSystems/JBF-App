@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jbf_app/data/database.dart';
 import 'package:jbf_app/data/repositories/auth_repository.dart';
+import 'package:jbf_app/data/repositories/member_repository.dart';
 import 'package:jbf_app/data/repositories/payment_repository.dart';
 import 'package:jbf_app/data/repositories/welfare_repository.dart';
 import 'package:jbf_app/data/sync/sync_api.dart';
 import 'package:jbf_app/data/sync/sync_service.dart';
+import 'package:jbf_app/domain/permissions.dart';
 
 import 'fake_cloud.dart';
 import 'helpers.dart';
@@ -328,6 +330,178 @@ void main() {
     final org = await third.db.select(third.db.orgSettings).getSingle();
     expect(org.deviceSeries, 'P2');
     expect(await third.db.select(third.db.members).get(), hasLength(1));
+    await third.close();
+  });
+
+  test('executives and members sign in with their member ID', () async {
+    final zones = await main.env.zoneIdsByCode();
+    final founder = await main.env.auth.login(
+      'ama',
+      'secret1',
+      method: LoginMethod.password,
+      deviceId: 'main',
+    );
+    final yaw = await main.env.members.create(
+      MemberDraft(
+        fullName: 'Yaw Boateng',
+        dateJoined: DateTime(2026, 1, 1),
+        zoneIds: [zones[2]!],
+        phone: '0241112222',
+      ),
+      actor,
+    );
+    final mayor = (await main.env.auth.roles()).firstWhere(
+      (r) => r.key == 'zone_mayor',
+    );
+    await main.env.auth.assignRole(
+      memberId: yaw.id,
+      roleId: mayor.id,
+      zoneIds: [zones[2]!],
+      by: founder,
+      deviceId: 'main',
+    );
+    await main.sync.syncNow();
+
+    // Activation is checked against the phone number on record.
+    final api = cloud.api;
+    await expectLater(
+      api.memberAuth(
+        action: 'activate',
+        org: 'JBF',
+        memberNo: yaw.memberNo,
+        newPassword: 'pass123',
+        phone: '0200000000',
+      ),
+      throwsA(isA<SyncException>()),
+    );
+    final r = await api.memberAuth(
+      action: 'activate',
+      org: 'JBF',
+      memberNo: yaw.memberNo.toLowerCase(),
+      newPassword: 'pass123',
+      phone: '+233 24 111 2222',
+    );
+    expect(r, isA<OfficerSignIn>());
+
+    // The Zone Mayor's phone joins and signs in with the member ID.
+    final third = Phone(cloud);
+    third.env.auth.cloudCheck = (no, pw, {newPassword}) => api.memberAuth(
+      action: newPassword == null ? 'sign_in' : 'change_password',
+      org: 'JBF',
+      memberNo: no,
+      password: pw,
+      newPassword: newPassword,
+      check: true,
+    );
+    await third.sync.load();
+    await third.sync.joinEnrollment((r as OfficerSignIn).enrollment, 'Yaw');
+    final user = await third.env.auth.login(
+      yaw.memberNo,
+      'pass123',
+      method: LoginMethod.password,
+      deviceId: 'yaw',
+    );
+    expect(user.memberAccount, isTrue);
+    expect(user.memberId, yaw.id);
+    expect(user.roleName, 'Zone Mayor');
+    expect(user.zoneScope, {zones[2]});
+    expect(user.can(Perm.membersView), isTrue);
+    expect(user.can(Perm.zoneRolesAssign), isTrue);
+    expect(user.can(Perm.rolesAssign), isFalse);
+    await expectLater(
+      third.env.auth.login(
+        yaw.memberNo,
+        'wrong',
+        method: LoginMethod.password,
+        deviceId: 'yaw',
+      ),
+      throwsA(isA<AuthException>()),
+    );
+
+    // Offline, the copy kept on the phone still works.
+    third.env.auth.cloudCheck = (no, pw, {newPassword}) =>
+        throw SyncException('offline', offline: true);
+    expect(
+      (await third.env.auth.login(
+        yaw.memberNo,
+        'pass123',
+        method: LoginMethod.password,
+        deviceId: 'yaw',
+      )).id,
+      yaw.id,
+    );
+
+    // A Zone Mayor may give zone roles in their zone only.
+    final secretary = (await third.env.auth.roles()).firstWhere(
+      (r) => r.key == 'zone_secretary',
+    );
+    final kofi = (await third.db.select(third.db.members).get()).firstWhere(
+      (m) => m.fullName == 'Kofi Mensah',
+    );
+    await expectLater(
+      third.env.auth.assignRole(
+        memberId: kofi.id,
+        roleId: secretary.id,
+        zoneIds: [zones[1]!],
+        by: user,
+        deviceId: 'yaw',
+      ),
+      throwsA(isA<AuthException>()),
+    );
+    final treasurer = (await third.env.auth.roles()).firstWhere(
+      (r) => r.key == 'treasurer',
+    );
+    await expectLater(
+      third.env.auth.assignRole(
+        memberId: kofi.id,
+        roleId: treasurer.id,
+        by: user,
+        deviceId: 'yaw',
+      ),
+      throwsA(isA<AuthException>()),
+    );
+
+    // An ordinary member gets their own page, not the records.
+    final kofiMain = (await main.db.select(main.db.members).get()).firstWhere(
+      (m) => m.fullName == 'Kofi Mensah',
+    );
+    final k = await api.memberAuth(
+      action: 'activate',
+      org: 'JBF',
+      memberNo: kofiMain.memberNo,
+      newPassword: 'kofi123',
+      phone: '0240000000',
+    );
+    expect(k, isA<MemberSession>());
+    final home = MemberHome.fromJson(
+      await api.memberHome((k as MemberSession).token),
+    );
+    expect(home.statement.name, 'Kofi Mensah');
+    expect(home.officer, isFalse);
+    await expectLater(
+      main.env.auth.login(
+        kofiMain.memberNo,
+        'kofi123',
+        method: LoginMethod.password,
+        deviceId: 'main',
+      ),
+      throwsA(isA<AuthException>()),
+    );
+
+    // Removing the role takes the access away on every phone.
+    final held = (await main.env.auth.heldRoles(yaw.id)).single;
+    await main.env.auth.endRole(held, by: founder, deviceId: 'main');
+    await main.sync.syncNow();
+    await third.sync.syncNow();
+    await expectLater(
+      third.env.auth.login(
+        yaw.memberNo,
+        'pass123',
+        method: LoginMethod.password,
+        deviceId: 'yaw',
+      ),
+      throwsA(isA<AuthException>()),
+    );
     await third.close();
   });
 }

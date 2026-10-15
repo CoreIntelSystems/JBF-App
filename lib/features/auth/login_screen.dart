@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() => _run(() async {
     if (_username.text.trim().isEmpty || _secret.text.isEmpty) {
       throw AuthException(
-        'Enter your username and '
+        'Enter your member ID and '
         '${_method == LoginMethod.pin ? 'PIN' : 'password'}.',
       );
     }
@@ -110,7 +110,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _username,
-                      decoration: const InputDecoration(labelText: 'Username'),
+                      decoration: const InputDecoration(
+                        labelText: 'Member ID or username',
+                      ),
                       autocorrect: false,
                       autofillHints: const [AutofillHints.username],
                       textInputAction: TextInputAction.next,

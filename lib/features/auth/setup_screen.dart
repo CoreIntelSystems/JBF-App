@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../backup/backup_screen.dart';
 import '../cloud/cloud_sync_screen.dart';
-import '../portal/member_statement_screen.dart';
 import 'auth_cubit.dart';
 import 'brand_header.dart';
+import 'member_sign_in_screen.dart';
 
 /// First run on a new device: create the Super Administrator.
 class SetupScreen extends StatefulWidget {
@@ -68,12 +68,41 @@ class _SetupScreenState extends State<SetupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const BrandHeader(
-                      subtitle:
-                          'Welcome. Create the Super Administrator account '
-                          'for this device.',
+                    const BrandHeader(subtitle: 'Welcome'),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      key: const Key('memberSignIn'),
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const MemberSignInScreen(),
+                              ),
+                            ),
+                      icon: const Icon(Icons.badge_outlined),
+                      label: const Text('Sign in with your member ID'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const MemberSignInScreen(activate: true),
+                              ),
+                            ),
+                      child: const Text('First time? Activate your account'),
                     ),
                     const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Setting up the app for a new organisation? Create the '
+                      'Super Administrator account for this device.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
                     TextFormField(
                       controller: _name,
                       decoration: const InputDecoration(labelText: 'Your name'),
@@ -162,20 +191,7 @@ class _SetupScreenState extends State<SetupScreen> {
                               ),
                             ),
                       icon: const Icon(Icons.cloud_download_outlined),
-                      label: const Text(
-                        'Already set up by your group? Sign in online',
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: _busy
-                          ? null
-                          : () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const MemberStatementScreen(),
-                              ),
-                            ),
-                      icon: const Icon(Icons.receipt_long_outlined),
-                      label: const Text('Member? Check my dues'),
+                      label: const Text('Sign in online with an old username'),
                     ),
                   ],
                 ),

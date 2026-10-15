@@ -12,6 +12,7 @@ import '../payments/member_ledger_section.dart';
 import '../executives/executives_screen.dart';
 import '../welfare/member_welfare_section.dart';
 import 'id_card_pdf.dart';
+import 'member_access_section.dart';
 import 'member_form_screen.dart';
 import 'members_screen.dart';
 
@@ -152,6 +153,8 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
               MemberLedgerSection(member: m),
               MemberWelfareSection(member: m, own: widget.self),
               MemberPositionsSection(member: m),
+              if (!widget.self && MemberAccessSection.visibleTo(user))
+                MemberAccessSection(member: m, zones: item.zones),
               _Section('Zones', [
                 for (final z in item.zones)
                   _Row(zoneDisplayName(z), primary(z) ?? ''),

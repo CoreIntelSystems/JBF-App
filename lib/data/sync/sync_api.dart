@@ -562,6 +562,7 @@ class MemberHome {
     this.profile = const {},
     this.zoneOptions = const [],
     this.zoneIds = const [],
+    this.zonesLocked = false,
   });
   final MemberStatement statement;
 
@@ -590,6 +591,9 @@ class MemberHome {
 
   /// Their current zones' ids, main zone first.
   final List<String> zoneIds;
+
+  /// They have already used their one chance to choose their zones.
+  final bool zonesLocked;
 
   static List<Map> _list(Object? v) => (v as List? ?? const []).cast<Map>();
 
@@ -645,6 +649,7 @@ class MemberHome {
       for (final z in _list(r['zone_options'])) ('${z['id']}', '${z['name']}'),
     ],
     zoneIds: [for (final z in (r['zone_ids'] as List? ?? const [])) '$z'],
+    zonesLocked: r['zones_locked'] == true,
     warnings: [
       for (final w in _list(r['warnings']))
         (DateTime.tryParse('${w['at']}')?.toLocal(), '${w['details']}'),

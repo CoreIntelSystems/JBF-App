@@ -40,6 +40,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   };
   late String? _gender = widget.home.profile['gender'];
   late final Set<String> _zones = {...widget.home.zoneIds};
+  bool get _locked => widget.home.zonesLocked;
   bool _busy = false;
   String? _error;
 
@@ -52,7 +53,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   }
 
   Future<void> _save() async {
-    if (_zones.isEmpty) {
+    if (!_locked && _zones.isEmpty) {
       setState(() => _error = ZoneRules.tooFewMessage);
       return;
     }
@@ -76,7 +77,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
       await api.memberUpdateProfile(widget.session.token, {
         for (final e in _controllers.entries) e.key: e.value.text,
         'gender': _gender,
-      }, zoneIds: ordered);
+      }, zoneIds: _locked ? null : ordered);
       messenger.showSnackBar(const SnackBar(content: Text('Details saved.')));
       nav.pop(true);
     } on SyncException catch (e) {
@@ -132,25 +133,42 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
           ),
           const SizedBox(height: 16),
           Text('My zone', style: theme.textTheme.titleSmall),
-          const Text('Choose one zone, or two at most.'),
-          for (final (id, name) in widget.home.zoneOptions)
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(name),
-              value: _zones.contains(id),
-              onChanged: (on) => setState(() {
-                _error = null;
-                if (on == true) {
-                  if (_zones.length >= ZoneRules.maxZones) {
-                    _error = ZoneRules.tooManyMessage;
-                  } else {
-                    _zones.add(id);
-                  }
-                } else {
-                  _zones.remove(id);
-                }
-              }),
+          if (_locked) ...[
+            Text(
+              widget.home.zoneOptions
+                  .where((o) => widget.home.zoneIds.contains(o.$1))
+                  .map((o) => o.$2)
+                  .join(', '),
+              style: theme.textTheme.bodyLarge,
             ),
+            const Text(
+              'You have already chosen your zone. To change it, speak to '
+              'your Zone Secretary.',
+            ),
+          ] else ...[
+            const Text(
+              'Choose one zone, or two at most. You can only do this once, '
+              'so choose carefully.',
+            ),
+            for (final (id, name) in widget.home.zoneOptions)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(name),
+                value: _zones.contains(id),
+                onChanged: (on) => setState(() {
+                  _error = null;
+                  if (on == true) {
+                    if (_zones.length >= ZoneRules.maxZones) {
+                      _error = ZoneRules.tooManyMessage;
+                    } else {
+                      _zones.add(id);
+                    }
+                  } else {
+                    _zones.remove(id);
+                  }
+                }),
+              ),
+          ],
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),

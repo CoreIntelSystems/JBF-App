@@ -155,6 +155,7 @@ missing, correct it on their member page.
 
 If you were on the founding member list, your Me page has **Edit my
 details and zones**. Check that your name, phone number and zone are right
-and correct anything that is not, then save. Members registered later are
-updated by their Zone Secretary.
+and correct anything that is not, then save. You can choose your zone only
+once, so choose carefully; after that your Zone Secretary changes it. Members
+registered later are updated by their Zone Secretary.
 

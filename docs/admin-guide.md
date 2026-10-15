@@ -76,7 +76,8 @@ Phone 3, and optionally Zone and Zone 2 (zone numbers 1 to 8).
 - People without a zone in the file all go into the zone you choose on the
   screen, or are left out.
 - Imported members may check and correct their own name, contact details
-  and zone (Me > Edit my details and zones). Members you register later are
+  and choose their zone, one time only (Me > Edit my details and zones).
+  After that you, the General Secretary or their Zone Secretary change it. Members you register later are
   updated by the Founder, General Secretary or the member's Zone Secretary
   or Mayor.
 

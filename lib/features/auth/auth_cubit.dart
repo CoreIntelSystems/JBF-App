@@ -85,7 +85,8 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
     }
-    if (!await _auth.hasUsers()) {
+    // A zone executive's phone holds no username logins, only members.
+    if (!await _auth.hasUsers() && !await _services.sync.isJoined()) {
       emit(const AuthNeedsSetup());
       return;
     }

@@ -292,6 +292,7 @@ class SyncService extends Cubit<SyncStatus> {
       await _resetState(e.orgId);
       await _removeStarterRecords();
       await _applyRows(rows.$1, lastSeq: rows.$2);
+      if (rows.$3 != null) await _setStateValue('scope', rows.$3!);
     } else {
       outcome = JoinOutcome.merged;
       final rows = await _pullEverything(e.token);
@@ -306,6 +307,7 @@ class SyncService extends Cubit<SyncStatus> {
       await _resetState(e.orgId);
       await enqueueAll();
       await _applyRows(rows.$1, lastSeq: rows.$2);
+      if (rows.$3 != null) await _setStateValue('scope', rows.$3!);
     }
     await (_db.update(
       _db.orgSettings,
@@ -316,6 +318,10 @@ class SyncService extends Cubit<SyncStatus> {
     await syncNow();
     return outcome;
   }
+
+  /// Whether this phone has joined an organisation's cloud sync (read
+  /// straight from storage, so it works before [load]).
+  Future<bool> isJoined() async => await _prefs.read(_credentialsKey) != null;
 
   /// Stops syncing on this phone. Its records stay; other phones keep
   /// theirs.
@@ -517,25 +523,82 @@ class SyncService extends Cubit<SyncStatus> {
 
   // ---- Download ----
 
-  Future<(List<SyncRow>, int)> _pullEverything(String token) async {
+  Future<(List<SyncRow>, int, String?)> _pullEverything(String token) async {
     final rows = <SyncRow>[];
     var since = 0;
     while (true) {
       final page = await _api.pull(token, since, max: 2000);
       rows.addAll(page.rows);
       since = page.lastSeq;
-      if (!page.more) return (rows, since);
+      if (!page.more) return (rows, since, page.scope);
     }
   }
 
   Future<void> _pullAll(String token) async {
     var since = int.tryParse(await _stateValue('last_seq') ?? '') ?? 0;
+    final known = await _stateValue('scope') ?? 'all';
+    var first = true;
     while (true) {
       final page = await _api.pull(token, since);
+      if (first) {
+        first = false;
+        if (page.scope != null && page.scope != known && since > 0) {
+          // This phone's zones, or who is in them, changed: drop what it
+          // may no longer hold and download again from the start.
+          await _pruneToZones(page.zones);
+          since = 0;
+          continue;
+        }
+      }
       await _applyRows(page.rows, lastSeq: page.lastSeq);
       since = page.lastSeq;
-      if (!page.more) return;
+      if (!page.more) {
+        if (page.scope != null) await _setStateValue('scope', page.scope!);
+        return;
+      }
     }
+  }
+
+  /// Removes members outside [zones] and their records (zone executives'
+  /// phones only hold their own zones).
+  Future<void> _pruneToZones(List<String>? zones) async {
+    if (zones == null) return;
+    final marks = List.filled(zones.length, '?').join(', ');
+    final visible =
+        'SELECT member_id FROM member_zones WHERE deleted_at IS NULL'
+        '${zones.isEmpty ? ' AND 0' : ' AND zone_id IN ($marks)'}';
+    final vars = [for (final z in zones) Variable.withString(z)];
+    await _withoutForeignKeys(
+      () => _db.transaction(() async {
+        await _db.customStatement(
+          'UPDATE sync_flags SET applying = 1 WHERE id = 1',
+        );
+        for (final t in ['payments', 'welfare_cases', 'attendance_records']) {
+          await _db.customUpdate(
+            'DELETE FROM $t WHERE member_id IS NULL '
+            'OR member_id NOT IN ($visible)',
+            variables: vars,
+            updateKind: UpdateKind.delete,
+          );
+        }
+        await _db.customUpdate(
+          'DELETE FROM members WHERE id NOT IN ($visible)',
+          variables: vars,
+          updateKind: UpdateKind.delete,
+        );
+        await _db.customUpdate(
+          'DELETE FROM member_zones WHERE member_id NOT IN ($visible)',
+          variables: vars,
+          updateKind: UpdateKind.delete,
+        );
+        for (final t in ['users', 'expenses']) {
+          await _db.customStatement('DELETE FROM $t');
+        }
+        await _db.customStatement(
+          'UPDATE sync_flags SET applying = 0 WHERE id = 1',
+        );
+      }),
+    );
   }
 
   /// Foreign keys are switched off while applying: a page can hold a

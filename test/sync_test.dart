@@ -431,12 +431,19 @@ void main() {
       yaw.id,
     );
 
+    // The Zone Mayor's phone only holds their zone.
+    final kofi = (await main.db.select(main.db.members).get()).firstWhere(
+      (m) => m.fullName == 'Kofi Mensah',
+    );
+    Future<List<String>> names(Phone p) async => [
+      for (final m in await p.db.select(p.db.members).get()) m.fullName,
+    ];
+    expect(await names(third), ['Yaw Boateng']);
+    expect(await third.db.select(third.db.users).get(), isEmpty);
+
     // A Zone Mayor may give zone roles in their zone only.
     final secretary = (await third.env.auth.roles()).firstWhere(
       (r) => r.key == 'zone_secretary',
-    );
-    final kofi = (await third.db.select(third.db.members).get()).firstWhere(
-      (m) => m.fullName == 'Kofi Mensah',
     );
     await expectLater(
       third.env.auth.assignRole(
@@ -461,10 +468,19 @@ void main() {
       throwsA(isA<AuthException>()),
     );
 
+    // When Kofi joins zone 2 the Zone Mayor's phone receives him.
+    await main.db
+        .into(main.db.memberZones)
+        .insert(
+          MemberZonesCompanion.insert(memberId: kofi.id, zoneId: zones[2]!),
+        );
+    await main.sync.syncNow();
+    await third.sync.syncNow();
+    expect(third.sync.state.error, isNull);
+    expect(await names(third), unorderedEquals(['Yaw Boateng', 'Kofi Mensah']));
+
     // An ordinary member gets their own page, not the records.
-    final kofiMain = (await main.db.select(main.db.members).get()).firstWhere(
-      (m) => m.fullName == 'Kofi Mensah',
-    );
+    final kofiMain = kofi;
     final k = await api.memberAuth(
       action: 'activate',
       org: 'JBF',
@@ -493,6 +509,7 @@ void main() {
     await main.env.auth.endRole(held, by: founder, deviceId: 'main');
     await main.sync.syncNow();
     await third.sync.syncNow();
+    expect(await names(third), isEmpty);
     await expectLater(
       third.env.auth.login(
         yaw.memberNo,

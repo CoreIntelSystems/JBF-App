@@ -24,6 +24,9 @@ class FakeCloud {
   final memberPasswords = <String, String>{};
   final memberSessions = <String, String>{};
 
+  /// The member each phone signed in as, by token.
+  final deviceMember = <String, String>{};
+
   Future<Object?> call(String fn, Map<String, Object?> a) async {
     if (fn == 'fn:sync-sign-in') return _signIn(a);
     if (fn == 'fn:member-auth') return _memberAuth(a);
@@ -127,16 +130,41 @@ class FakeCloud {
       case 'sync_pull':
         final since = a['since']! as int;
         final max = a['max_rows']! as int;
+        final zones = _zonesOf(a['token']! as String);
+        final members = zones == null ? null : _zoneMembers(zones);
+        bool visible(CloudRecord r) =>
+            members == null ||
+            switch (r.t) {
+              'members' => members.contains(r.k),
+              'member_zones' ||
+              'payments' ||
+              'welfare_cases' ||
+              'attendance_records' => members.contains(r.data['member_id']),
+              'users' || 'audit_logs' || 'expenses' => false,
+              _ => true,
+            };
         final page =
             (_records.values.where((r) => r.seq > since).toList()
                   ..sort((x, y) => x.seq.compareTo(y.seq)))
                 .take(max)
                 .toList();
         final last = page.isEmpty ? since : page.last.seq;
+        final scopeSeq = zones == null
+            ? 0
+            : _records.values
+                  .where(
+                    (r) =>
+                        r.t == 'member_zones' &&
+                        zones.contains(r.data['zone_id']) &&
+                        r.by != d.id,
+                  )
+                  .fold(0, (m, r) => r.seq > m ? r.seq : m);
         return {
+          'scope': zones == null ? 'all' : '${zones.join(',')}|$scopeSeq',
+          'zones': zones?.toList(),
           'rows': [
             for (final r in page)
-              if (r.by != d.id)
+              if (r.by != d.id && visible(r))
                 {
                   't': r.t,
                   'k': r.k,
@@ -164,6 +192,36 @@ class FakeCloud {
 }
 
 extension on FakeCloud {
+  /// Zones a phone is limited to (zone executives), or null.
+  Set<String>? _zonesOf(String token) {
+    final key = deviceMember[token];
+    if (key == null) return null;
+    final roles = {
+      for (final r in _records.values)
+        if (r.t == 'roles') r.k: r.data,
+    };
+    final held = [
+      for (final r in _records.values)
+        if (r.t == 'role_assignments' &&
+            r.data['member_id'] == key &&
+            r.data['ends_on'] == null &&
+            r.data['deleted_at'] == null &&
+            roles[r.data['role_id']]?['key'] != 'member')
+          r.data,
+    ];
+    if (held.any((h) => roles[h['role_id']]?['level'] != 'zone')) return null;
+    return {for (final h in held) ...'${h['zone_ids'] ?? ''}'.split(',')}
+      ..remove('');
+  }
+
+  Set<String> _zoneMembers(Set<String> zones) => {
+    for (final r in _records.values)
+      if (r.t == 'member_zones' &&
+          r.data['deleted_at'] == null &&
+          zones.contains(r.data['zone_id']))
+        r.data['member_id']! as String,
+  };
+
   bool _isOfficer(String memberKey) => _records.values.any(
     (r) =>
         (r.t == 'role_assignments' &&
@@ -223,6 +281,7 @@ extension on FakeCloud {
       }
       final token = 'tok${_n++}';
       devices[token] = (id: 'dev${_n++}', admin: false, series: 'P$n');
+      deviceMember[token] = key;
       return {
         'kind': 'officer',
         'member_key': key,

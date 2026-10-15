@@ -24,10 +24,19 @@ class SyncPage {
     required this.rows,
     required this.lastSeq,
     required this.more,
+    this.scope,
+    this.zones,
   });
   final List<SyncRow> rows;
   final int lastSeq;
   final bool more;
+
+  /// Changes when the zones this phone may hold, or who is in them,
+  /// change; the phone then downloads again from the start.
+  final String? scope;
+
+  /// The zones this phone is limited to; null for the whole association.
+  final List<String>? zones;
 }
 
 /// A row as stored in the cloud: table, key, when it last changed, data.
@@ -177,6 +186,10 @@ class SyncApi {
       ],
       lastSeq: (r['last_seq'] as num).toInt(),
       more: r['more'] as bool,
+      scope: r['scope'] as String?,
+      zones: r['zones'] == null
+          ? null
+          : [for (final z in r['zones'] as List) '$z'],
     );
   }
 

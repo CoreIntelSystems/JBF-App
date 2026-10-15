@@ -27,7 +27,12 @@ use **Roles and access**:
   so they activate again with their phone number.
 
 A member with no role only gets their own page. A member with any role
-gets the association's records for that role when they sign in.
+gets the association's records for that role when they sign in. A phone
+used by someone with only zone roles holds just their zone(s): those
+members and their payments, welfare cases and attendance, plus the shared
+lists. When a member joins their zone, or their role changes, the phone
+updates itself at the next sync; if all their roles are removed, the
+members are taken off the phone.
 
 | Role | Can |
 | --- | --- |

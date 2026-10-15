@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jbf_app/data/repositories/auth_repository.dart';
 import 'package:jbf_app/domain/permissions.dart';
@@ -25,6 +26,17 @@ void main() {
       ]),
     );
   });
+
+  test(
+    'a seeded role with no stored list takes the seed permissions',
+    () async {
+      final founder = (await env.auth.roles()).firstWhere(
+        (r) => r.key == 'founder',
+      );
+      final bare = founder.copyWith(permissions: const Value(null));
+      expect(AuthRepository.permissionsOf(bare), contains(Perm.backupManage));
+    },
+  );
 
   test('first-run admin gets every permission and can log in', () async {
     expect(await env.auth.hasUsers(), isFalse);

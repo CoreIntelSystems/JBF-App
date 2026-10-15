@@ -842,11 +842,18 @@ class AuthRepository {
   }
 
   Future<Set<String>> _rolePermissions(Role role) async {
-    if (role.permissions != null) return decodePermissions(role.permissions);
     final rows = await (_db.select(
       _db.rolePermissions,
     )..where((p) => p.roleId.equals(role.id))).get();
-    return {for (final p in rows) p.permission};
+    return _effectivePermissions(role, {for (final p in rows) p.permission});
+  }
+
+  /// A role's permissions. A seeded role whose stored list is missing (it
+  /// came down from the cloud before lists existed) takes the seed's list.
+  static Set<String> _effectivePermissions(Role role, Set<String> fromRows) {
+    if (role.permissions != null) return decodePermissions(role.permissions);
+    final seed = defaultRoles.where((r) => r.key == role.key).firstOrNull;
+    return {...fromRows, ...?seed?.permissions};
   }
 
   /// The signed-in user for a member: the permissions of every role they
@@ -1124,7 +1131,7 @@ class AuthRepository {
 
   /// A role's permissions, from its stored list.
   static Set<String> permissionsOf(Role role) =>
-      decodePermissions(role.permissions);
+      _effectivePermissions(role, const {});
 
   void _checkCanAssign(AppUser by, Role role, List<String> zoneIds) {
     if (!canGive(by, role)) {
@@ -1165,7 +1172,9 @@ class AuthRepository {
       displayName: user.displayName,
       roleKey: role.key,
       roleName: role.name,
-      permissions: perms.map((p) => p.permission).toSet(),
+      permissions: _effectivePermissions(role, {
+        for (final p in perms) p.permission,
+      }),
       biometricEnabled: user.biometricEnabled,
       hasPin: user.pinHash != null,
       zoneScope: scopeFor(role, user),

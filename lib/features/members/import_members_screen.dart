@@ -190,6 +190,12 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
             Text(_fileName ?? '', style: theme.textTheme.titleSmall),
             const SizedBox(height: 4),
             Text('${plan.members.length} people ready to register.'),
+            if (plan.unnamed > 0)
+              Text(
+                '${plan.unnamed} of them have no name in the list. They are '
+                'added as "Member <number>" and give their own name when '
+                'they sign in.',
+              ),
             if (_skipped.isNotEmpty)
               Text('${_skipped.length} rows will be left out:'),
             for (final e in reasons.entries) Text('  ${e.value}  ${e.key}'),

@@ -33,21 +33,26 @@ void main() {
     expect(rows.first.take(2), ['Name', 'Phone 1']);
 
     final plan = planMemberImport(rows);
-    expect(plan.members.map((m) => m.name), ['Abel', 'Abby', 'Ama Owusu']);
+    expect(plan.members.map((m) => m.name), [
+      'Abel',
+      'Abby',
+      'Member 0265778617',
+      'Ama Owusu',
+    ]);
     expect(plan.members[0].phone, '0244862488');
     expect(plan.members[0].gender, 'Male');
     expect(plan.members[1].gender, 'Female');
     expect(plan.members[1].whatsapp, '0554082776');
     expect(plan.members[1].otherNumbers, ['0201112222']);
-    expect(plan.members[2].phone, '+447700900123');
+    expect(plan.members[2].unnamed, isTrue);
+    expect(plan.members[3].phone, '+447700900123');
     expect(plan.skipped.map((s) => s.reason), [
-      'No name saved with this number',
-      'WhatsApp username only, no name',
+      'WhatsApp username only, no number',
       'Same number as row 2',
       'No usable phone number',
     ]);
     expect(plan.hasZones, isFalse);
-    expect(plan.withoutZone, 3);
+    expect(plan.withoutZone, 4);
   });
 
   test('leaves out people who are already registered', () {
@@ -55,7 +60,11 @@ void main() {
       readSheetRows(buildXlsx([XlsxSheet('S', sheet)]), 'list.xlsx'),
       existing: {phoneKey('0244862488')},
     );
-    expect(plan.members.map((m) => m.name), ['Abby', 'Ama Owusu']);
+    expect(plan.members.map((m) => m.name), [
+      'Abby',
+      'Member 0265778617',
+      'Ama Owusu',
+    ]);
     expect(plan.skipped.first.reason, contains('Already registered'));
   });
 
@@ -99,7 +108,7 @@ void main() {
         );
       }
       final all = await env.members.watchMembers(MemberFilter()).first;
-      expect(all.length, 3);
+      expect(all.length, 4);
       expect(all.map((m) => m.member.memberNo), contains('JBF-000001'));
     },
   );

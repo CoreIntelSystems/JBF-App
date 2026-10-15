@@ -73,6 +73,8 @@ Phone 3, and optionally Zone and Zone 2 (zone numbers 1 to 8).
 - Names ending "King June" or "Queen June" are tidied and set the gender.
 - Rows with no name, no usable phone, or a number already registered are
   left out. You can share the list of left-out rows afterwards.
+- Numbers with no name in the list are added as "Member 0XXXXXXXXX" and
+  give their own name when they sign in.
 - People without a zone in the file all go into the zone you choose on the
   screen, or are left out.
 - Imported members may check and correct their own name, contact details
@@ -81,7 +83,8 @@ Phone 3, and optionally Zone and Zone 2 (zone numbers 1 to 8).
   updated by the Founder, General Secretary or the member's Zone Secretary
   or Mayor.
 - To tell members their IDs, tap the chat icon at the top of Members (**Send
-  IDs on WhatsApp**). Each person has a Send button that opens WhatsApp with
+  IDs on WhatsApp**). Tap **Send to the next person** again and again to go
+  through everyone. Each person has a Send button that opens WhatsApp with
   their message ready; you tap send in WhatsApp. People you have opened show
   a green tick until you leave the screen.
 

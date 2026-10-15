@@ -18,8 +18,13 @@ String idInviteMessage({
   required String memberNo,
   required String orgName,
 }) {
-  final first = name.trim().split(RegExp(r'\s+')).first;
-  return 'Hello $first, this is $orgName. Your member ID is $memberNo.\n\n'
+  final parts = name.trim().split(RegExp(r'\s+'));
+  final unnamed =
+      parts.first == 'Member' &&
+      parts.length > 1 &&
+      RegExp(r'^[+\d]').hasMatch(parts[1]);
+  final hello = unnamed ? 'Hello' : 'Hello ${parts.first}';
+  return '$hello, this is $orgName. Your member ID is $memberNo.\n\n'
       'To see your dues and details on the app, open it, choose "Member '
       'sign-in" and enter your member ID and the phone number you gave us.';
 }

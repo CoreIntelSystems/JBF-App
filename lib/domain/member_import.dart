@@ -10,6 +10,7 @@ class ImportMember {
     this.otherNumbers = const [],
     this.gender,
     this.zones = const [],
+    this.unnamed = false,
   });
 
   /// Row number in the file, as the person sees it in Excel.
@@ -24,6 +25,9 @@ class ImportMember {
 
   /// Zone numbers from the file; empty when the file gave none.
   final List<int> zones;
+
+  /// The list had no name for this number; the member sets their own.
+  final bool unnamed;
 }
 
 /// A row that could not be imported, and why.
@@ -42,6 +46,8 @@ class ImportPlan {
 
   /// The file has a Zone column.
   final bool hasZones;
+
+  int get unnamed => members.where((m) => m.unnamed).length;
 
   int get withoutZone => members.where((m) => m.zones.isEmpty).length;
 }
@@ -120,22 +126,11 @@ ImportPlan planMemberImport(
     if (g.startsWith('m')) gender = 'Male';
     if (g.startsWith('f')) gender = 'Female';
 
-    if (name.isEmpty ||
+    final unnamed =
+        name.isEmpty ||
         name.startsWith('@') ||
         !RegExp(r'\p{L}', unicode: true).hasMatch(name) ||
-        name.toLowerCase() == '(not saved)') {
-      skipped.add(
-        ImportSkip(
-          line,
-          rawName,
-          phones,
-          rawName.startsWith('@')
-              ? 'WhatsApp username only, no name'
-              : 'No name saved with this number',
-        ),
-      );
-      continue;
-    }
+        name.toLowerCase() == '(not saved)';
     final numbers = <String>[];
     for (final p in raws) {
       final s = storedPhone(p);
@@ -144,9 +139,19 @@ ImportPlan planMemberImport(
       }
     }
     if (numbers.isEmpty) {
-      skipped.add(ImportSkip(line, rawName, phones, 'No usable phone number'));
+      skipped.add(
+        ImportSkip(
+          line,
+          rawName,
+          phones,
+          unnamed && rawName.startsWith('@')
+              ? 'WhatsApp username only, no number'
+              : 'No usable phone number',
+        ),
+      );
       continue;
     }
+    if (unnamed) name = 'Member ${numbers[0]}';
     final clash = numbers
         .map((x) => phoneKey(x))
         .firstWhere(
@@ -199,6 +204,7 @@ ImportPlan planMemberImport(
         otherNumbers: numbers.skip(2).toList(),
         gender: gender,
         zones: zones,
+        unnamed: unnamed,
       ),
     );
   }

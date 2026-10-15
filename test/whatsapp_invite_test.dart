@@ -23,4 +23,13 @@ void main() {
     expect(link.path, '/233241234567');
     expect(link.queryParameters['text'], text);
   });
+
+  test('people with no saved name get a plain greeting', () {
+    final text = idInviteMessage(
+      name: 'Member 0265778617',
+      memberNo: 'JBF-000009',
+      orgName: 'June Borns Family',
+    );
+    expect(text, startsWith('Hello, this is'));
+  });
 }

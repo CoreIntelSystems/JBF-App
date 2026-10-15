@@ -28,6 +28,20 @@ class _SendIdsScreenState extends State<SendIdsScreen> {
     return (members, org.name);
   }
 
+  /// Opens WhatsApp for the next member not yet opened, in list order.
+  Future<void> _sendNext(List<MemberWithZones> all, String orgName) async {
+    for (final mz in all) {
+      if (_opened.contains(mz.member.id)) continue;
+      final m = mz.member;
+      if (whatsappNumber(m.phone) == null &&
+          whatsappNumber(m.whatsapp) == null) {
+        continue;
+      }
+      await _send(mz, orgName);
+      return;
+    }
+  }
+
   Future<void> _send(MemberWithZones mz, String orgName) async {
     final m = mz.member;
     final number = whatsappNumber(m.phone) ?? whatsappNumber(m.whatsapp);
@@ -88,8 +102,20 @@ class _SendIdsScreenState extends State<SendIdsScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Tap Send on a member to open WhatsApp with their message '
-                  'ready. ${_opened.length} of ${all.length} opened.',
+                  'Tap "Send to the next person" again and again to go through '
+                  'everyone, or tap Send on one member. ${_opened.length} of ${all.length} opened.',
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: const Key('send_next'),
+                    icon: const Icon(Icons.send),
+                    label: const Text('Send to the next person'),
+                    onPressed: () => _sendNext(all, orgName),
+                  ),
                 ),
               ),
               Expanded(

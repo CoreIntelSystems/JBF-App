@@ -152,6 +152,43 @@ class MemberRepository {
             ..orderBy([(z) => OrderingTerm.asc(z.sortOrder)]))
           .get();
 
+  /// Zone code of the holding zone for members who have not chosen yet.
+  static const holdingZoneCode = 0;
+
+  /// The "Unassigned" zone, created when first needed. Imported members wait
+  /// here until they, or their Zone Secretary, pick a real zone.
+  Future<String> ensureHoldingZone() async {
+    final found = await (_db.select(
+      _db.zones,
+    )..where((z) => z.code.equals(holdingZoneCode))).getSingleOrNull();
+    if (found != null) {
+      if (found.deletedAt != null || !found.isActive) {
+        await (_db.update(
+          _db.zones,
+        )..where((z) => z.id.equals(found.id))).write(
+          ZonesCompanion(
+            deletedAt: const Value(null),
+            isActive: const Value(true),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+      }
+      return found.id;
+    }
+    final id = newId();
+    await _db
+        .into(_db.zones)
+        .insert(
+          ZonesCompanion.insert(
+            id: Value(id),
+            code: holdingZoneCode,
+            name: 'Unassigned',
+            sortOrder: const Value(99),
+          ),
+        );
+    return id;
+  }
+
   /// Members matching [filter], newest first by member number.
   /// Searches name, phone, WhatsApp and member ID.
   Stream<List<MemberWithZones>> watchMembers(MemberFilter filter) {

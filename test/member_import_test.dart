@@ -112,4 +112,27 @@ void main() {
       expect(all.map((m) => m.member.memberNo), contains('JBF-000001'));
     },
   );
+
+  test(
+    'the holding zone is created once and used for the unassigned',
+    () async {
+      final env = TestEnv();
+      final a = await env.members.ensureHoldingZone();
+      final b = await env.members.ensureHoldingZone();
+      expect(a, b);
+      final m = await env.members.create(
+        MemberDraft(
+          fullName: 'Esi',
+          phone: '0241234567',
+          dateJoined: DateTime(2026, 10, 15),
+          zoneIds: [a],
+          primaryZoneId: a,
+          selfEdit: true,
+        ),
+        TestEnv.actor,
+      );
+      final back = await env.members.getMember(m.id);
+      expect(back!.zones.single.name, 'Unassigned');
+    },
+  );
 }

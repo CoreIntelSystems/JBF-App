@@ -28,6 +28,9 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
   String? _error;
   List<Zone> _zones = const [];
   String? _fallbackZone;
+
+  /// Dropdown value for "register them without a zone; they choose".
+  static const _unassigned = 'unassigned';
   bool _busy = false;
   int _done = 0;
   int _total = 0;
@@ -51,7 +54,11 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
           phoneKey(m.member.whatsapp),
         ],
       }..remove('');
-      final zones = (await repo.zones()).where((z) => z.isActive).toList();
+      final zones = (await repo.zones())
+          .where(
+            (z) => z.isActive && z.code != MemberRepository.holdingZoneCode,
+          )
+          .toList();
       final plan = planMemberImport(rows, existing: existing);
       if (!mounted) return;
       setState(() {
@@ -61,7 +68,7 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
         _skipped = plan.skipped;
         _error = null;
         _finished = false;
-        _fallbackZone = null;
+        _fallbackZone = plan.withoutZone > 0 ? _unassigned : null;
       });
     } on FormatException catch (e) {
       setState(() => _error = e.message);
@@ -76,6 +83,9 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
         user?.actor(_services.deviceId) ??
         Actor.system(deviceId: _services.deviceId);
     final byCode = {for (final z in _zones) z.code: z.id};
+    final holding = _fallbackZone == _unassigned
+        ? await repo.ensureHoldingZone()
+        : _fallbackZone;
     final skipped = [...plan.skipped];
     final todo = <(ImportMember, List<String>)>[];
     for (final m in plan.members) {
@@ -92,10 +102,10 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
             'Zone ${m.zones.join(' and ')} is not open for members',
           ),
         );
-      } else if (ids.isEmpty && _fallbackZone == null) {
+      } else if (ids.isEmpty && holding == null) {
         skipped.add(ImportSkip(m.line, m.name, m.phone, 'No zone given'));
       } else {
-        todo.add((m, ids.isEmpty ? [_fallbackZone!] : ids));
+        todo.add((m, ids.isEmpty ? [holding!] : ids));
       }
     }
     setState(() {
@@ -203,7 +213,8 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
               const SizedBox(height: 16),
               Text(
                 '${plan.withoutZone} people have no zone in the list. '
-                'Choose a zone for them, or leave them out.',
+                'Put them in Unassigned so each chooses their own zone once, '
+                'pick one zone for all of them, or leave them out.',
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String?>(
@@ -213,6 +224,10 @@ class _ImportMembersScreenState extends State<ImportMembersScreen> {
                   labelText: 'Zone for people without one',
                 ),
                 items: [
+                  const DropdownMenuItem<String?>(
+                    value: _unassigned,
+                    child: Text('Unassigned (they choose their own zone)'),
+                  ),
                   const DropdownMenuItem<String?>(
                     value: null,
                     child: Text('Leave them out'),

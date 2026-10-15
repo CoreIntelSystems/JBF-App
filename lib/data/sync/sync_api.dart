@@ -646,7 +646,8 @@ class MemberHome {
         if (e.value != null) '${e.key}': '${e.value}',
     },
     zoneOptions: [
-      for (final z in _list(r['zone_options'])) ('${z['id']}', '${z['name']}'),
+      for (final z in _list(r['zone_options']))
+        if (z['code'] != 0) ('${z['id']}', '${z['name']}'),
     ],
     zoneIds: [for (final z in (r['zone_ids'] as List? ?? const [])) '$z'],
     zonesLocked: r['zones_locked'] == true,

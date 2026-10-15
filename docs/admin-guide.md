@@ -75,8 +75,9 @@ Phone 3, and optionally Zone and Zone 2 (zone numbers 1 to 8).
   left out. You can share the list of left-out rows afterwards.
 - Numbers with no name in the list are added as "Member 0XXXXXXXXX" and
   give their own name when they sign in.
-- People without a zone in the file all go into the zone you choose on the
-  screen, or are left out.
+- People without a zone in the file go into **Unassigned** (the default), so
+  each chooses their own zone once; or into one zone you pick; or are left
+  out.
 - Imported members may check and correct their own name, contact details
   and choose their zone, one time only (Me > Edit my details and zones).
   After that you, the General Secretary or their Zone Secretary change it. Members you register later are

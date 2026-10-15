@@ -39,7 +39,10 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
       key: TextEditingController(text: widget.home.profile[key] ?? ''),
   };
   late String? _gender = widget.home.profile['gender'];
-  late final Set<String> _zones = {...widget.home.zoneIds};
+  late final Set<String> _zones = {
+    for (final z in widget.home.zoneIds)
+      if (widget.home.zoneOptions.any((o) => o.$1 == z)) z,
+  };
   bool get _locked => widget.home.zonesLocked;
   bool _busy = false;
   String? _error;

@@ -12,6 +12,7 @@ import '../../data/repositories/member_repository.dart';
 import '../../domain/permissions.dart';
 import '../auth/auth_cubit.dart';
 import 'id_card_pdf.dart';
+import 'import_members_screen.dart';
 import 'member_detail_screen.dart';
 import 'member_form_screen.dart';
 
@@ -84,6 +85,16 @@ class _MembersScreenState extends State<MembersScreen> {
       appBar: AppBar(
         title: const Text('Members'),
         actions: [
+          if (canCreate)
+            IconButton(
+              tooltip: 'Import members from a list',
+              icon: const Icon(Icons.upload_file),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ImportMembersScreen(),
+                ),
+              ),
+            ),
           IconButton(
             tooltip: 'ID cards for this list',
             icon: const Icon(Icons.badge_outlined),

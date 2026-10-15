@@ -183,6 +183,7 @@ class SyncService extends Cubit<SyncStatus> {
   final SyncPrefs _prefs;
   Timer? _timer;
   Future<void>? _running;
+  bool _identityChecked = false;
 
   static const _credentialsKey = 'cloud_sync';
   static const _pushBatch = 200;
@@ -336,6 +337,33 @@ class SyncService extends Cubit<SyncStatus> {
 
   /// Exchanges changes with the cloud now. Safe to call often: calls made
   /// while a sync is running wait for it.
+  /// The cloud may change this phone's role after it joined (for example
+  /// when it takes over as the main phone and loses its number series).
+  /// Reads it once per start and keeps this phone in line.
+  Future<void> _refreshIdentity(SyncCredentials creds) async {
+    final me = (await api.devices(
+      creds.token,
+    )).where((d) => d.isThisPhone).firstOrNull;
+    if (me == null ||
+        (me.series == creds.series && me.isAdmin == creds.isAdmin)) {
+      return;
+    }
+    final next = SyncCredentials(
+      token: creds.token,
+      deviceId: creds.deviceId,
+      orgId: creds.orgId,
+      orgName: creds.orgName,
+      deviceName: creds.deviceName,
+      isAdmin: me.isAdmin,
+      series: me.series,
+    );
+    await _db
+        .update(_db.orgSettings)
+        .write(OrgSettingsCompanion(deviceSeries: Value(next.series)));
+    await _prefs.write(_credentialsKey, jsonEncode(next.toJson()));
+    emit(state.copyWith(credentials: () => next));
+  }
+
   Future<void> syncNow() => _running ??= _sync().whenComplete(() {
     _running = null;
   });
@@ -345,8 +373,12 @@ class SyncService extends Cubit<SyncStatus> {
     if (creds == null) return;
     emit(state.copyWith(busy: true));
     try {
-      await _pullAll(creds.token);
-      await _pushAll(creds.token);
+      if (!_identityChecked) {
+        await _refreshIdentity(creds);
+        _identityChecked = true;
+      }
+      await _pullAll(state.credentials!.token);
+      await _pushAll(state.credentials!.token);
       final now = DateTime.now();
       await _setStateValue('last_sync_at', now.toIso8601String());
       emit(

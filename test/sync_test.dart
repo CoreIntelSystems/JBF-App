@@ -13,8 +13,9 @@ import 'helpers.dart';
 
 class Phone {
   Phone(this.cloud) : env = TestEnv() {
-    sync = SyncService(env.db, cloud.api, MemorySyncPrefs());
+    sync = SyncService(env.db, cloud.api, prefs);
   }
+  final prefs = MemorySyncPrefs();
   final FakeCloud cloud;
   final TestEnv env;
   late final SyncService sync;
@@ -105,6 +106,27 @@ void main() {
     expect(user.username, 'ama');
     final org = await field.db.select(field.db.orgSettings).getSingle();
     expect(org.deviceSeries, 'Z3');
+  });
+
+  test('a phone that becomes the main phone drops its series', () async {
+    final token = field.sync.state.credentials!.token;
+    final d = cloud.devices[token]!;
+    cloud.devices[token] = (id: d.id, admin: true, series: null);
+    // The app is started again: it reads the phone's role once.
+    final restarted = SyncService(field.db, cloud.api, field.prefs);
+    await restarted.load();
+    await restarted.syncNow();
+    expect(restarted.state.credentials!.series, isNull);
+    expect(restarted.state.credentials!.isAdmin, isTrue);
+    final org = await field.db.select(field.db.orgSettings).getSingle();
+    expect(org.deviceSeries, isNull);
+    final zones = await field.env.zoneIdsByCode();
+    final m = await field.env.members.create(
+      field.env.draft('Akua Boateng', [zones[3]!]),
+      actor,
+    );
+    expect(m.memberNo, matches(RegExp(r'^JBF-\d{6}$')));
+    await restarted.close();
   });
 
   test('numbers made on the field phone carry its series', () async {

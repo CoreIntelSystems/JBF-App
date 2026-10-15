@@ -181,6 +181,19 @@ class FakeCloud {
         return {'ok': true};
       case 'member_account_status':
         return {'activated': memberPasswords.containsKey(a['member'])};
+      case 'sync_list_devices':
+        return [
+          for (final e in devices.entries)
+            {
+              'id': e.value.id,
+              'name': 'Phone',
+              'series': e.value.series,
+              'is_admin': e.value.admin,
+              'last_seen_at': null,
+              'revoked': false,
+              'me': e.key == a['token'],
+            },
+        ];
       case 'sync_create_code':
         if (!d.admin) {
           throw SyncException('Only the main phone can add phones.');

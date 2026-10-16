@@ -16,7 +16,9 @@ Future<File> appDatabaseFile() async =>
 /// storage; it is not encrypted with [hexKey] as the phone's file is.
 Future<AppDatabase> openAppDatabase({required String hexKey}) async {
   final result = await WasmDatabase.open(
-    databaseName: 'jbf',
+    // A new name so browsers that kept a half-filled copy from the first
+    // web build start clean.
+    databaseName: 'jbf_web2',
     sqlite3Uri: Uri.parse('sqlite3.wasm'),
     driftWorkerUri: Uri.parse('drift_worker.js'),
   );

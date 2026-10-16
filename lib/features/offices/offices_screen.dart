@@ -12,6 +12,7 @@ IconData officeIcon(String key) => switch (key) {
   'ec' => Icons.how_to_vote_rounded,
   'welfare' => Icons.volunteer_activism,
   'discipline' => Icons.gavel_outlined,
+  'organizing' => Icons.event_available_outlined,
   _ => Icons.groups_2_outlined,
 };
 

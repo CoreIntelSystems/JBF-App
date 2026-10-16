@@ -68,6 +68,12 @@ class OfficeApi {
     {'token': token, 'committee': committee, 'case_id': caseId},
   );
 
+  /// Adds the Organizing Committee's standard planning steps to an event.
+  Future<void> addEventSteps(String committee, String eventId) => _api.rpc(
+    'office_add_event_steps',
+    {'token': token, 'committee': committee, 'event': eventId},
+  );
+
   /// [kind] is `meeting`, `decision` or `note`.
   Future<void> saveNote(
     String committee, {

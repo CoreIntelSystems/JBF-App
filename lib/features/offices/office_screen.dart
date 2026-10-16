@@ -163,6 +163,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       for (final e in _items('elections')) e['id']: '${e['title']}',
       for (final c in _cases())
         c['id']: 'Case: ${c['member_name'] ?? 'member'}',
+      for (final e in _items('events')) e['id']: '${e['name']}',
     };
     final tasks = _items('tasks').where((t) {
       return switch (_taskFilter) {
@@ -236,6 +237,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (due != null) '${late ? 'Was due' : 'Due'} ${formatDate(due)}',
       if (elections[t['election_id']] != null) elections[t['election_id']]!,
       if (elections[t['case_id']] != null) elections[t['case_id']]!,
+      if (elections[t['event_id']] != null) elections[t['event_id']]!,
     ];
     if (parts.isEmpty) return null;
     return Text(
@@ -533,6 +535,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       ],
       if (roll != null) ..._rollSection(roll),
       if (h['cases'] is Map) ..._casesSection(),
+      if (h['events'] is List) ..._eventsSection(),
       SectionTitle('Members (${members.length})'),
       GroupCard(
         children: [
@@ -623,6 +626,87 @@ class _OfficeScreenState extends State<OfficeScreen>
               )
             else
               const Text('No checklist yet.'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- Organizing Committee: events ----------
+
+  List<Widget> _eventsSection() {
+    final events = _items('events');
+    return [
+      const SectionTitle('Events'),
+      if (events.isEmpty)
+        const Text(
+          'No events yet. Add them in More > Events and meetings; they then '
+          'appear here, and the Organizer can add the planning steps.',
+        ),
+      for (final e in events) _eventCard(e),
+    ];
+  }
+
+  Widget _eventCard(Map<String, dynamic> e) {
+    final planned = e['status'] == 'planned';
+    final steps = (e['steps'] as num?)?.toInt() ?? 0;
+    final done = (e['steps_done'] as num?)?.toInt() ?? 0;
+    final present = (e['present'] as num?)?.toInt() ?? 0;
+    final on = DateTime.tryParse('${e['starts_on']}');
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${e['name']}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Pill(switch (e['status']) {
+                  'held' => 'Held',
+                  'cancelled' => 'Cancelled',
+                  _ => 'Planned',
+                }, color: planned ? null : Colors.grey.shade600),
+              ],
+            ),
+            Text(
+              [
+                if (on != null) formatDateTime(on),
+                if (e['venue'] != null) '${e['venue']}',
+              ].join(' · '),
+            ),
+            if (!planned || present > 0) Text('$present attended'),
+            if (steps > 0) ...[
+              const SizedBox(height: 10),
+              Text('Planning: $done of $steps steps done'),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: done / steps,
+                  minHeight: 8,
+                ),
+              ),
+            ] else if (planned && _lead)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: OutlinedButton.icon(
+                  onPressed: () => _run(
+                    () => _api.addEventSteps(_c, e['id'] as String),
+                    'Planning steps added to Tasks.',
+                  ),
+                  icon: const Icon(Icons.checklist_rounded),
+                  label: const Text('Add the planning steps'),
+                ),
+              ),
           ],
         ),
       ),

@@ -253,4 +253,12 @@ The second office. Its members are whoever holds a Disciplinary Committee role: 
 - Tasks, Minutes and Notices work as in every office. The office chat is the committee's existing Disciplinary Committee chat, which the Chairperson and Secretary now join too.
 - Notices from any committee appear on every member's home page.
 
+### Organizing Committee office
+
+The third office. The national **Organizer** leads it; **Zone Organizers** and **organizing helpers** are its members. They join automatically from their roles (given on the member's page under **Roles and access**).
+
+- **Events** (on the Overview): planned events soonest first, then the latest held ones, with the date, venue and how many attended. Events are still created in More > Events and meetings.
+- For each planned event, the Organizer can tap **Add the planning steps**: agree the date, venue and budget, book the venue, arrange transport and accommodation, announce it, arrange any Silver Collection, share the attendance QR codes, take attendance, and report attendance and spending afterwards. Each event shows how far its steps have got.
+- Tasks, Minutes and Notices work as in every office. The office chat is the existing Organizing chat.
+
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

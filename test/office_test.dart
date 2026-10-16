@@ -248,4 +248,65 @@ void main() {
       );
     },
   );
+
+  testWidgets('the Organizing office lists events and adds planning steps', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'organizing',
+      'name': 'Organizing Committee',
+      'chat': 'organizing',
+      'events': [
+        {
+          'id': 'ev-1',
+          'name': 'End of year party',
+          'status': 'planned',
+          'starts_on': '2026-12-20T15:00:00.000',
+          'venue': 'Accra',
+          'present': 0,
+          'steps': 0,
+          'steps_done': 0,
+        },
+        {
+          'id': 'ev-0',
+          'name': 'Picnic',
+          'status': 'held',
+          'starts_on': '2026-08-01T10:00:00.000',
+          'present': 42,
+          'steps': 0,
+          'steps_done': 0,
+        },
+      ],
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'organizing',
+          title: 'Organizing Committee',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('End of year party'), findsOneWidget);
+    expect(find.text('42 attended'), findsOneWidget);
+    await tester.tap(find.text('Add the planning steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_event_steps').single.$2,
+      containsPair('event', 'ev-1'),
+    );
+  });
 }

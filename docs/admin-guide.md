@@ -250,6 +250,12 @@ The Founder cannot run or change an election. The main phone's old username logi
 
 Open More > Elections > Electoral Commission. The **Founder** and **General Secretary** appoint the Chairperson (and can add or remove anyone). The **Chairperson** then adds the Secretary and members. Nothing changes while voting is open, and a candidate cannot join. The Commission is kept separately from the ordinary role list, so giving someone a role does not put them on it. The Founder can appoint from the main phone; voting and running elections need the member ID sign-in.
 
+## Who makes announcements
+
+General announcements (the Announcements chat, and committee notices that every member sees) are made by the **Founder**, the **General Secretary**, the **Welfare Secretary**, the **Organising Committee Secretary**, and the Secretaries of the other committees: the **Disciplinary Committee Secretary** and the **Electoral Commission Secretary**. Zone Secretaries are in the Secretariat, so they do not make general announcements. Instead each **Zone Secretary** and **Zone Mayor** posts in their zone's announcements chat, which only that zone's members read.
+
+Give the roles on each member's page as usual. The Organising Committee Secretary is a new role; it also leads the Organizing office with the Organizer. A role with the "Post announcements to all members" permission (More > Roles) can also make general announcements, so the Founder can add someone without an update. For another organisation, CoreIntel changes the list in the cloud table `announce_roles` (role key, and `all` or `zone`).
+
 ## Committee offices
 
 Each committee gets its own digital office in the app, open only to the people on that committee. The Electoral Commission is the first; the next committees (Welfare, Treasury and so on) plug in the same way.
@@ -261,7 +267,7 @@ The office has four tabs and a private chat (the speech-bubble button):
 - **Overview**: the Commission's members and roles, each election with its checklist progress and turnout, the **voter roll** (active members, and how many have activated their sign-in, zone by zone, so you know whom to remind before voting opens), and recent activity.
 - **Tasks**: anyone in the office adds a task, gives it to a member and sets a due date, and anyone ticks it done. For each election the Chairperson or Secretary can tap **Add the standard steps** on the Overview to add the usual checklist (timetable, nominations, vetting, candidate list, ballot, opening, reminders, results, complaints).
 - **Minutes**: meeting minutes, decisions and notes, kept for later. The writer, the Chairperson or the Secretary can change or remove an entry.
-- **Notices**: the Chairperson or Secretary posts notices (for example "Nominations are open"). Every member sees them at the top of Elections, in the app and on the member website. A notice can be withdrawn.
+- **Notices**: the committee's Secretary posts notices (for example "Nominations are open"). Every member sees them at the top of Elections, in the app and on the member website. A notice can be withdrawn. Because notices reach every member, they follow the announcement rule below: a Chairperson who is not on that list (the Treasurer, the Organizer, the Welfare Chairman) cannot post them.
 
 Every change is written to the office's activity list. Office records live in the cloud only, like elections.
 

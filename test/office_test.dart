@@ -4,7 +4,12 @@ import 'package:jbf_app/data/sync/sync_api.dart';
 import 'package:jbf_app/features/offices/office_api.dart';
 import 'package:jbf_app/features/offices/office_screen.dart';
 
-Map<String, Object?> _home({required bool lead, int steps = 0}) => {
+Map<String, Object?> _home({
+  required bool lead,
+  int steps = 0,
+  bool? canNotice,
+}) => {
+  'can_notice': ?canNotice,
   'key': 'ec',
   'name': 'Electoral Commission',
   'purpose': 'Prepares and runs the elections.',
@@ -82,7 +87,11 @@ Map<String, Object?> _home({required bool lead, int steps = 0}) => {
 void main() {
   late List<(String, Map<String, Object?>)> calls;
 
-  Future<void> pumpOffice(WidgetTester tester, {required bool lead}) async {
+  Future<void> pumpOffice(
+    WidgetTester tester, {
+    required bool lead,
+    bool? canNotice,
+  }) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -90,7 +99,9 @@ void main() {
     final api = OfficeApi(
       SyncApi((fn, args) async {
         calls.add((fn, args));
-        return fn == 'office_home' ? _home(lead: lead) : {'ok': true};
+        return fn == 'office_home'
+            ? _home(lead: lead, canNotice: canNotice)
+            : {'ok': true};
       }),
       'tok',
     );
@@ -165,6 +176,16 @@ void main() {
     await tester.tap(find.text('Notices'));
     await tester.pumpAndSettle();
     expect(find.text('Post notice'), findsNothing);
+  });
+
+  testWidgets('a Chairperson who does not announce cannot post notices', (
+    tester,
+  ) async {
+    await pumpOffice(tester, lead: true, canNotice: false);
+    await tester.tap(find.text('Notices'));
+    await tester.pumpAndSettle();
+    expect(find.text('Post notice'), findsNothing);
+    expect(find.textContaining("committee's Secretary"), findsOneWidget);
   });
 
   testWidgets('a lead posts a notice to every member', (tester) async {

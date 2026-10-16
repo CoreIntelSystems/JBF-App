@@ -43,6 +43,10 @@ class _OfficeScreenState extends State<OfficeScreen>
   OfficeApi get _api => widget.api;
   String get _c => widget.committee;
   bool get _lead => _home?['lead'] == true;
+
+  /// Notices reach every member, so only those who make general
+  /// announcements post them (older clouds: the office's leads).
+  bool get _canNotice => (_home?['can_notice'] ?? _home?['lead']) == true;
   String? get _me => _home?['me'] as String?;
 
   List<Map<String, dynamic>> _items(String key) => [
@@ -435,7 +439,7 @@ class _OfficeScreenState extends State<OfficeScreen>
         'Notices appear for every member on their home page'
         '${_c == 'ec' ? ' and at the top of Elections' : ''}, in the app '
         'and on the member website. '
-        '${_lead ? 'You can post and withdraw them.' : 'The Chairperson and Secretary post them.'}',
+        '${_canNotice ? 'You can post and withdraw them.' : 'The committee\'s Secretary, the Founder or the General Secretary posts them.'}',
         style: TextStyle(color: Tones.of(context).muted),
       ),
       const SizedBox(height: 12),
@@ -464,7 +468,7 @@ class _OfficeScreenState extends State<OfficeScreen>
                     ),
                     if (n['withdrawn'] == true)
                       Pill('Withdrawn', color: Colors.grey.shade600)
-                    else if (_lead)
+                    else if (_canNotice)
                       TextButton(
                         onPressed: () async {
                           if (!await _confirm(
@@ -1745,7 +1749,7 @@ class _OfficeScreenState extends State<OfficeScreen>
         icon: const Icon(Icons.edit_note),
         label: const Text('Write'),
       ),
-      3 when _lead => FloatingActionButton.extended(
+      3 when _canNotice => FloatingActionButton.extended(
         onPressed: _postNotice,
         icon: const Icon(Icons.campaign_outlined),
         label: const Text('Post notice'),

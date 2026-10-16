@@ -96,7 +96,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
             ListTile(
               leading: CircleAvatar(
                 child: Icon(
-                  c.id == 'announcements'
+                  c.id == 'announcements' || c.id.startsWith('announce:')
                       ? Icons.campaign_outlined
                       : Icons.forum_outlined,
                 ),

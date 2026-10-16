@@ -220,6 +220,12 @@ final defaultRoles = <RoleSeed>[
     Perm.reportsExport,
     Perm.backupManage,
   }),
+  RoleSeed(
+    'organizing_secretary',
+    'Organising Committee Secretary',
+    'national',
+    _memberRead,
+  ),
   RoleSeed('welfare_chairman', 'Welfare Chairman', 'welfare', {
     ..._memberRead,
     Perm.welfarePrepare,

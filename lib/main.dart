@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -19,14 +20,17 @@ Future<void> main() async {
   final db = await openAppDatabase(hexKey: key);
   final themeMode = await store.themeMode();
   final org = await db.select(db.orgSettings).getSingle();
-  final backup = BackupService(
-    db: db,
-    databaseKey: () async => key,
-    databaseFile: await appDatabaseFile(),
-    workDir: Directory((await getApplicationSupportDirectory()).path),
-  );
+  // Backups copy the database file, which phones have and browsers do not.
+  final BackupService? backup = kIsWeb
+      ? null
+      : BackupService(
+          db: db,
+          databaseKey: () async => key,
+          databaseFile: await appDatabaseFile(),
+          workDir: Directory((await getApplicationSupportDirectory()).path),
+        );
   // A daily safety copy on this phone; failures must never block start-up.
-  backup.autoBackupIfDue().ignore();
+  backup?.autoBackupIfDue().ignore();
   runApp(
     JbfApp(
       services: AppServices(

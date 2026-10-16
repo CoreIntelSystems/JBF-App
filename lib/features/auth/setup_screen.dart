@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -94,93 +95,105 @@ class _SetupScreenState extends State<SetupScreen> {
                             ),
                       child: const Text('First time? Activate your account'),
                     ),
-                    const SizedBox(height: 24),
-                    const Divider(),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Setting up the app for a new organisation? Create the '
-                      'Super Administrator account for this device.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _name,
-                      decoration: const InputDecoration(labelText: 'Your name'),
-                      textCapitalization: TextCapitalization.words,
-                      validator: (v) =>
-                          (v ?? '').trim().isEmpty ? 'Enter your name.' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _username,
-                      decoration: const InputDecoration(labelText: 'Username'),
-                      autocorrect: false,
-                      validator: (v) =>
-                          (v ?? '').trim().isEmpty ? 'Enter a username.' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _password,
-                      decoration: const InputDecoration(labelText: 'Password'),
-                      obscureText: true,
-                      validator: (v) =>
-                          AuthRepository.validatePassword(v ?? ''),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _confirm,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirm password',
-                      ),
-                      obscureText: true,
-                      validator: (v) => v != _password.text
-                          ? 'Passwords do not match.'
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _pin,
-                      decoration: const InputDecoration(
-                        labelText: 'Quick PIN (optional, 4 to 6 digits)',
-                      ),
-                      keyboardType: TextInputType.number,
-                      obscureText: true,
-                      maxLength: 6,
-                      validator: (v) => (v ?? '').isEmpty
-                          ? null
-                          : AuthRepository.validatePin(v!),
-                    ),
-                    if (_error != null) ...[
+                    if (!kIsWeb) ...[
+                      const SizedBox(height: 24),
+                      const Divider(),
                       const SizedBox(height: 8),
                       Text(
-                        _error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                        'Setting up the app for a new organisation? Create the '
+                        'Super Administrator account for this device.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _name,
+                        decoration: const InputDecoration(
+                          labelText: 'Your name',
                         ),
+                        textCapitalization: TextCapitalization.words,
+                        validator: (v) => (v ?? '').trim().isEmpty
+                            ? 'Enter your name.'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _username,
+                        decoration: const InputDecoration(
+                          labelText: 'Username',
+                        ),
+                        autocorrect: false,
+                        validator: (v) => (v ?? '').trim().isEmpty
+                            ? 'Enter a username.'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _password,
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                        ),
+                        obscureText: true,
+                        validator: (v) =>
+                            AuthRepository.validatePassword(v ?? ''),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _confirm,
+                        decoration: const InputDecoration(
+                          labelText: 'Confirm password',
+                        ),
+                        obscureText: true,
+                        validator: (v) => v != _password.text
+                            ? 'Passwords do not match.'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _pin,
+                        decoration: const InputDecoration(
+                          labelText: 'Quick PIN (optional, 4 to 6 digits)',
+                        ),
+                        keyboardType: TextInputType.number,
+                        obscureText: true,
+                        maxLength: 6,
+                        validator: (v) => (v ?? '').isEmpty
+                            ? null
+                            : AuthRepository.validatePin(v!),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: _busy ? null : _submit,
+                        child: _busy
+                            ? const SizedBox.square(
+                                dimension: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Create account'),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const BackupScreen(),
+                                ),
+                              ),
+                        icon: const Icon(Icons.restore),
+                        label: const Text('New phone? Restore from a backup'),
                       ),
                     ],
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: _busy ? null : _submit,
-                      child: _busy
-                          ? const SizedBox.square(
-                              dimension: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Create account'),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton.icon(
-                      onPressed: _busy
-                          ? null
-                          : () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const BackupScreen(),
-                              ),
-                            ),
-                      icon: const Icon(Icons.restore),
-                      label: const Text('New phone? Restore from a backup'),
-                    ),
                     TextButton.icon(
                       onPressed: _busy
                           ? null

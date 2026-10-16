@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -63,6 +64,10 @@ class LocalReminders implements Reminders {
 
   @override
   Future<bool> setDuesDay(int? day) async {
+    if (kIsWeb) {
+      await _store.setPref(_duesKey, day?.toString());
+      return false;
+    }
     await _init();
     await _plugin.cancel(id: duesId);
     await _store.setPref(_duesKey, day?.toString());
@@ -94,6 +99,7 @@ class LocalReminders implements Reminders {
     String title,
     String body,
   ) async {
+    if (kIsWeb) return;
     await _init();
     await _plugin.cancel(id: id);
     final at = tz.TZDateTime.from(when, tz.local);
@@ -111,6 +117,7 @@ class LocalReminders implements Reminders {
 
   @override
   Future<void> cancel(int id) async {
+    if (kIsWeb) return;
     await _init();
     await _plugin.cancel(id: id);
   }

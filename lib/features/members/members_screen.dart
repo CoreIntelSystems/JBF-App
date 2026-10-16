@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:printing/printing.dart';
@@ -250,7 +251,7 @@ class MemberAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = member.photoPath;
-    if (path != null && File(path).existsSync()) {
+    if (!kIsWeb && path != null && File(path).existsSync()) {
       return CircleAvatar(
         radius: radius,
         backgroundImage: FileImage(File(path)),

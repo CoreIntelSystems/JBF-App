@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -123,8 +124,9 @@ class MoreScreen extends StatelessWidget {
               subtitle: const Text('Share records with other phones online'),
               onTap: () => open(const CloudSyncScreen()),
             ),
-          if ((user?.can(Perm.paymentsRecord) ?? false) ||
-              (user?.can(Perm.backupManage) ?? false))
+          if (!kIsWeb &&
+              ((user?.can(Perm.paymentsRecord) ?? false) ||
+                  (user?.can(Perm.backupManage) ?? false)))
             ListTile(
               leading: const Icon(Icons.phonelink_ring_outlined),
               title: const Text('Field phones'),
@@ -166,7 +168,7 @@ class MoreScreen extends StatelessWidget {
               subtitle: const Text('Logins, edits and status changes'),
               onTap: () => open(const AuditLogScreen()),
             ),
-          if (user?.can(Perm.backupManage) ?? false)
+          if (!kIsWeb && (user?.can(Perm.backupManage) ?? false))
             ListTile(
               leading: const Icon(Icons.backup_outlined),
               title: const Text('Backup and restore'),

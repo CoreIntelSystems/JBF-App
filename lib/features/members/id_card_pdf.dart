@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -33,7 +34,7 @@ Future<Uint8List> buildIdCardsPdf(
 
   pw.ImageProvider? photo(Member m) {
     final path = m.photoPath;
-    if (path == null) return null;
+    if (kIsWeb || path == null) return null;
     final f = File(path);
     return f.existsSync() ? pw.MemoryImage(f.readAsBytesSync()) : null;
   }

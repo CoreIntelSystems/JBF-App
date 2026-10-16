@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -111,6 +112,8 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
       imageQuality: 70,
     );
     if (picked == null) return;
+    // The browser build keeps no photo files.
+    if (kIsWeb) return;
     final dir = Directory(
       p.join((await getApplicationSupportDirectory()).path, 'photos'),
     );
@@ -380,7 +383,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
 
   Widget _photo() {
     final path = _draft.photoPath;
-    final hasPhoto = path != null && File(path).existsSync();
+    final hasPhoto = !kIsWeb && path != null && File(path).existsSync();
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(

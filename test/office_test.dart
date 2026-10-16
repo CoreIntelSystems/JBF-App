@@ -178,14 +178,15 @@ void main() {
     expect(find.text('Post notice'), findsNothing);
   });
 
-  testWidgets('a Chairperson who does not announce cannot post notices', (
-    tester,
-  ) async {
+  testWidgets('Post notice follows what the cloud allows', (tester) async {
     await pumpOffice(tester, lead: true, canNotice: false);
     await tester.tap(find.text('Notices'));
     await tester.pumpAndSettle();
     expect(find.text('Post notice'), findsNothing);
-    expect(find.textContaining("committee's Secretary"), findsOneWidget);
+    expect(
+      find.textContaining('Chairperson and Secretary post'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('a lead posts a notice to every member', (tester) async {

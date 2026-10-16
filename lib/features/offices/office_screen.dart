@@ -44,8 +44,8 @@ class _OfficeScreenState extends State<OfficeScreen>
   String get _c => widget.committee;
   bool get _lead => _home?['lead'] == true;
 
-  /// Notices reach every member, so only those who make general
-  /// announcements post them (older clouds: the office's leads).
+  /// The office's leads, and anyone who makes general announcements, post
+  /// notices to every member.
   bool get _canNotice => (_home?['can_notice'] ?? _home?['lead']) == true;
   String? get _me => _home?['me'] as String?;
 
@@ -439,7 +439,7 @@ class _OfficeScreenState extends State<OfficeScreen>
         'Notices appear for every member on their home page'
         '${_c == 'ec' ? ' and at the top of Elections' : ''}, in the app '
         'and on the member website. '
-        '${_canNotice ? 'You can post and withdraw them.' : 'The committee\'s Secretary, the Founder or the General Secretary posts them.'}',
+        '${_canNotice ? 'You can post and withdraw them.' : 'The Chairperson and Secretary post them.'}',
         style: TextStyle(color: Tones.of(context).muted),
       ),
       const SizedBox(height: 12),

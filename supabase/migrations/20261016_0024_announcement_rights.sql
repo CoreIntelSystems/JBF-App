@@ -13,7 +13,8 @@
 --
 -- Zone announcements are their own read-only chat per zone
 -- ('announce:<zone id>'), shown to that zone's members on their home page.
--- A committee office's notices to all members follow the general rule.
+-- A committee office's notices to all members can be posted by the office's
+-- leads (as before) and by anyone who makes general announcements.
 
 create table if not exists public.announce_roles (
   id uuid primary key default gen_random_uuid(),
@@ -132,7 +133,8 @@ begin
   d := pg_get_functiondef('public.office_home(text,text)'::regprocedure);
   d := replace(d, $r$'lead', (me ->> 'lead')::boolean,$r$,
     $r$'lead', (me ->> 'lead')::boolean,
-    'can_notice', (public.announce_rights(me) ->> 'all')::boolean,$r$);
+    'can_notice', (me ->> 'lead')::boolean
+      or (public.announce_rights(me) ->> 'all')::boolean,$r$);
   if position('can_notice' in d) = 0 then
     raise exception 'office_home patch did not match';
   end if;
@@ -176,7 +178,8 @@ as $$
   )
 $$;
 
--- A committee's notice reaches every member, so it follows the general rule.
+-- A committee's notice to every member: the office's leads, or anyone who
+-- makes general announcements.
 create or replace function public.office_notice_post(
   token text, committee text, title text, body text
 ) returns jsonb
@@ -188,8 +191,9 @@ declare
   me jsonb := public.office_who(token, committee);
   nid uuid;
 begin
-  if not (public.announce_rights(me) ->> 'all')::boolean then
-    raise exception 'Notices to all members are posted by the committee''s Secretary, the Founder or the General Secretary.'
+  if not ((me ->> 'lead')::boolean
+          or (public.announce_rights(me) ->> 'all')::boolean) then
+    raise exception 'Only the Chairperson or Secretary can post notices.'
       using errcode = 'P0001';
   end if;
   if length(trim(coalesce(title, ''))) < 2

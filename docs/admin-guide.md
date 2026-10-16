@@ -224,3 +224,7 @@ Only the Electoral Commission (Chairperson and Secretary) runs elections. Everyo
 5. Everyone then sees the results with the winners. The record of every step is chained so tampering shows.
 
 The Founder cannot run or change an election. The main phone's old username login cannot vote; use the member ID sign-in.
+
+### Who is on the Electoral Commission
+
+Open More > Elections > Electoral Commission. The **Founder** and **General Secretary** appoint the Chairperson (and can add or remove anyone). The **Chairperson** then adds the Secretary and members. Nothing changes while voting is open, and a candidate cannot join. The Commission is kept separately from the ordinary role list, so giving someone a role does not put them on it. The Founder can appoint from the main phone; voting and running elections need the member ID sign-in.

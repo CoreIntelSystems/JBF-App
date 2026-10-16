@@ -7,6 +7,7 @@ import '../../core/ui.dart';
 import '../../data/sync/sync_api.dart';
 import '../chats/chats_screen.dart' show ChatAccess;
 import 'election_screen.dart';
+import 'commission_screen.dart';
 import 'election_admin.dart';
 import 'election_api.dart';
 
@@ -85,7 +86,27 @@ class _ElectionsScreenState extends State<ElectionsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
           children: [
-            if (_error != null) Text(_error!),
+            Card(
+              child: ListTile(
+                leading: const IconBadge(Icons.balance_rounded),
+                title: const Text(
+                  'Electoral Commission',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text('Who runs the elections'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => CommissionScreen(api: _api),
+                  ),
+                ),
+              ),
+            ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(_error!),
+              ),
             if (items == null && _error == null)
               const Padding(
                 padding: EdgeInsets.all(32),

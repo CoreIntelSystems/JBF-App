@@ -87,6 +87,21 @@ class ElectionApi {
     'photo': photo,
   });
 
+  Future<Map<String, dynamic>> commission() async => Map<String, dynamic>.from(
+    (await _api.rpc('election_commission', {'token': token}))! as Map,
+  );
+
+  /// [role] is `chair`, `secretary` or `member`.
+  Future<void> appoint(String memberKey, String role) => _api.rpc(
+    'election_appoint',
+    {'token': token, 'member': memberKey, 'role': role},
+  );
+
+  Future<void> removeOfficer(String memberKey) => _api.rpc(
+    'election_remove_officer',
+    {'token': token, 'member': memberKey},
+  );
+
   Future<void> open(String id) =>
       _api.rpc('election_open', {'token': token, 'eid': id});
 

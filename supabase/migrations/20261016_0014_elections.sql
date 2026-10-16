@@ -2,7 +2,7 @@
 --
 -- Rules the database itself enforces (an app bug or a curious officer cannot
 -- get round them):
---   * Only the Electoral Commission (Chairperson, Secretary) runs elections,
+--   * Only the Electoral Commission (appointed in election_officers) runs elections,
 --     and a different EC officer must open it than the one who prepared it.
 --   * The voters are frozen when the election opens (active members only).
 --   * Candidates, posts and rules cannot change once it is open.
@@ -153,6 +153,30 @@ $$;
 revoke all on function public.election_write_log(uuid, text, text, text)
   from public, anon, authenticated;
 
+-- The Electoral Commission: appointed here, not through the ordinary role
+-- list, so nobody can give themselves a seat by editing roles on a phone.
+-- The Founder or General Secretary appoints the Chairperson (and anyone);
+-- the Chairperson appoints the Secretary and members. Nothing changes while
+-- voting is open, and nobody who is a candidate can join.
+create table if not exists public.election_officers (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.sync_orgs (id),
+  member_key text not null,
+  role text not null check (role in ('chair', 'secretary', 'member')),
+  appointed_by text not null,
+  appointed_at timestamptz not null default now(),
+  ended_by text,
+  ended_at timestamptz
+);
+create unique index if not exists election_officers_active_member
+  on public.election_officers (org_id, member_key) where ended_at is null;
+create unique index if not exists election_officers_one_chair
+  on public.election_officers (org_id) where ended_at is null and role = 'chair';
+create unique index if not exists election_officers_one_secretary
+  on public.election_officers (org_id) where ended_at is null and role = 'secretary';
+alter table public.election_officers enable row level security;
+revoke all on public.election_officers from public, anon, authenticated;
+
 -- Who is calling: a member signed in with their own member ID, on a member
 -- session or on a phone enrolled by member sign-in. Never a shared or
 -- legacy login, because a vote must belong to one person.
@@ -177,8 +201,10 @@ begin
     'status', m ->> 'status',
     'member_no', m ->> 'member_no',
     'deleted', m ->> 'deleted_at' is not null,
-    'is_ec', (me -> 'roles') ?| array['electoral_commission', 'ec_secretary']
-      and coalesce((me -> 'permissions') ? 'elections.manage', false));
+    'is_ec', exists (select 1 from public.election_officers o
+                     where o.org_id = (me ->> 'org')::uuid
+                       and o.member_key = me ->> 'member'
+                       and o.ended_at is null));
 end;
 $$;
 revoke all on function public.election_who(text) from public, anon, authenticated;
@@ -323,7 +349,8 @@ begin
 end;
 $$;
 
--- Commission only, while still a draft: find members to stand.
+-- Commission members, the Founder and the General Secretary: find active
+-- members to stand or to appoint.
 create or replace function public.election_find_member(token text, q text)
 returns jsonb
 language plpgsql
@@ -331,9 +358,16 @@ security definer
 set search_path = ''
 as $$
 declare
-  me jsonb := public.election_who(token);
+  me jsonb := public.chat_identity(token, null);
+  org uuid := (me ->> 'org')::uuid;
+  allowed boolean;
 begin
-  if not (me ->> 'is_ec')::boolean then
+  allowed := coalesce((me ->> 'all')::boolean, false)
+    or coalesce((me -> 'roles') ? 'general_secretary', false)
+    or exists (select 1 from public.election_officers o
+               where o.org_id = org and o.member_key = me ->> 'member'
+                 and o.ended_at is null);
+  if not allowed then
     raise exception 'Only the Electoral Commission can do this.'
       using errcode = 'P0001';
   end if;
@@ -347,7 +381,7 @@ begin
       '[]')
     from (
       select * from public.sync_records r
-      where r.org_id = (me ->> 'org')::uuid and r.tbl = 'members'
+      where r.org_id = org and r.tbl = 'members'
         and r.data ->> 'deleted_at' is null and r.data ->> 'status' = 'active'
         and ((r.data ->> 'full_name') ilike '%' || trim(q) || '%'
              or (r.data ->> 'member_no') ilike '%' || trim(q) || '%')
@@ -385,11 +419,11 @@ begin
   if m.key is null then
     raise exception 'Only active members can stand.' using errcode = 'P0001';
   end if;
-  -- The Commission runs the election, so its officers cannot stand.
-  if exists (select 1 from jsonb_array_elements(
-               public.member_access(e.org_id, member) -> 'roles') x
-             where x ->> 'key' in ('electoral_commission', 'ec_secretary')) then
-    raise exception 'Electoral Commission officers cannot stand.'
+  -- The Commission runs the election, so its members cannot stand.
+  if exists (select 1 from public.election_officers o
+             where o.org_id = e.org_id and o.member_key = member
+               and o.ended_at is null) then
+    raise exception 'Electoral Commission members cannot stand.'
       using errcode = 'P0001';
   end if;
   if photo is not null and photo not like 'data:image/%' then
@@ -656,6 +690,154 @@ begin
 end;
 $$;
 
+
+-- The Commission and who may change it.
+create or replace function public.election_commission(token text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me jsonb := public.chat_identity(token, null);
+  org uuid := (me ->> 'org')::uuid;
+  mine text;
+  top boolean := coalesce((me ->> 'all')::boolean, false)
+                 or coalesce((me -> 'roles') ? 'general_secretary', false);
+begin
+  select o.role into mine from public.election_officers o
+  where o.org_id = org and o.member_key = me ->> 'member' and o.ended_at is null;
+  return jsonb_build_object(
+    'can_appoint', top or coalesce(mine = 'chair', false),
+    'can_appoint_chair', top,
+    'mine', mine,
+    'officers', (
+      select coalesce(jsonb_agg(jsonb_build_object(
+        'key', o.member_key, 'role', o.role,
+        'name', r.data ->> 'full_name', 'member_no', r.data ->> 'member_no',
+        'since', o.appointed_at) order by
+          case o.role when 'chair' then 0 when 'secretary' then 1 else 2 end,
+          o.appointed_at), '[]')
+      from public.election_officers o
+      left join public.sync_records r on r.org_id = o.org_id
+        and r.tbl = 'members' and r.key = o.member_key
+      where o.org_id = org and o.ended_at is null));
+end;
+$$;
+
+create or replace function public.election_appoint(
+  token text, member text, role text
+) returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me jsonb := public.chat_identity(token, null);
+  org uuid := (me ->> 'org')::uuid;
+  top boolean := coalesce((me ->> 'all')::boolean, false)
+                 or (me -> 'roles') ? 'general_secretary';
+  chair boolean;
+  m public.sync_records;
+begin
+  chair := exists (select 1 from public.election_officers o
+                   where o.org_id = org and o.member_key = me ->> 'member'
+                     and o.role = 'chair' and o.ended_at is null);
+  if not (top or chair) then
+    raise exception 'Only the Founder, General Secretary or Commission Chairperson can appoint.'
+      using errcode = 'P0001';
+  end if;
+  if role not in ('chair', 'secretary', 'member') then
+    raise exception 'Choose a role.' using errcode = 'P0001';
+  end if;
+  if role = 'chair' and not top then
+    raise exception 'Only the Founder or General Secretary appoints the Chairperson.'
+      using errcode = 'P0001';
+  end if;
+  if exists (select 1 from public.elections e
+             where e.org_id = org and e.status = 'open' and now() < e.closes_at) then
+    raise exception 'The Commission cannot change while voting is open.'
+      using errcode = 'P0001';
+  end if;
+  select * into m from public.sync_records r
+  where r.org_id = org and r.tbl = 'members' and r.key = member
+    and r.data ->> 'deleted_at' is null and r.data ->> 'status' = 'active';
+  if m.key is null then
+    raise exception 'Only active members can join the Commission.'
+      using errcode = 'P0001';
+  end if;
+  if exists (select 1 from public.election_candidates c
+             join public.election_posts p on p.id = c.post_id
+             join public.elections e on e.id = p.election_id
+             where e.org_id = org and c.member_key = member
+               and e.status in ('draft', 'open')) then
+    raise exception 'That member is a candidate, so cannot join the Commission.'
+      using errcode = 'P0001';
+  end if;
+  if exists (select 1 from public.election_officers o
+             where o.org_id = org and o.member_key = member and o.ended_at is null) then
+    raise exception 'They are already on the Commission.' using errcode = 'P0001';
+  end if;
+  if role = 'chair' and exists (select 1 from public.election_officers o
+        where o.org_id = org and o.role = 'chair' and o.ended_at is null) then
+    raise exception 'There is a Chairperson already. Remove them first.'
+      using errcode = 'P0001';
+  end if;
+  if role = 'secretary' and exists (select 1 from public.election_officers o
+        where o.org_id = org and o.role = 'secretary' and o.ended_at is null) then
+    raise exception 'There is a Secretary already. Remove them first.'
+      using errcode = 'P0001';
+  end if;
+  insert into public.election_officers (org_id, member_key, role, appointed_by)
+  values (org, member, role,
+    coalesce((select r.data ->> 'full_name' from public.sync_records r
+              where r.org_id = org and r.tbl = 'members'
+                and r.key = me ->> 'member'), me ->> 'name', 'Founder'));
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+create or replace function public.election_remove_officer(token text, member text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me jsonb := public.chat_identity(token, null);
+  org uuid := (me ->> 'org')::uuid;
+  top boolean := coalesce((me ->> 'all')::boolean, false)
+                 or (me -> 'roles') ? 'general_secretary';
+  target public.election_officers;
+  chair boolean;
+begin
+  chair := exists (select 1 from public.election_officers o
+                   where o.org_id = org and o.member_key = me ->> 'member'
+                     and o.role = 'chair' and o.ended_at is null);
+  select * into target from public.election_officers o
+  where o.org_id = org and o.member_key = member and o.ended_at is null;
+  if target.id is null then
+    raise exception 'They are not on the Commission.' using errcode = 'P0001';
+  end if;
+  if not (top or (chair and target.role <> 'chair')) then
+    raise exception 'You cannot remove them.' using errcode = 'P0001';
+  end if;
+  if exists (select 1 from public.elections e
+             where e.org_id = org and e.status = 'open' and now() < e.closes_at) then
+    raise exception 'The Commission cannot change while voting is open.'
+      using errcode = 'P0001';
+  end if;
+  update public.election_officers
+  set ended_at = now(),
+      ended_by = coalesce((select r.data ->> 'full_name'
+                           from public.sync_records r
+                           where r.org_id = org and r.tbl = 'members'
+                             and r.key = me ->> 'member'), me ->> 'name', 'Founder')
+  where id = target.id;
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
 do $$
 declare
   f text;
@@ -667,7 +849,9 @@ begin
     'election_set_candidate(text, uuid, text, text, text)',
     'election_open(text, uuid)', 'election_vote(text, uuid, jsonb)',
     'election_close(text, uuid)', 'election_cancel(text, uuid)',
-    'election_results(text, uuid)', 'election_history(text, uuid)']
+    'election_results(text, uuid)', 'election_history(text, uuid)',
+    'election_commission(text)', 'election_appoint(text, text, text)',
+    'election_remove_officer(text, text)']
   loop
     execute format('revoke all on function public.%s from public', f);
     execute format('grant execute on function public.%s to anon, authenticated', f);

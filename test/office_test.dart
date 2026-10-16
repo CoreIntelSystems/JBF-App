@@ -309,4 +309,77 @@ void main() {
       containsPair('event', 'ev-1'),
     );
   });
+
+  testWidgets('the Welfare office shows cases, benefits and adds case steps', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'welfare',
+      'name': 'Welfare Committee',
+      'chat': 'welfare',
+      'welfare': {
+        'pending': 1,
+        'approved': 0,
+        'paid': 1,
+        'rejected': 0,
+        'to_pay': 0,
+        'paid_total': 30000,
+        'unset_types': 6,
+        'proposals': [
+          {
+            'id': 'wt1',
+            'name': 'Death of a member',
+            'amount': null,
+            'proposed': 100000,
+            'by': 'Treasurer',
+          },
+        ],
+        'recent': [
+          {
+            'id': 'wc1',
+            'case_no': 'WF-0001',
+            'status': 'pending',
+            'amount': 50000,
+            'type': 'Death of a member',
+            'member_name': 'Abel Mensah',
+            'member_no': 'JBF-000003',
+            'steps': 0,
+            'steps_done': 0,
+          },
+        ],
+      },
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'welfare',
+          title: 'Welfare Committee',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Waiting for approval'), findsOneWidget);
+    expect(find.text('Abel Mensah · JBF-000003'), findsOneWidget);
+    expect(find.textContaining('waiting for the Chairman'), findsOneWidget);
+    expect(find.textContaining('6 case types have no benefit'), findsOneWidget);
+    await tester.tap(find.text('Add the case steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_welfare_steps').single.$2,
+      containsPair('welfare_case', 'wc1'),
+    );
+  });
 }

@@ -261,4 +261,13 @@ The third office. The national **Organizer** leads it; **Zone Organizers** and *
 - For each planned event, the Organizer can tap **Add the planning steps**: agree the date, venue and budget, book the venue, arrange transport and accommodation, announce it, arrange any Silver Collection, share the attendance QR codes, take attendance, and report attendance and spending afterwards. Each event shows how far its steps have got.
 - Tasks, Minutes and Notices work as in every office. The office chat is the existing Organizing chat.
 
+### Welfare Committee office
+
+The fourth office. The **Welfare Chairman** and **Welfare Secretary** lead it; the **Welfare Treasurer**, welfare committee members, **Zone Welfare Officers** and **Zone Welfare Helpers** are its members. They join automatically from their roles.
+
+- **Welfare cases** (on the Overview): how many cases wait for approval and how many are approved but not yet paid, what is still to pay and what has been paid, then the latest cases with the member, case type, amount and who prepared and approved them. Zone Welfare Officers and Helpers see only the cases of members in their own zones; the national team sees all.
+- **Benefit amounts**: any amount the Treasurer has proposed that still waits for the Chairman, and how many case types have no amount yet.
+- For each open case, the Chairman or Secretary can tap **Add the case steps**: confirm the details with the member's zone, check the member is in good standing, prepare the case with the fixed benefit, approve it (Chairman, or Secretary if the Chairman is away), pay and record the payout, and visit or call the family. Each case shows how far its steps have got.
+- Cases are still prepared, approved and paid in More > Welfare, with the same rules as before. The office is where the team plans and follows up. The office chat is the existing Welfare chat.
+
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

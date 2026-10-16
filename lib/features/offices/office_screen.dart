@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/format.dart';
+import '../../core/money.dart';
 import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../data/sync/sync_api.dart' show ChatChannel;
@@ -164,6 +165,8 @@ class _OfficeScreenState extends State<OfficeScreen>
       for (final c in _cases())
         c['id']: 'Case: ${c['member_name'] ?? 'member'}',
       for (final e in _items('events')) e['id']: '${e['name']}',
+      for (final w in _welfareCases())
+        w['id']: '${w['case_no'] ?? 'Case'} · ${w['member_name'] ?? 'member'}',
     };
     final tasks = _items('tasks').where((t) {
       return switch (_taskFilter) {
@@ -238,6 +241,8 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (elections[t['election_id']] != null) elections[t['election_id']]!,
       if (elections[t['case_id']] != null) elections[t['case_id']]!,
       if (elections[t['event_id']] != null) elections[t['event_id']]!,
+      if (elections[t['welfare_case_id']] != null)
+        elections[t['welfare_case_id']]!,
     ];
     if (parts.isEmpty) return null;
     return Text(
@@ -536,6 +541,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (roll != null) ..._rollSection(roll),
       if (h['cases'] is Map) ..._casesSection(),
       if (h['events'] is List) ..._eventsSection(),
+      if (h['welfare'] is Map) ..._welfareSection(),
       SectionTitle('Members (${members.length})'),
       GroupCard(
         children: [
@@ -626,6 +632,194 @@ class _OfficeScreenState extends State<OfficeScreen>
               )
             else
               const Text('No checklist yet.'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- Welfare Committee: cases and benefits ----------
+
+  List<Map<String, dynamic>> _welfareCases() {
+    final w = _home?['welfare'];
+    if (w is! Map) return const [];
+    return [
+      for (final x in (w['recent'] as List?) ?? const [])
+        Map<String, dynamic>.from(x as Map),
+    ];
+  }
+
+  List<Widget> _welfareSection() {
+    final w = Map<String, dynamic>.from(_home!['welfare'] as Map);
+    final cases = _welfareCases();
+    final proposals = [
+      for (final x in (w['proposals'] as List?) ?? const [])
+        Map<String, dynamic>.from(x as Map),
+    ];
+    final unset = (w['unset_types'] as num?)?.toInt() ?? 0;
+    final toPay = (w['to_pay'] as num?)?.toInt() ?? 0;
+    final paidTotal = (w['paid_total'] as num?)?.toInt() ?? 0;
+    return [
+      const SectionTitle('Welfare cases'),
+      Row(
+        children: [
+          Expanded(
+            child: MetricTile(
+              label: 'Waiting for approval',
+              value: '${w['pending'] ?? 0}',
+              icon: Icons.hourglass_top_rounded,
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: MetricTile(
+              label: 'Approved, to pay',
+              value: '${w['approved'] ?? 0}',
+              icon: Icons.payments_outlined,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      Text(
+        [
+          if (toPay > 0) '${formatMoney(toPay)} still to pay',
+          '${formatMoney(paidTotal)} paid on ${w['paid'] ?? 0} '
+              '${w['paid'] == 1 ? 'case' : 'cases'}',
+        ].join(' · '),
+      ),
+      if (proposals.isNotEmpty || unset > 0) ...[
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Benefit amounts',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+                for (final p in proposals)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      '${p['name']}: '
+                      '${p['amount'] == null ? 'change' : '${formatMoney((p['amount'] as num).toInt())} to'} '
+                      '${formatMoney((p['proposed'] as num).toInt())}, '
+                      'waiting for the Chairman'
+                      '${p['by'] == null ? '' : ' (proposed by ${p['by']})'}',
+                    ),
+                  ),
+                if (unset > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      '$unset case ${unset == 1 ? 'type has' : 'types have'} '
+                      'no benefit amount yet. The Treasurer sets them in '
+                      'More > Welfare > Benefit amounts.',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+      const SizedBox(height: 8),
+      if (cases.isEmpty)
+        const Text(
+          'No welfare cases yet. Cases are prepared and approved in '
+          'More > Welfare; they then appear here.',
+        ),
+      for (final x in cases) _welfareCard(x),
+    ];
+  }
+
+  Widget _welfareCard(Map<String, dynamic> x) {
+    final status = '${x['status']}';
+    final closed = status == 'paid' || status == 'rejected';
+    final steps = (x['steps'] as num?)?.toInt() ?? 0;
+    final done = (x['steps_done'] as num?)?.toInt() ?? 0;
+    final amount = (x['amount'] as num?)?.toInt();
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${x['member_name'] ?? 'Member'}'
+                    '${x['member_no'] == null ? '' : ' · ${x['member_no']}'}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Pill(
+                  switch (status) {
+                    'approved' => 'Approved',
+                    'paid' => 'Paid',
+                    'rejected' => 'Rejected',
+                    _ => 'Pending',
+                  },
+                  color: status == 'pending'
+                      ? Theme.of(context).colorScheme.error
+                      : closed
+                      ? Colors.grey.shade600
+                      : null,
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              [
+                '${x['case_no'] ?? 'Case'}',
+                if (x['type'] != null) '${x['type']}',
+                if (amount != null) formatMoney(amount),
+              ].join(' · '),
+            ),
+            if (x['beneficiary'] != null) Text('For ${x['beneficiary']}'),
+            if (x['by'] != null || x['decided_by'] != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                [
+                  if (x['by'] != null) 'Prepared by ${x['by']}',
+                  if (x['decided_by'] != null)
+                    '${status == 'rejected' ? 'Rejected' : 'Approved'} by '
+                        '${x['decided_by']}',
+                ].join(' · '),
+                style: TextStyle(fontSize: 12, color: Tones.of(context).muted),
+              ),
+            ],
+            if (steps > 0) ...[
+              const SizedBox(height: 10),
+              Text('Case steps: $done of $steps done'),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: done / steps,
+                  minHeight: 8,
+                ),
+              ),
+            ] else if (!closed && _lead)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: OutlinedButton.icon(
+                  onPressed: () => _run(
+                    () => _api.addWelfareSteps(_c, x['id'] as String),
+                    'Case steps added to Tasks.',
+                  ),
+                  icon: const Icon(Icons.checklist_rounded),
+                  label: const Text('Add the case steps'),
+                ),
+              ),
           ],
         ),
       ),

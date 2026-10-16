@@ -18,6 +18,8 @@ void main() {
     );
     expect(text, contains('Hello Kofi'));
     expect(text, contains('JBF-000002'));
+    expect(text, contains('https://jbf-members.onrender.com'));
+    expect(text, contains('Add to Home Screen'));
     final link = whatsappLink('233241234567', text);
     expect(link.host, 'wa.me');
     expect(link.path, '/233241234567');

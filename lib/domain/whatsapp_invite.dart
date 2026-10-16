@@ -12,11 +12,16 @@ String? whatsappNumber(String? stored) {
   return null;
 }
 
-/// The message the Founder sends so a member learns their ID.
+/// Where members open the installable member app.
+const memberAppUrl = 'https://jbf-members.onrender.com';
+
+/// The message the Founder sends so a member learns their ID and how to
+/// install and sign in to the member app.
 String idInviteMessage({
   required String name,
   required String memberNo,
   required String orgName,
+  String appUrl = memberAppUrl,
 }) {
   final parts = name.trim().split(RegExp(r'\s+'));
   final unnamed =
@@ -24,9 +29,18 @@ String idInviteMessage({
       parts.length > 1 &&
       RegExp(r'^[+\d]').hasMatch(parts[1]);
   final hello = unnamed ? 'Hello' : 'Hello ${parts.first}';
-  return '$hello, this is $orgName. Your member ID is $memberNo.\n\n'
-      'To see your dues and details on the app, open it, choose "Member '
-      'sign-in" and enter your member ID and the phone number you gave us.';
+  return '$hello, this is $orgName.\n'
+      'Your member ID is *$memberNo*.\n\n'
+      'To get the $orgName app on your phone:\n'
+      '1. Open this link: $appUrl\n'
+      '   (iPhone: use Safari. Android: use Chrome.)\n'
+      '2. iPhone: tap the Share button, then "Add to Home Screen", then "Add".\n'
+      '   Android: tap the 3 dots, then "Install app" or "Add to Home screen".\n'
+      '3. Open the app from your home screen and tap "First time? Activate '
+      'your account".\n'
+      '4. Enter your member ID, this phone number, and choose a password.\n'
+      '5. Choose your zone. You can only choose it once.\n\n'
+      'Next time, just sign in with your member ID and password.';
 }
 
 Uri whatsappLink(String number, String message) =>

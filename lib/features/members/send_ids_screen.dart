@@ -52,10 +52,19 @@ class _SendIdsScreenState extends State<SendIdsScreen> {
       );
       return;
     }
+    // Anyone holding an executive role gets the full app link.
+    final held = await context.read<AppServices>().auth.heldRoles(m.id);
+    final executive = held.any((h) => h.role.key != 'member');
     final link = whatsappLink(
       number,
-      idInviteMessage(name: m.fullName, memberNo: m.memberNo, orgName: orgName),
+      idInviteMessage(
+        name: m.fullName,
+        memberNo: m.memberNo,
+        orgName: orgName,
+        executive: executive,
+      ),
     );
+    if (!mounted) return;
     final ok = await launchUrl(link, mode: LaunchMode.externalApplication);
     if (!mounted) return;
     if (ok) {

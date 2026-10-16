@@ -108,6 +108,8 @@ Deno.serve(async (req) => {
   const phone = String(body.phone ?? "");
   const deviceName = String(body.device_name ?? "").trim();
   const checkOnly = body.check === true;
+  // The member web app has no synced phone: executives get a member session.
+  const web = body.web === true;
   if (!org || !memberNo) return refuse("Enter your member ID.");
 
   const db = createClient(
@@ -156,7 +158,7 @@ Deno.serve(async (req) => {
   } else {
     return refuse("Unknown action.");
   }
-  const done = await db.rpc("member_auth_complete", {
+  const done = await db.rpc(web ? "member_auth_complete_web" : "member_auth_complete", {
     org: m.org_id,
     member_no: memberNo,
     ok,

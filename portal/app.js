@@ -78,7 +78,7 @@ async function call(path, body) {
   return data;
 }
 const rpc = (name, args) => call('/rest/v1/rpc/' + name, args);
-const auth = (body) => call('/functions/v1/member-auth', { org: ORG, ...body });
+const auth = (body) => call('/functions/v1/member-auth', { org: ORG, web: true, ...body });
 
 function stopPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
 
@@ -109,9 +109,6 @@ function renderAuth(mode, message) {
       const r = await auth(activating
         ? { action: 'activate', member_no: idInput.value.trim(), phone: phone.value.trim(), new_password: pass.value, device_name: 'Web app' }
         : { action: 'sign_in', member_no: idInput.value.trim(), password: pass.value, device_name: 'Web app' });
-      if (r.kind === 'officer') {
-        throw new ApiError('You hold an executive role. Please use the JBF Android app to work with your role.');
-      }
       if (r.kind !== 'member') throw new ApiError('Could not sign you in.');
       session = { token: r.token, member_key: r.member_key, member_no: r.member_no, name: r.name, org_name: r.org_name };
       store.set(SESSION_KEY, session);
@@ -221,6 +218,10 @@ function viewHome() {
     out.append(h('div', { class: 'notice' }, h('b', null, 'Please choose your zone'), h('br'),
       'You can only choose once. Go to Me > My details.',
       h('div', null, h('button', { class: 'small', onclick: () => show('me') }, 'Choose my zone'))));
+  }
+  if (home.officer || (home.roles || []).length) {
+    out.append(h('div', { class: 'notice' }, h('b', null, 'Executive'), h('br'),
+      'Your roles show on your card and in your chats. Recording payments and managing records is still done in the JBF Android app; more of it is coming here.'));
   }
   out.append(idCard());
   for (const d of home.dues || []) {

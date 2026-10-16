@@ -224,6 +224,8 @@ function viewHome() {
       'Your roles show on your card and in your chats. To record payments and manage records, open the full app: ',
       h('a', { href: 'https://jbf-app.onrender.com', target: '_blank' }, 'jbf-app.onrender.com'), '.'));
   }
+  out.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('span', null, '🗳 Elections'),
+    h('button', { class: 'small', onclick: openElections }, 'Open'))));
   out.append(idCard());
   for (const d of home.dues || []) {
     const card = h('div', { class: 'card' }, h('h2', null, d.name));
@@ -335,6 +337,117 @@ function openChat(chan) {
       : h('p', { class: 'hint' }, 'Only officers can post here.'));
   load();
   pollTimer = setInterval(load, 8000);
+}
+
+// ---------- elections ----------
+// Every check (who may vote, one vote each, secrecy, counting) happens in the
+// cloud. This page only shows the ballot and sends the choices.
+const electionError = (ex) => ex.expired ? 'Please sign in again.' : ex.message;
+
+function photoOrInitials(c, size) {
+  if (c.photo) return h('img', { class: 'cphoto', src: c.photo, alt: '', width: size, height: size });
+  const letters = String(c.name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+  return h('div', { class: 'cphoto init', style: `width:${size}px;height:${size}px` }, letters);
+}
+
+async function openElections() {
+  stopPolling();
+  tabsEl.hidden = false;
+  const box = h('div', null, h('button', { class: 'link', onclick: () => show('home') }, '‹ Back'),
+    h('h2', null, 'Elections'), h('p', { class: 'hint' }, 'Loading...'));
+  app.replaceChildren(box);
+  try {
+    const r = await rpc('election_list', { token: session.token });
+    box.lastChild.remove();
+    if (!r.elections.length) box.append(h('p', { class: 'hint' }, 'There are no elections yet.'));
+    for (const e of r.elections) {
+      const state = e.status === 'open' ? (e.voted_all ? 'You have voted' : e.can_vote ? 'Vote now' : 'Open')
+        : e.status === 'closed' ? 'See results' : e.status;
+      box.append(h('div', { class: 'card' }, h('h2', null, e.title),
+        h('div', { class: 'sub' }, e.status === 'open' ? 'Closes ' + new Date(e.closes_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : 'Voting closed'),
+        h('button', { class: 'small', onclick: () => openElection(e.id) }, state)));
+    }
+    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'To set up or open an election, use the full app.'));
+  } catch (ex) { box.lastChild.replaceWith(h('p', { class: 'error' }, electionError(ex))); }
+}
+
+async function openElection(id) {
+  const back = h('button', { class: 'link', onclick: openElections }, '‹ All elections');
+  app.replaceChildren(back, h('p', { class: 'hint' }, 'Loading...'));
+  try {
+    const e = await rpc('election_get', { token: session.token, eid: id });
+    if (e.status === 'closed') return showResults(e, back);
+    const posts = e.posts;
+    const voted = posts.length && posts.every((p) => p.voted);
+    const choices = {};
+    const go = h('button', { disabled: true }, 'Review and cast my vote');
+    const error = h('p', { class: 'error' });
+    const out = h('div', null, back, h('h2', null, e.title), e.notes ? h('p', null, e.notes) : null);
+    if (e.status !== 'open') out.append(h('p', { class: 'hint' }, 'Voting has not opened.'));
+    else if (voted) out.append(h('div', { class: 'notice' }, 'You have voted. Your vote is secret and cannot be changed.'));
+    else if (!e.can_vote) out.append(h('div', { class: 'notice' }, 'You were not on the voters list when this election opened.'));
+    const voting = e.status === 'open' && e.can_vote && !voted;
+    const refresh = () => { go.disabled = !posts.every((p) => choices[p.id]); };
+    for (const p of posts) {
+      const card = h('div', { class: 'card' }, h('h2', null, p.title));
+      const options = [];
+      const pick = (val, el) => { choices[p.id] = val; options.forEach((o) => o.classList.remove('picked')); el.classList.add('picked'); refresh(); };
+      for (const c of p.candidates) {
+        const el = h('div', { class: 'cand' }, photoOrInitials(c, 72),
+          h('div', null, h('b', null, c.name), h('div', { class: 'sub' }, c.member_no || ''), c.manifesto ? h('div', { class: 'sub' }, c.manifesto) : null));
+        if (voting) { el.addEventListener('click', () => pick(c.id, el)); options.push(el); }
+        card.append(el);
+      }
+      if (voting) {
+        const ab = h('div', { class: 'cand' }, h('div', { class: 'cphoto init', style: 'width:72px;height:72px' }, '—'),
+          h('div', null, h('b', null, 'Abstain'), h('div', { class: 'sub' }, 'I do not choose anyone for this post.')));
+        ab.addEventListener('click', () => pick('abstain', ab));
+        options.push(ab);
+        card.append(ab);
+      }
+      out.append(card);
+    }
+    if (voting) {
+      go.addEventListener('click', async () => {
+        const name = (p) => choices[p.id] === 'abstain' ? 'No one (abstain)' : (p.candidates.find((c) => c.id === choices[p.id]) || {}).name;
+        const summary = posts.map((p) => `${p.title}: ${name(p)}`).join('\n');
+        if (!confirm(`Check your vote\n\n${summary}\n\nYou cannot change your vote after this.`)) return;
+        go.disabled = true; error.textContent = '';
+        try {
+          await rpc('election_vote', { token: session.token, eid: id, choices });
+          app.replaceChildren(h('div', { class: 'card' }, h('h2', null, 'Your vote has been recorded.'),
+            h('p', null, 'It is secret. Nobody can see how you voted, and it cannot be changed.'),
+            h('button', { onclick: openElections }, 'Done')));
+        } catch (ex) { error.textContent = electionError(ex); go.disabled = false; }
+      });
+      out.append(error, go);
+    }
+    app.replaceChildren(out);
+  } catch (ex) { app.replaceChildren(back, h('p', { class: 'error' }, electionError(ex))); }
+}
+
+async function showResults(e, back) {
+  try {
+    const r = await rpc('election_results', { token: session.token, eid: e.id });
+    const out = h('div', null, back, h('h2', null, r.title),
+      h('p', { class: 'hint' }, r.log_ok ? 'Record checked: no step of this election was altered.' : 'Warning: the election record does not check out.'));
+    for (const p of r.posts) {
+      const card = h('div', { class: 'card' }, h('h2', null, p.title));
+      const tie = p.candidates.length > p.seats && p.candidates[p.seats - 1].votes === p.candidates[p.seats].votes;
+      p.candidates.forEach((c, i) => {
+        const pct = p.ballots ? Math.round((c.votes / p.ballots) * 100) : 0;
+        card.append(h('div', { class: 'cand' }, photoOrInitials(c, 56),
+          h('div', { style: 'flex:1' }, h('b', null, c.name), i < p.seats && !tie && p.ballots > 0 ? ' ✅ Elected' : '',
+            h('div', { class: 'bar' }, h('i', { style: `width:${pct}%` }))),
+          h('b', null, String(c.votes))));
+      });
+      card.append(h('div', { class: 'sub' }, `${p.ballots} votes cast out of ${r.voters} members · ${p.abstained} abstained`));
+      if (tie) card.append(h('div', { class: 'sub' }, 'There is a tie for the last seat. The Electoral Commission decides how it is settled.'));
+      if (p.ballots !== p.voted) card.append(h('p', { class: 'error' }, 'Warning: the number of votes does not match the voted list.'));
+      out.append(card);
+    }
+    app.replaceChildren(out);
+  } catch (ex) { app.replaceChildren(back, h('p', { class: 'error' }, electionError(ex))); }
 }
 
 // ---------- me ----------

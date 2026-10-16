@@ -128,6 +128,10 @@ class SyncApi {
 
   final SyncTransport _call;
 
+  /// Calls a cloud function by name and returns its JSON answer. Used by
+  /// elections, which pass the answers straight to their screens.
+  Future<Object?> rpc(String fn, Map<String, Object?> args) => _call(fn, args);
+
   Future<Enrollment> enroll(
     String code,
     String deviceName, {

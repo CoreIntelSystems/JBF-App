@@ -279,4 +279,15 @@ The fifth office. The **General Secretary** leads it; **Zone Secretaries** are i
 - For each meeting, the General Secretary can tap **Add the meeting steps**: agree the date and agenda with the Chairperson, send the notice and agenda, prepare the attendance register or QR codes, take attendance, write the minutes, have them adopted at the next meeting, and follow up on the decisions.
 - Tasks, Minutes and Notices work as in every office. The office chat is the existing Secretariat chat.
 
+### Treasury office
+
+The sixth office. The **Treasurer** leads it; **Zone Treasurers** and the **Welfare Treasurer** are its members. They join automatically from their roles.
+
+- **This month** (on the Overview): money received and paid out (expenses and welfare payouts), the number of receipts and any voided ones, welfare cases approved but not yet paid, and the totals by contribution type and by collector, so the Treasurer can check each collector's money.
+- **Monthly dues**: how many active members have paid this month's dues.
+- **Amounts waiting**: any dues amount the Treasurer has proposed that waits for the Founder or General Secretary, and monthly dues with no amount yet.
+- Zone Treasurers see only payments from members in their own zones, and not the association's spending.
+- **Month end**: for this month and last month, the Treasurer can tap **Add the month-end steps**: collect the money and receipt books from the Zone Treasurers, bank it, check receipts against the bank, record every expense, pay approved welfare cases, review voided receipts, prepare the finance report and present it to the executives.
+- Payments, expenses and dues are still recorded in Payments, More > Expenses and More > Contribution types, with the same rules. The office chat is the existing Treasury chat.
+
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

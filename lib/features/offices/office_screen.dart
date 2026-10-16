@@ -245,6 +245,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (elections[t['welfare_case_id']] != null)
         elections[t['welfare_case_id']]!,
       if (elections[t['meeting_id']] != null) elections[t['meeting_id']]!,
+      if (t['period'] != null) 'Month end: ${formatPeriod('${t['period']}')}',
     ];
     if (parts.isEmpty) return null;
     return Text(
@@ -546,6 +547,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (h['welfare'] is Map) ..._welfareSection(),
       if (h['register'] is Map) ..._registerSection(),
       if (h['meetings'] is List) ..._meetingsSection(),
+      if (h['treasury'] is Map) ..._treasurySection(),
       SectionTitle('Members (${members.length})'),
       GroupCard(
         children: [
@@ -636,6 +638,214 @@ class _OfficeScreenState extends State<OfficeScreen>
               )
             else
               const Text('No checklist yet.'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- Treasury: this month's money ----------
+
+  List<Widget> _treasurySection() {
+    final t = Map<String, dynamic>.from(_home!['treasury'] as Map);
+    int n(String k) => (t[k] as num?)?.toInt() ?? 0;
+    List<Map<String, dynamic>> rows(String k) => [
+      for (final x in (t[k] as List?) ?? const [])
+        Map<String, dynamic>.from(x as Map),
+    ];
+    final month = formatPeriod('${t['month']}');
+    final zoneOnly = t['zone_only'] == true;
+    final dues = t['dues'] is Map
+        ? Map<String, dynamic>.from(t['dues'] as Map)
+        : null;
+    final proposals = rows('proposals');
+    final unset = n('unset_dues');
+    Widget breakdown(String title, List<Map<String, dynamic>> items) =>
+        GroupCard(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            for (final x in items)
+              ListTile(
+                dense: true,
+                title: Text('${x['name']}'),
+                subtitle: Text(
+                  '${x['count']} ${x['count'] == 1 ? 'receipt' : 'receipts'}',
+                ),
+                trailing: Text(
+                  formatMoney((x['amount'] as num).toInt()),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+          ],
+        );
+    return [
+      SectionTitle(zoneOnly ? '$month in your zones' : month),
+      Row(
+        children: [
+          Expanded(
+            child: MetricTile(
+              label: 'Received',
+              value: formatMoney(n('received')),
+              icon: Icons.south_west_rounded,
+            ),
+          ),
+          if (!zoneOnly) ...[
+            const SizedBox(width: 12),
+            Expanded(
+              child: MetricTile(
+                label: 'Paid out',
+                value: formatMoney(n('spent') + n('welfare_paid')),
+                icon: Icons.north_east_rounded,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+      const SizedBox(height: 8),
+      Text(
+        [
+          '${n('receipts')} ${n('receipts') == 1 ? 'receipt' : 'receipts'}',
+          if (n('voided') > 0) '${n('voided')} voided',
+          if (!zoneOnly && n('welfare_paid') > 0)
+            '${formatMoney(n('welfare_paid'))} of it welfare',
+          if (!zoneOnly && n('to_pay') > 0)
+            '${formatMoney(n('to_pay'))} welfare approved, still to pay',
+        ].join(' · '),
+      ),
+      if (dues != null) ...[
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${dues['name']}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  dues['amount'] == null
+                      ? 'No amount set yet.'
+                      : '${dues['paid']} of ${dues['active']} active members '
+                            'have paid for $month '
+                            '(${formatMoney((dues['amount'] as num).toInt())} each).',
+                ),
+                if (dues['amount'] != null &&
+                    ((dues['active'] as num?) ?? 0) > 0) ...[
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value:
+                          ((dues['paid'] as num?) ?? 0) /
+                          (dues['active'] as num),
+                      minHeight: 8,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+      if (proposals.isNotEmpty || unset > 0)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Amounts waiting',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+                for (final p in proposals)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      '${p['name']}: '
+                      '${p['amount'] == null ? 'set' : 'change ${formatMoney((p['amount'] as num).toInt())}'} '
+                      'to ${formatMoney((p['proposed'] as num).toInt())}, '
+                      'waiting for the Founder or General Secretary',
+                    ),
+                  ),
+                if (unset > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      '$unset monthly ${unset == 1 ? 'due has' : 'dues have'} '
+                      'no amount yet. Set it in More > Contribution types.',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      if (rows('by_type').isNotEmpty) ...[
+        const SizedBox(height: 8),
+        breakdown('By contribution', rows('by_type')),
+      ],
+      if (rows('by_collector').isNotEmpty) ...[
+        const SizedBox(height: 8),
+        breakdown('By collector', rows('by_collector')),
+      ],
+      if (rows('months').isNotEmpty) ...[
+        const SectionTitle('Month end'),
+        for (final m in rows('months')) _monthCard(m),
+      ],
+    ];
+  }
+
+  Widget _monthCard(Map<String, dynamic> m) {
+    final steps = (m['steps'] as num?)?.toInt() ?? 0;
+    final done = (m['steps_done'] as num?)?.toInt() ?? 0;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              formatPeriod('${m['period']}'),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            if (steps > 0) ...[
+              const SizedBox(height: 6),
+              Text('$done of $steps steps done'),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: done / steps,
+                  minHeight: 8,
+                ),
+              ),
+            ] else if (_lead)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: OutlinedButton.icon(
+                  onPressed: () => _run(
+                    () => _api.addMonthSteps(_c, '${m['period']}'),
+                    'Month-end steps added to Tasks.',
+                  ),
+                  icon: const Icon(Icons.checklist_rounded),
+                  label: const Text('Add the month-end steps'),
+                ),
+              )
+            else
+              const Text('No month-end steps yet.'),
           ],
         ),
       ),

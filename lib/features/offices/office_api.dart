@@ -86,6 +86,12 @@ class OfficeApi {
     {'token': token, 'committee': committee, 'meeting': meetingId},
   );
 
+  /// Adds the Treasury's standard month-end steps to [period] (`YYYY-MM`).
+  Future<void> addMonthSteps(String committee, String period) => _api.rpc(
+    'office_add_month_steps',
+    {'token': token, 'committee': committee, 'period': period},
+  );
+
   /// [kind] is `meeting`, `decision` or `note`.
   Future<void> saveNote(
     String committee, {

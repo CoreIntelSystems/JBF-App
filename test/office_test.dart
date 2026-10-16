@@ -469,4 +469,77 @@ void main() {
       containsPair('meeting', 'mt1'),
     );
   });
+
+  testWidgets('the Treasury office shows the month and adds month-end steps', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'treasury',
+      'name': 'Treasury',
+      'chat': 'treasury',
+      'treasury': {
+        'month': '2026-10',
+        'zone_only': false,
+        'received': 4000,
+        'receipts': 2,
+        'voided': 1,
+        'spent': 15000,
+        'welfare_paid': 0,
+        'to_pay': 0,
+        'unset_dues': 1,
+        'dues': {
+          'name': 'Monthly welfare dues',
+          'amount': 2000,
+          'paid': 2,
+          'active': 453,
+        },
+        'proposals': [
+          {
+            'name': 'Monthly welfare dues',
+            'amount': 2000,
+            'proposed': 2500,
+            'by': 'Miz Akosua',
+          },
+        ],
+        'by_type': [
+          {'name': 'Monthly welfare dues', 'amount': 4000, 'count': 2},
+        ],
+        'by_collector': [
+          {'name': 'Zone 1 Treasurer', 'amount': 2000, 'count': 1},
+        ],
+        'months': [
+          {'period': '2026-10', 'steps': 0, 'steps_done': 0},
+          {'period': '2026-09', 'steps': 8, 'steps_done': 3},
+        ],
+      },
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(api: api, committee: 'treasury', title: 'Treasury'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('2 of 453 active members'), findsOneWidget);
+    expect(find.text('Zone 1 Treasurer'), findsOneWidget);
+    expect(find.textContaining('waiting for the Founder'), findsOneWidget);
+    expect(find.text('3 of 8 steps done'), findsOneWidget);
+    await tester.tap(find.text('Add the month-end steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_month_steps').single.$2,
+      containsPair('period', '2026-10'),
+    );
+  });
 }

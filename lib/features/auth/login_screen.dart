@@ -5,6 +5,7 @@ import '../../core/org_config.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../portal/member_statement_screen.dart';
 import 'auth_cubit.dart';
+import 'member_sign_in_screen.dart';
 import 'brand_header.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -158,6 +159,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                     const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const MemberSignInScreen(),
+                              ),
+                            ),
+                      icon: const Icon(Icons.cloud_outlined),
+                      label: const Text('Sign in online with member ID'),
+                    ),
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const MemberSignInScreen(activate: true),
+                              ),
+                            ),
+                      child: const Text('First time? Activate your account'),
+                    ),
                     TextButton.icon(
                       onPressed: _busy
                           ? null

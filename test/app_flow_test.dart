@@ -130,6 +130,10 @@ void main() {
         200,
         scrollable: formScroll,
       );
+      await tester.ensureVisible(find.widgetWithText(FilterChip, z));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.drag(formScroll, const Offset(0, -120));
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.widgetWithText(FilterChip, z));
       await tester.pump();
     }
@@ -640,6 +644,8 @@ void main() {
         )
         .first;
     await tester.scrollUntilVisible(find.text('Zone 2'), 200, scrollable: form);
+    await tester.ensureVisible(find.text('Zone 2'));
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.tap(find.text('Zone 2'));
     await tester.pump();
     await tester.tap(find.text('Zone 1'));

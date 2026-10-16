@@ -22,9 +22,7 @@ class PasswordHasher {
   Future<String> hash(String secret) {
     final salt = _randomBytes(16);
     final iters = iterations;
-    return _run(
-      () => _encode(iters, salt, _pbkdf2(secret, salt, iters)),
-    );
+    return _run(() => _encode(iters, salt, _pbkdf2(secret, salt, iters)));
   }
 
   Future<bool> verify(String secret, String stored) {

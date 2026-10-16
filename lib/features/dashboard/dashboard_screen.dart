@@ -4,6 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../app_services.dart';
 import '../../core/format.dart';
 import '../../core/money.dart';
+import '../../core/org_config.dart';
+import '../../core/theme.dart';
+import '../../core/ui.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dashboard_repository.dart';
 import '../../data/repositories/member_repository.dart';
@@ -50,20 +53,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (stats == null) {
             return const Center(child: CircularProgressIndicator());
           }
+          final canMembers = user?.can(Perm.membersView) ?? false;
+          final maxZone = stats.byZone.fold<int>(
+            1,
+            (m, z) => z.members > m ? z.members : m,
+          );
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                'Hello, ${user?.displayName ?? ''}',
-                style: Theme.of(context).textTheme.titleLarge,
+              _Hero(
+                greeting: 'Hello, ${user?.displayName ?? ''}',
+                role: user?.roleName ?? '',
+                figures: canMembers
+                    ? [
+                        ('Members', '${stats.total}'),
+                        ('Active', '${stats.count(MemberStatus.active)}'),
+                        (
+                          'Zones',
+                          '${stats.byZone.where((z) => z.zone.isActive && z.zone.code != 0).length}',
+                        ),
+                      ]
+                    : const [],
               ),
-              Text(user?.roleName ?? ''),
               const SizedBox(height: 16),
               if ((user?.can(Perm.financeView) ?? false) ||
                   (user?.can(Perm.paymentsRecord) ?? false))
                 _Collections(_collections),
               if (user?.canViewWelfare ?? false) _WelfareCard(_welfare),
-              if (!(user?.can(Perm.membersView) ?? false))
+              if (!canMembers)
                 const Card(
                   child: Padding(
                     padding: EdgeInsets.all(16),
@@ -73,65 +90,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ),
-              if (user?.can(Perm.membersView) ?? false) ...[
+              if (canMembers) ...[
                 // Rows that size to their content, so larger phone text
                 // settings never overflow the tiles.
                 _TileRow([
-                  _StatTile(
-                    'Total members',
-                    '${stats.total}',
-                    Icons.groups,
-                    highlight: true,
+                  MetricTile(
+                    label: 'Total members',
+                    value: '${stats.total}',
+                    icon: Icons.groups_rounded,
                   ),
-                  _StatTile(
-                    'Active',
-                    '${stats.count(MemberStatus.active)}',
-                    Icons.check_circle_outline,
+                  MetricTile(
+                    label: 'Active',
+                    value: '${stats.count(MemberStatus.active)}',
+                    icon: Icons.check_circle_rounded,
+                    color: const Color(0xFF1B8A4B),
                   ),
                 ]),
                 const SizedBox(height: 12),
                 _TileRow([
-                  _StatTile(
-                    'Inactive / suspended',
-                    '${stats.count(MemberStatus.inactive) + stats.count(MemberStatus.suspended)}',
-                    Icons.pause_circle_outline,
+                  MetricTile(
+                    label: 'Inactive / suspended',
+                    value:
+                        '${stats.count(MemberStatus.inactive) + stats.count(MemberStatus.suspended)}',
+                    icon: Icons.pause_circle_rounded,
+                    color: const Color(0xFFB7791F),
                   ),
-                  _StatTile(
-                    'Deceased',
-                    '${stats.count(MemberStatus.deceased)}',
-                    Icons.local_florist_outlined,
+                  MetricTile(
+                    label: 'Deceased',
+                    value: '${stats.count(MemberStatus.deceased)}',
+                    icon: Icons.local_florist_rounded,
+                    color: const Color(0xFF6B7A72),
                   ),
                 ]),
-                const SizedBox(height: 24),
-                Text(
-                  'Active members by zone',
-                  style: Theme.of(context).textTheme.titleMedium,
+                const SectionTitle('Active members by zone'),
+                GroupCard(
+                  children: [
+                    for (final zc in stats.byZone)
+                      _ZoneRow(
+                        name: zoneDisplayName(zc.zone),
+                        note: zc.zone.isActive ? null : 'Not open yet',
+                        count: zc.members,
+                        share: zc.members / maxZone,
+                        holding: zc.zone.code == 0,
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Card(
-                  child: Column(
-                    children: [
-                      for (final zc in stats.byZone)
-                        ListTile(
-                          dense: true,
-                          title: Text(zoneDisplayName(zc.zone)),
-                          subtitle: zc.zone.isActive
-                              ? null
-                              : const Text('Not open yet'),
-                          trailing: Text(
-                            '${zc.members}',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Recently registered',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
+                const SectionTitle('Recently registered'),
                 if (stats.recent.isEmpty)
                   const Card(
                     child: Padding(
@@ -143,29 +147,214 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   )
                 else
-                  Card(
-                    child: Column(
-                      children: [
-                        for (final m in stats.recent)
-                          ListTile(
-                            title: Text(m.fullName),
-                            subtitle: Text(
-                              '${m.memberNo} · joined ${formatDate(m.dateJoined)}',
-                            ),
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    MemberDetailScreen(memberId: m.id),
-                              ),
+                  GroupCard(
+                    children: [
+                      for (final m in stats.recent)
+                        ListTile(
+                          leading: InitialsAvatar(m.fullName),
+                          title: Text(
+                            m.fullName,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            '${m.memberNo} · joined ${formatDate(m.dateJoined)}',
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  MemberDetailScreen(memberId: m.id),
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
               ],
+              const SizedBox(height: 8),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Branded header: who is signed in and the organisation's key figures.
+class _Hero extends StatelessWidget {
+  const _Hero({
+    required this.greeting,
+    required this.role,
+    required this.figures,
+  });
+
+  final String greeting;
+  final String role;
+  final List<(String, String)> figures;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final top = dark ? const Color(0xFF14573A) : scheme.primary;
+    final bottom = dark ? const Color(0xFF0B3524) : const Color(0xFF064D29);
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [top, bottom],
+        ),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  OrgDefaults.logoAsset,
+                  width: 52,
+                  height: 52,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      OrgDefaults.name.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: scheme.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      greeting,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (role.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Pill(role, onDark: true),
+          ],
+          if (figures.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .10),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  for (final f in figures)
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            f.$2,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            f.$1,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: .75),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ZoneRow extends StatelessWidget {
+  const _ZoneRow({
+    required this.name,
+    required this.count,
+    required this.share,
+    this.note,
+    this.holding = false,
+  });
+
+  final String name;
+  final String? note;
+  final int count;
+  final double share;
+  final bool holding;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = Tones.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Text(
+                '$count',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          if (note != null)
+            Text(note!, style: TextStyle(fontSize: 12, color: ink.muted)),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: share.clamp(0.0, 1.0),
+              minHeight: 6,
+              backgroundColor: ink.border,
+              color: holding ? scheme.secondary : scheme.primary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -188,16 +377,16 @@ class _Collections extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _TileRow([
-                _StatTile(
-                  'Collected today',
-                  formatMoney(c.today),
-                  Icons.today,
-                  highlight: true,
+                MetricTile(
+                  label: 'Collected today',
+                  value: formatMoney(c.today),
+                  icon: Icons.today_rounded,
                 ),
-                _StatTile(
-                  'This month',
-                  formatMoney(c.thisMonth),
-                  Icons.calendar_month,
+                MetricTile(
+                  label: 'This month',
+                  value: formatMoney(c.thisMonth),
+                  icon: Icons.calendar_month_rounded,
+                  color: const Color(0xFF2B6CB0),
                 ),
               ]),
               const SizedBox(height: 12),
@@ -210,15 +399,17 @@ class _Collections extends StatelessWidget {
                     ),
                   ),
                   child: _TileRow([
-                    _StatTile(
-                      'Dues outstanding',
-                      formatMoney(c.outstanding),
-                      Icons.account_balance_wallet_outlined,
+                    MetricTile(
+                      label: 'Dues outstanding',
+                      value: formatMoney(c.outstanding),
+                      icon: Icons.account_balance_wallet_rounded,
+                      color: const Color(0xFFB7791F),
                     ),
-                    _StatTile(
-                      'Defaulters',
-                      '${c.defaulters}',
-                      Icons.warning_amber_outlined,
+                    MetricTile(
+                      label: 'Defaulters',
+                      value: '${c.defaulters}',
+                      icon: Icons.warning_amber_rounded,
+                      color: const Color(0xFFC53030),
                     ),
                   ]),
                 )
@@ -235,15 +426,9 @@ class _Collections extends StatelessWidget {
                 ),
               if (c.recent.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(
-                  'Latest payments',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Card(
-                  child: Column(
-                    children: [for (final v in c.recent) PaymentTile(view: v)],
-                  ),
+                const SectionTitle('Latest payments'),
+                GroupCard(
+                  children: [for (final v in c.recent) PaymentTile(view: v)],
                 ),
               ],
             ],
@@ -279,14 +464,17 @@ class _WelfareCard extends StatelessWidget {
                 ? null
                 : Theme.of(context).colorScheme.tertiaryContainer,
             child: ListTile(
-              leading: const Icon(Icons.volunteer_activism),
-              title: Text('Welfare fund ${formatMoney(s.fundBalance)}'),
+              leading: const IconBadge(Icons.volunteer_activism_rounded),
+              title: Text(
+                'Welfare fund ${formatMoney(s.fundBalance)}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               subtitle: Text(
                 waiting.isEmpty
                     ? 'Paid out this month ${formatMoney(s.paidThisMonth)}'
                     : waiting.join(' · '),
               ),
-              trailing: const Icon(Icons.chevron_right),
+              trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => WelfareScreen(
@@ -320,48 +508,6 @@ class _TileRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(child: tiles[1]),
         ],
-      ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile(this.label, this.value, this.icon, {this.highlight = false});
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final bool highlight;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final fg = highlight ? scheme.onPrimary : null;
-    return Card(
-      color: highlight ? scheme.primary : null,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: highlight ? scheme.secondary : null),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: fg,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(color: fg),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -151,7 +151,13 @@ Turn on the monthly dues reminder and pick the day of the month.
 ## Chats (More > Chats)
 
 Chats need internet. Everyone is in **All members** and reads
-**Announcements** (only the Founder and General Secretary post there).
+**Announcements**. General announcements are posted by the Founder, the
+General Secretary, the Welfare Secretary, the Organising Committee
+Secretary and the Secretaries of the Disciplinary Committee and the
+Electoral Commission. Each member also reads their zone's announcements
+(for example **Zone 2 announcements**), posted by that zone's Secretary and
+Mayor. Announcements also show at the top of every member's home page, zone
+ones marked with the zone's name.
 Each person is also in the chats for their roles: **Board**, **Leadership
 Council** (all zone executives and the Board), **Secretariat**, **Treasury**,
 **Organizing**, **Welfare**, the **Disciplinary Committee**, and a chat for

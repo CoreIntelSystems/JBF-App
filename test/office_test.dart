@@ -542,4 +542,85 @@ void main() {
       containsPair('period', '2026-10'),
     );
   });
+
+  testWidgets('the Leadership Council office shows zones and what waits', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'leadership',
+      'name': 'Leadership Council',
+      'chat': 'leadership',
+      'council': {
+        'month': '2026-10',
+        'zones': [
+          {
+            'id': 'z1',
+            'name': 'Zone 1',
+            'mayor': 'Adjoa Oppong',
+            'members': 3,
+            'executives': 1,
+            'dues_paid': 0,
+            'missing': ['Zone Secretary'],
+          },
+        ],
+        'waiting': {
+          'dues_amounts': 1,
+          'benefit_amounts': 0,
+          'welfare_cases': 2,
+          'complaints': 0,
+        },
+        'positions': ['Welfare Chairman'],
+        'meetings': [
+          {
+            'id': 'mt1',
+            'title': 'Council meeting',
+            'kind': 'executive',
+            'held_on': '2026-11-05T10:00:00.000',
+            'upcoming': true,
+            'has_agenda': false,
+            'has_minutes': false,
+            'present': 0,
+            'steps': 0,
+            'steps_done': 0,
+          },
+        ],
+      },
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'leadership',
+          title: 'Leadership Council',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Zone 1 · Mayor Adjoa Oppong'), findsOneWidget);
+    expect(find.textContaining('2 welfare cases waiting'), findsOneWidget);
+    expect(
+      find.textContaining('No one holds: Welfare Chairman'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Add the meeting steps'));
+    await tester.pumpAndSettle();
+    final added = calls
+        .where((c) => c.$1 == 'office_add_meeting_steps')
+        .single
+        .$2;
+    expect(added['meeting'], 'mt1');
+    expect(added['committee'], 'leadership');
+  });
 }

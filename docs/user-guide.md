@@ -147,7 +147,7 @@ complaint when it is dealt with.
 
 ## Committee offices
 
-If you sit on a committee (the Electoral Commission, the Disciplinary Committee, the Organizing Committee, the Welfare Committee, the Secretariat or the Treasury for now), you get its office under **My committee office**: the team's tasks, meeting minutes and decisions, notices to members, the voter roll and a private chat. See the admin guide for details. Notices that committees post to everyone appear on members' home page, and the Commission's also at the top of Elections.
+If you sit on a committee (the Electoral Commission, the Disciplinary Committee, the Organizing Committee, the Welfare Committee, the Secretariat, the Treasury or the Leadership Council for now), you get its office under **My committee office**: the team's tasks, meeting minutes and decisions, notices to members, the voter roll and a private chat. See the admin guide for details. Notices that committees post to everyone appear on members' home page, and the Commission's also at the top of Elections.
 
 ## Member portal (for ordinary members)
 

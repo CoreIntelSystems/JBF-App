@@ -290,4 +290,12 @@ The sixth office. The **Treasurer** leads it; **Zone Treasurers** and the **Welf
 - **Month end**: for this month and last month, the Treasurer can tap **Add the month-end steps**: collect the money and receipt books from the Zone Treasurers, bank it, check receipts against the bank, record every expense, pay approved welfare cases, review voided receipts, prepare the finance report and present it to the executives.
 - Payments, expenses and dues are still recorded in Payments, More > Expenses and More > Contribution types, with the same rules. The office chat is the existing Treasury chat.
 
+### Leadership Council office
+
+The seventh office. The **Founder** and the **General Secretary** lead it. Its members are the **Directors** (and Patron), the **Organizer**, the **Treasurer**, the **Welfare Chairman** and every zone executive (Mayor, Deputy Mayor, Secretary, Treasurer, Organizer and Welfare Officer). They join automatically from their roles. The office uses the existing Leadership Council chat, which now also includes the Welfare Chairman.
+
+- **Waiting for the Council** (on the Overview): dues and welfare benefit amounts waiting for approval, welfare cases waiting for approval, open complaints with the Disciplinary Committee, and national posts that no one holds yet.
+- **Zones**: each active zone with its Mayor, active members, how many of its 6 executive posts are filled (and which are missing), and how many members have paid this month's dues.
+- **Council meetings**: executive and general meetings, with attendance, agenda and minutes. The Founder or General Secretary can tap **Add the meeting steps**: circulate the agenda, collect a report from every Zone Mayor and from the committees, hold the meeting and take attendance, record the decisions, and follow them up. These steps are separate from the Secretariat's own meeting steps.
+
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

@@ -168,6 +168,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       for (final w in _welfareCases())
         w['id']: '${w['case_no'] ?? 'Case'} · ${w['member_name'] ?? 'member'}',
       for (final m in _items('meetings')) m['id']: '${m['title']}',
+      for (final m in _councilMeetings()) m['id']: '${m['title']}',
     };
     final tasks = _items('tasks').where((t) {
       return switch (_taskFilter) {
@@ -548,6 +549,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (h['register'] is Map) ..._registerSection(),
       if (h['meetings'] is List) ..._meetingsSection(),
       if (h['treasury'] is Map) ..._treasurySection(),
+      if (h['council'] is Map) ..._councilSection(),
       SectionTitle('Members (${members.length})'),
       GroupCard(
         children: [
@@ -642,6 +644,96 @@ class _OfficeScreenState extends State<OfficeScreen>
         ),
       ),
     );
+  }
+
+  // ---------- Leadership Council: the association at a glance ----------
+
+  List<Map<String, dynamic>> _councilMeetings() {
+    final c = _home?['council'];
+    if (c is! Map) return const [];
+    return [
+      for (final x in (c['meetings'] as List?) ?? const [])
+        Map<String, dynamic>.from(x as Map),
+    ];
+  }
+
+  List<Widget> _councilSection() {
+    final c = Map<String, dynamic>.from(_home!['council'] as Map);
+    final zones = [
+      for (final x in (c['zones'] as List?) ?? const [])
+        Map<String, dynamic>.from(x as Map),
+    ];
+    final waiting = Map<String, dynamic>.from(
+      (c['waiting'] as Map?) ?? const {},
+    );
+    int w(String k) => (waiting[k] as num?)?.toInt() ?? 0;
+    final positions = [
+      for (final p in (c['positions'] as List?) ?? const []) '$p',
+    ];
+    final decisions = [
+      if (w('dues_amounts') > 0)
+        '${w('dues_amounts')} dues ${w('dues_amounts') == 1 ? 'amount' : 'amounts'} waiting for approval',
+      if (w('benefit_amounts') > 0)
+        '${w('benefit_amounts')} welfare benefit ${w('benefit_amounts') == 1 ? 'amount' : 'amounts'} waiting for approval',
+      if (w('welfare_cases') > 0)
+        '${w('welfare_cases')} welfare ${w('welfare_cases') == 1 ? 'case' : 'cases'} waiting for approval',
+      if (w('complaints') > 0)
+        '${w('complaints')} open ${w('complaints') == 1 ? 'complaint' : 'complaints'} with the Disciplinary Committee',
+      if (positions.isNotEmpty) 'No one holds: ${positions.join(', ')}',
+    ];
+    final meetings = _councilMeetings();
+    return [
+      const SectionTitle('Waiting for the Council'),
+      if (decisions.isEmpty)
+        const Text('Nothing is waiting for a decision.')
+      else
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final d in decisions)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Text('• $d'),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      SectionTitle('Zones (${formatPeriod('${c['month']}')})'),
+      GroupCard(
+        children: [
+          for (final z in zones)
+            ListTile(
+              leading: IconBadge(Icons.location_city_outlined, size: 36),
+              title: Text(
+                '${z['name']}'
+                '${z['mayor'] == null ? '' : ' · Mayor ${z['mayor']}'}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                [
+                  '${z['members']} members',
+                  '${z['executives']} of 6 executives',
+                  '${z['dues_paid']} paid dues',
+                  if (((z['missing'] as List?) ?? const []).isNotEmpty)
+                    'Missing: ${(z['missing'] as List).join(', ')}',
+                ].join(' · '),
+              ),
+            ),
+        ],
+      ),
+      const SectionTitle('Council meetings'),
+      if (meetings.isEmpty)
+        const Text(
+          'No executive or general meetings yet. Add them in More > Events '
+          'and meetings; the Founder or General Secretary can then add the '
+          'Council meeting steps.',
+        ),
+      for (final m in meetings) _meetingCard(m),
+    ];
   }
 
   // ---------- Treasury: this month's money ----------

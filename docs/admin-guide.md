@@ -270,4 +270,13 @@ The fourth office. The **Welfare Chairman** and **Welfare Secretary** lead it; t
 - For each open case, the Chairman or Secretary can tap **Add the case steps**: confirm the details with the member's zone, check the member is in good standing, prepare the case with the fixed benefit, approve it (Chairman, or Secretary if the Chairman is away), pay and record the payout, and visit or call the family. Each case shows how far its steps have got.
 - Cases are still prepared, approved and paid in More > Welfare, with the same rules as before. The office is where the team plans and follows up. The office chat is the existing Welfare chat.
 
+### Secretariat office
+
+The fifth office. The **General Secretary** leads it; **Zone Secretaries** are its members. They join automatically from their roles.
+
+- **Membership register** (on the Overview): active members and how many have activated their sign-in, how many are suspended, inactive or deceased, and the records still to complete (members who have not picked their zone, or have no phone number or emergency contact). The latest status changes are listed. Zone Secretaries see only their own zones.
+- **Meetings**: upcoming meetings soonest first, then the latest held, with attendance, and whether the agenda and minutes have been written. Zone Secretaries see their zones' meetings and association-wide ones. Meetings, agendas and minutes are still written in More > Events and meetings.
+- For each meeting, the General Secretary can tap **Add the meeting steps**: agree the date and agenda with the Chairperson, send the notice and agenda, prepare the attendance register or QR codes, take attendance, write the minutes, have them adopted at the next meeting, and follow up on the decisions.
+- Tasks, Minutes and Notices work as in every office. The office chat is the existing Secretariat chat.
+
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

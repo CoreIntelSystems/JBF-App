@@ -382,4 +382,91 @@ void main() {
       containsPair('welfare_case', 'wc1'),
     );
   });
+
+  testWidgets('the Secretariat office shows the register and meetings', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'secretariat',
+      'name': 'Secretariat',
+      'chat': 'secretariat',
+      'register': {
+        'active': 453,
+        'ready': 4,
+        'suspended': 1,
+        'inactive': 0,
+        'deceased': 0,
+        'no_zone': 446,
+        'no_phone': 0,
+        'no_emergency': 451,
+        'changes': [
+          {
+            'name': 'Kojo Asante',
+            'member_no': 'JBF-000050',
+            'status': 'suspended',
+            'on': '2026-10-01',
+          },
+        ],
+      },
+      'meetings': [
+        {
+          'id': 'mt1',
+          'title': 'Annual general meeting',
+          'held_on': '2026-12-05T10:00:00.000',
+          'upcoming': true,
+          'has_agenda': false,
+          'has_minutes': false,
+          'present': 0,
+          'steps': 0,
+          'steps_done': 0,
+        },
+        {
+          'id': 'mt2',
+          'title': 'Zone 2 meeting',
+          'zone': 'Zone 2',
+          'held_on': '2026-09-01T10:00:00.000',
+          'upcoming': false,
+          'has_minutes': true,
+          'present': 12,
+          'steps': 7,
+          'steps_done': 7,
+        },
+      ],
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'secretariat',
+          title: 'Secretariat',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('446 active members have not picked'),
+      findsOneWidget,
+    );
+    expect(find.text('Kojo Asante · JBF-000050'), findsOneWidget);
+    expect(find.text('Minutes kept'), findsOneWidget);
+    expect(find.text('12 attended'), findsOneWidget);
+    await tester.tap(find.text('Add the meeting steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_meeting_steps').single.$2,
+      containsPair('meeting', 'mt1'),
+    );
+  });
 }

@@ -167,6 +167,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       for (final e in _items('events')) e['id']: '${e['name']}',
       for (final w in _welfareCases())
         w['id']: '${w['case_no'] ?? 'Case'} · ${w['member_name'] ?? 'member'}',
+      for (final m in _items('meetings')) m['id']: '${m['title']}',
     };
     final tasks = _items('tasks').where((t) {
       return switch (_taskFilter) {
@@ -243,6 +244,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (elections[t['event_id']] != null) elections[t['event_id']]!,
       if (elections[t['welfare_case_id']] != null)
         elections[t['welfare_case_id']]!,
+      if (elections[t['meeting_id']] != null) elections[t['meeting_id']]!,
     ];
     if (parts.isEmpty) return null;
     return Text(
@@ -542,6 +544,8 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (h['cases'] is Map) ..._casesSection(),
       if (h['events'] is List) ..._eventsSection(),
       if (h['welfare'] is Map) ..._welfareSection(),
+      if (h['register'] is Map) ..._registerSection(),
+      if (h['meetings'] is List) ..._meetingsSection(),
       SectionTitle('Members (${members.length})'),
       GroupCard(
         children: [
@@ -632,6 +636,198 @@ class _OfficeScreenState extends State<OfficeScreen>
               )
             else
               const Text('No checklist yet.'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- Secretariat: the register and meetings ----------
+
+  List<Widget> _registerSection() {
+    final r = Map<String, dynamic>.from(_home!['register'] as Map);
+    int n(String k) => (r[k] as num?)?.toInt() ?? 0;
+    final active = n('active');
+    final changes = [
+      for (final x in (r['changes'] as List?) ?? const [])
+        Map<String, dynamic>.from(x as Map),
+    ];
+    final gaps = [
+      if (n('no_zone') > 0)
+        '${n('no_zone')} active members have not picked their zone yet',
+      if (n('no_phone') > 0) '${n('no_phone')} have no phone number',
+      if (n('no_emergency') > 0)
+        '${n('no_emergency')} have no emergency contact',
+      if (active - n('ready') > 0)
+        '${active - n('ready')} have not activated their sign-in',
+    ];
+    return [
+      const SectionTitle('Membership register'),
+      Row(
+        children: [
+          Expanded(
+            child: MetricTile(
+              label: 'Active members',
+              value: '$active',
+              icon: Icons.groups_rounded,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: MetricTile(
+              label: 'Signed in',
+              value: '${n('ready')}',
+              icon: Icons.verified_user_outlined,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+          ),
+        ],
+      ),
+      if (n('suspended') + n('inactive') + n('deceased') > 0) ...[
+        const SizedBox(height: 8),
+        Text(
+          [
+            if (n('suspended') > 0) '${n('suspended')} suspended',
+            if (n('inactive') > 0) '${n('inactive')} inactive',
+            if (n('deceased') > 0) '${n('deceased')} deceased',
+          ].join(' · '),
+        ),
+      ],
+      if (gaps.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Records to complete',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+                for (final g in gaps)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text('• $g.'),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+      if (changes.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        GroupCard(
+          children: [
+            for (final c in changes)
+              ListTile(
+                leading: InitialsAvatar('${c['name']}', size: 36),
+                title: Text('${c['name']} · ${c['member_no']}'),
+                subtitle: Text(
+                  [
+                    switch (c['status']) {
+                      'suspended' => 'Suspended',
+                      'deceased' => 'Deceased',
+                      _ => 'Inactive',
+                    },
+                    if (DateTime.tryParse('${c['on']}') case final on?)
+                      formatDate(on),
+                  ].join(' · '),
+                ),
+              ),
+          ],
+        ),
+      ],
+    ];
+  }
+
+  List<Widget> _meetingsSection() {
+    final meetings = _items('meetings');
+    return [
+      const SectionTitle('Meetings'),
+      if (meetings.isEmpty)
+        const Text(
+          'No meetings yet. Add them in More > Events and meetings; they then '
+          'appear here, and the General Secretary can add the meeting steps.',
+        ),
+      for (final m in meetings) _meetingCard(m),
+    ];
+  }
+
+  Widget _meetingCard(Map<String, dynamic> m) {
+    final upcoming = m['upcoming'] == true;
+    final steps = (m['steps'] as num?)?.toInt() ?? 0;
+    final done = (m['steps_done'] as num?)?.toInt() ?? 0;
+    final present = (m['present'] as num?)?.toInt() ?? 0;
+    final on = DateTime.tryParse('${m['held_on']}');
+    final minutes = m['has_minutes'] == true;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${m['title']}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Pill(
+                  upcoming
+                      ? 'Coming up'
+                      : minutes
+                      ? 'Minutes kept'
+                      : 'No minutes yet',
+                  color: upcoming
+                      ? null
+                      : minutes
+                      ? Colors.grey.shade600
+                      : Theme.of(context).colorScheme.error,
+                ),
+              ],
+            ),
+            Text(
+              [
+                if (on != null) formatDateTime(on),
+                if (m['zone'] != null) '${m['zone']}',
+                if (m['venue'] != null) '${m['venue']}',
+              ].join(' · '),
+            ),
+            if (!upcoming || present > 0) Text('$present attended'),
+            if (upcoming && m['has_agenda'] != true)
+              Text(
+                'No agenda yet',
+                style: TextStyle(fontSize: 12, color: Tones.of(context).muted),
+              ),
+            if (steps > 0) ...[
+              const SizedBox(height: 10),
+              Text('Meeting steps: $done of $steps done'),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: done / steps,
+                  minHeight: 8,
+                ),
+              ),
+            ] else if (_lead)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: OutlinedButton.icon(
+                  onPressed: () => _run(
+                    () => _api.addMeetingSteps(_c, m['id'] as String),
+                    'Meeting steps added to Tasks.',
+                  ),
+                  icon: const Icon(Icons.checklist_rounded),
+                  label: const Text('Add the meeting steps'),
+                ),
+              ),
           ],
         ),
       ),

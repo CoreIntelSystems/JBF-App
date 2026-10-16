@@ -13,6 +13,7 @@ IconData officeIcon(String key) => switch (key) {
   'welfare' => Icons.volunteer_activism,
   'discipline' => Icons.gavel_outlined,
   'organizing' => Icons.event_available_outlined,
+  'secretariat' => Icons.edit_note_rounded,
   _ => Icons.groups_2_outlined,
 };
 

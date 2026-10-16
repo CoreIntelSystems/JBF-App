@@ -1,0 +1,65 @@
+name: jbf_app
+description: "June Borns Family welfare and membership app. A CoreIntel Systems product."
+publish_to: 'none'
+version: 0.11.7+23
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  drift: ^2.35.2
+  web: ^1.1.1
+  sqlite3: ^3.7.1
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
+  flutter_secure_storage: ^11.2.0
+  local_auth: ^3.0.2
+  path_provider: ^2.1.6
+  path: ^1.9.0
+  uuid: ^4.6.0
+  crypto: ^3.0.7
+  intl: ^0.20.2
+  image_picker: ^1.2.4
+  pdf: ^3.13.1
+  printing: ^5.15.1
+  share_plus: ^13.3.1
+  file_picker: ^13.1.0
+  archive: ^4.5.2
+  xml: ^7.1.0
+  flutter_local_notifications: ^22.3.2
+  timezone: ^0.11.2
+  url_launcher: ^6.3.3
+  mobile_scanner: ^7.4.2
+  fl_chart: ^1.2.0
+  http: ^1.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.35.1
+  build_runner: ^2.10.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/branding/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+
+# The local database is encrypted with SQLite3 Multiple Ciphers.
+# package:sqlite3 bundles the matching native library through its build hook.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc

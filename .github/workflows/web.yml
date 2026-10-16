@@ -1,0 +1,43 @@
+name: Web build
+
+on:
+  push:
+    branches: [main, claude/project-thread-2t5wgi]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+
+      - run: flutter pub get
+
+      # Everything is served from our own site (no Google CDN), so the app
+      # opens even when that CDN is slow or blocked.
+      - name: Build the web app
+        run: flutter build web --release --no-web-resources-cdn --no-wasm-dry-run
+
+      # Render publishes this branch as the executives' web app.
+      - name: Publish to the web-dist branch
+        run: |
+          cd build/web
+          git init -q -b web-dist
+          git config user.name "jbf-ci"
+          git config user.email "ci@coreintelsystems.org"
+          git add -A
+          git commit -q -m "Web app from ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" web-dist

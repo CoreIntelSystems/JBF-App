@@ -1,0 +1,70 @@
+name: Android build
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+
+      - name: Install packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      # Release mode is several times smaller and faster on low-end phones.
+      # It is signed with the shared test key, so it installs over earlier
+      # test builds.
+      - name: Build test APK
+        run: flutter build apk --release
+
+      - name: Name the APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/jbf-app-test-${{ github.run_number }}.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: jbf-app-test-apk
+          path: build/app/outputs/flutter-apk/jbf-app-test-${{ github.run_number }}.apk
+          retention-days: 30
+
+      # A plain .apk on a pre-release, so phones can download and install it
+      # directly without unzipping (some Android file apps mistake the
+      # artifact zip for a password-protected one).
+      - name: Publish APK to a pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Test build ${{ github.run_number }} (${{ github.ref_name }})
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          body: |
+            Test build of ${{ github.sha }} from ${{ github.ref_name }}.
+            On your phone, tap the .apk below to download and install it.
+          files: |
+            build/app/outputs/flutter-apk/jbf-app-test-${{ github.run_number }}.apk

@@ -49,3 +49,7 @@ AppDatabase openDatabaseFile(File file, {required String hexKey}) =>
 
 /// In-memory database for tests.
 AppDatabase openInMemoryDatabase() => AppDatabase(NativeDatabase.memory());
+
+/// Browsers only: erases what the site stored and reloads. Phones keep
+/// their encrypted data, so this does nothing here.
+void wipeBrowserAndReload() {}

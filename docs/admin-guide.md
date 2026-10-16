@@ -206,3 +206,9 @@ cloud like a phone. Limits: no backup/restore or field-phone files, no member
 photos, no reminders or fingerprint sign-in, and the data kept in the browser
 is not encrypted, so use it only on your own phone. Clearing Safari data
 removes it, but signing in again re-downloads everything.
+
+## Safety and upkeep
+
+- **Daily cloud copies.** Every night at 02:00 the cloud keeps a snapshot of all records, in seven rolling days. CoreIntel support can restore one if records are ever lost.
+- **Browser sign-out.** The web app signs out after 15 quiet minutes and, when you sign out, erases what the browser stored (after sending any unsent changes). Sign in again online with your member ID.
+- **Activation progress.** The dashboard shows how many members have activated their sign-in.

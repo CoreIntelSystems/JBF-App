@@ -8,6 +8,7 @@ import 'package:printing/printing.dart';
 
 import '../../app_services.dart';
 import '../../core/format.dart';
+import '../../core/ui.dart';
 import '../../data/database.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/permissions.dart';
@@ -202,7 +203,8 @@ class _MembersScreenState extends State<MembersScreen> {
                 return ListView.separated(
                   padding: const EdgeInsets.only(bottom: 88),
                   itemCount: list.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, _) =>
+                      const Divider(height: 1, indent: 72, endIndent: 16),
                   itemBuilder: (context, i) => MemberTile(list[i]),
                 );
               },
@@ -257,13 +259,7 @@ class MemberAvatar extends StatelessWidget {
         backgroundImage: FileImage(File(path)),
       );
     }
-    final initials = member.fullName
-        .split(RegExp(r'\s+'))
-        .where((p) => p.isNotEmpty)
-        .take(2)
-        .map((p) => p[0].toUpperCase())
-        .join();
-    return CircleAvatar(radius: radius, child: Text(initials));
+    return InitialsAvatar(member.fullName, size: radius * 2);
   }
 }
 
@@ -276,19 +272,12 @@ class StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final color = switch (status) {
-      MemberStatus.active => Colors.green,
-      MemberStatus.inactive => Colors.grey,
+      MemberStatus.active => Colors.green.shade700,
+      MemberStatus.inactive => Colors.grey.shade600,
       MemberStatus.suspended => scheme.error,
       MemberStatus.deceased => Colors.blueGrey,
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color),
-      ),
-      child: Text(capitalize(status.name), style: TextStyle(color: color)),
-    );
+    return Pill(capitalize(status.name), color: color);
   }
 }
 

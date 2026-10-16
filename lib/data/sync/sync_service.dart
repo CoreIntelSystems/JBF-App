@@ -433,6 +433,9 @@ class SyncService extends Cubit<SyncStatus> {
   Future<void> resetMemberSignIn(String memberId) =>
       _api.memberResetSignIn(_token, memberId);
 
+  Future<({int members, int activated})> activationSummary() =>
+      _api.activationSummary(_token);
+
   Future<MemberAccountStatus> memberAccountStatus(String memberId) =>
       _api.memberAccountStatus(_token, memberId);
 

@@ -179,6 +179,8 @@ class FakeCloud {
         memberPasswords.remove(a['member']);
         memberSessions.removeWhere((_, k) => k == a['member']);
         return {'ok': true};
+      case 'activation_summary':
+        return {'members': 453, 'activated': memberPasswords.length};
       case 'member_account_status':
         return {'activated': memberPasswords.containsKey(a['member'])};
       case 'sync_list_devices':

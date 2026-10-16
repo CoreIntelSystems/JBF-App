@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/format.dart';
 import '../../core/money.dart';
+import '../../core/ui.dart';
 import '../../data/database.dart';
 import '../../data/repositories/payment_repository.dart';
 import 'payment_detail_screen.dart';
@@ -21,8 +22,9 @@ class PaymentTile extends StatelessWidget {
         ? view.type.name
         : '${view.type.name} · ${formatPeriod(p.period)}';
     return ListTile(
-      leading: CircleAvatar(
-        child: Icon(voided ? Icons.block : Icons.receipt_long, size: 20),
+      leading: IconBadge(
+        voided ? Icons.block : Icons.receipt_long,
+        color: voided ? Theme.of(context).colorScheme.error : null,
       ),
       title: Text(showPayer ? view.payerName : purpose),
       subtitle: Text(

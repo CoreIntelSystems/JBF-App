@@ -108,6 +108,12 @@ void main() {
     expect(org.deviceSeries, 'Z3');
   });
 
+  test('officers can see how many members have activated', () async {
+    final summary = await main.sync.activationSummary();
+    expect(summary.members, 453);
+    expect(summary.activated, 0);
+  });
+
   test('a phone that becomes the main phone drops its series', () async {
     final token = field.sync.state.credentials!.token;
     final d = cloud.devices[token]!;

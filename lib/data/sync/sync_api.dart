@@ -401,6 +401,15 @@ class SyncApi {
     'as_name': asName,
   });
 
+  /// How many members there are and how many have activated sign-in.
+  Future<({int members, int activated})> activationSummary(String token) async {
+    final r = (await _call('activation_summary', {'token': token}))! as Map;
+    return (
+      members: (r['members'] as num).toInt(),
+      activated: (r['activated'] as num).toInt(),
+    );
+  }
+
   Future<MemberAccountStatus> memberAccountStatus(
     String token,
     String memberId,

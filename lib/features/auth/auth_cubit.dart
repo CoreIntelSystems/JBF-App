@@ -1,10 +1,12 @@
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app_services.dart';
 import '../../core/org_config.dart';
+import '../../data/connection.dart' show wipeBrowserAndReload;
 import '../../data/repositories/auth_repository.dart';
 import '../../data/sync/sync_api.dart';
 import 'biometrics.dart';
@@ -179,6 +181,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
     await _services.prefs.write(_sessionKey, null);
     await _services.prefs.write('member_home', null);
+    await _wipeWebData();
     await start();
   }
 
@@ -201,6 +204,23 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> logout() async {
     final u = user;
     if (u != null) await _auth.logout(u, _deviceId);
+    await _wipeWebData();
     await _signedOut();
+  }
+
+  /// In a browser, signing out erases what the site stored, so nothing is
+  /// left on a shared computer. Changes not yet in the cloud are sent first;
+  /// if any cannot be sent the data stays so nothing is lost.
+  Future<void> _wipeWebData() async {
+    if (!kIsWeb) return;
+    final sync = _services.sync;
+    try {
+      if (sync.state.enabled) await sync.syncNow();
+      await sync.refresh();
+      if (sync.state.pending > 0) return;
+    } catch (_) {
+      return;
+    }
+    wipeBrowserAndReload();
   }
 }

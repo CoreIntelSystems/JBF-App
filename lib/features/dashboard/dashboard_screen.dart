@@ -91,6 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               if (canMembers) ...[
+                const _ActivationCard(),
                 // Rows that size to their content, so larger phone text
                 // settings never overflow the tiles.
                 _TileRow([
@@ -508,6 +509,82 @@ class _TileRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(child: tiles[1]),
         ],
+      ),
+    );
+  }
+}
+
+/// Officers see how many members have activated their sign-in.
+class _ActivationCard extends StatefulWidget {
+  const _ActivationCard();
+
+  @override
+  State<_ActivationCard> createState() => _ActivationCardState();
+}
+
+class _ActivationCardState extends State<_ActivationCard> {
+  ({int members, int activated})? _summary;
+
+  @override
+  void initState() {
+    super.initState();
+    final sync = context.read<AppServices>().sync;
+    if (sync.state.enabled) {
+      sync
+          .activationSummary()
+          .then((s) {
+            if (mounted) setState(() => _summary = s);
+          })
+          .catchError((_) {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = _summary;
+    if (s == null || s.members == 0) return const SizedBox.shrink();
+    final share = (s.activated / s.members).clamp(0.0, 1.0);
+    final ink = Tones.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const IconBadge(Icons.how_to_reg_rounded),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Member sign-ins activated',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  Text(
+                    '${s.activated} of ${s.members}',
+                    style: TextStyle(color: ink.muted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(value: share, minHeight: 8),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                s.activated >= s.members
+                    ? 'Everyone has activated.'
+                    : 'Use the WhatsApp button in Members to send the '
+                          'remaining IDs.',
+                style: TextStyle(fontSize: 13, color: ink.muted),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HardwareKeyboard, KeyEvent;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'app_services.dart';
@@ -87,30 +91,32 @@ class JbfApp extends StatelessWidget {
           ),
           BlocProvider.value(value: services.sync),
         ],
-        child: _CloudSync(
-          child: BlocBuilder<ThemeModeCubit, ThemeMode>(
-            builder: (context, mode) => MaterialApp(
-              title: OrgDefaults.name,
-              debugShowCheckedModeBanner: false,
-              theme: buildTheme(Brightness.light, palette),
-              darkTheme: buildTheme(Brightness.dark, palette),
-              themeMode: mode,
-              home: BlocBuilder<AuthCubit, AuthState>(
-                builder: (context, state) => switch (state) {
-                  AuthChecking() => const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
-                  ),
-                  AuthNeedsSetup() => const SetupScreen(),
-                  AuthSignedOut() => LoginScreen(
-                    key: ValueKey(state),
-                    state: state,
-                  ),
-                  AuthSignedIn() => const HomeShell(),
-                  AuthMemberSession(:final session) => MemberShell(
-                    key: ValueKey(session.token),
-                    session: session,
-                  ),
-                },
+        child: _IdleSignOut(
+          child: _CloudSync(
+            child: BlocBuilder<ThemeModeCubit, ThemeMode>(
+              builder: (context, mode) => MaterialApp(
+                title: OrgDefaults.name,
+                debugShowCheckedModeBanner: false,
+                theme: buildTheme(Brightness.light, palette),
+                darkTheme: buildTheme(Brightness.dark, palette),
+                themeMode: mode,
+                home: BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) => switch (state) {
+                    AuthChecking() => const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    ),
+                    AuthNeedsSetup() => const SetupScreen(),
+                    AuthSignedOut() => LoginScreen(
+                      key: ValueKey(state),
+                      state: state,
+                    ),
+                    AuthSignedIn() => const HomeShell(),
+                    AuthMemberSession(:final session) => MemberShell(
+                      key: ValueKey(session.token),
+                      session: session,
+                    ),
+                  },
+                ),
               ),
             ),
           ),
@@ -118,4 +124,70 @@ class JbfApp extends StatelessWidget {
       ),
     );
   }
+}
+
+/// In a browser, signs out after a quiet spell so an unattended computer
+/// does not stay signed in.
+class _IdleSignOut extends StatefulWidget {
+  const _IdleSignOut({required this.child});
+  final Widget child;
+
+  static const limit = Duration(minutes: 15);
+
+  @override
+  State<_IdleSignOut> createState() => _IdleSignOutState();
+}
+
+class _IdleSignOutState extends State<_IdleSignOut> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      HardwareKeyboard.instance.addHandler(_key);
+      _touch();
+    }
+  }
+
+  bool _key(KeyEvent _) {
+    _touch();
+    return false;
+  }
+
+  void _touch() {
+    _timer?.cancel();
+    _timer = Timer(_IdleSignOut.limit, _expire);
+  }
+
+  void _expire() {
+    if (!mounted) return;
+    final auth = context.read<AuthCubit>();
+    switch (auth.state) {
+      case AuthSignedIn():
+        auth.logout();
+      case AuthMemberSession():
+        auth.memberSignOut();
+      default:
+    }
+    _touch();
+  }
+
+  @override
+  void dispose() {
+    if (kIsWeb) HardwareKeyboard.instance.removeHandler(_key);
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => kIsWeb
+      ? Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (_) => _touch(),
+          onPointerMove: (_) => _touch(),
+          onPointerSignal: (_) => _touch(),
+          child: widget.child,
+        )
+      : widget.child;
 }

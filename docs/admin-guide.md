@@ -60,7 +60,7 @@ members are taken off the phone.
 | Zone Secretary | Their zone's members and attendance, reset sign-ins, file complaints |
 | Other zone executives | Their zone's members; zone treasurers record payments; zone organizers and welfare officers add helpers |
 | Zone helpers | Their zone's members; organizing helpers take attendance |
-| Disciplinary Committee | See members, handle complaints |
+| Disciplinary Committee (Chairperson, Secretary, member) | See members, handle complaints; Chairperson and Secretary lead the committee office |
 | Auditor | View finance, reports and the audit log |
 | Electoral Commission | See members |
 
@@ -104,6 +104,27 @@ suspended. Arrears are counted from each member's join date. Other types:
 silver collection and event contributions (one-off, no arrears), emergency
 levy, charity, executive council dues and voluntary donations. Add new
 types as needed; old ones can be switched off but not deleted.
+
+## Payment requests (More > Payment requests)
+
+The Treasury or the Welfare Committee asks members to pay; members report
+how they paid; a treasurer confirms, which writes the receipt. How each
+step works is in the user guide.
+
+- **Who can ask:** for the Treasury, anyone whose role can record payments
+  or manage dues; for Welfare, anyone who can prepare, approve or pay
+  welfare. Zone officers ask their own zones only.
+- **Who can confirm:** anyone whose role can record payments or pay
+  welfare, never for their own payment. Zone treasurers see and confirm
+  their own zones' members only. Confirmed receipts are numbered
+  `ONL-YYYY-000001` so they never clash with phone receipts, and are voided
+  like any other receipt.
+- **Checking is by hand for now.** The app does not see the MoMo account,
+  so the treasurer matches each transaction ID against the MoMo or bank
+  messages before confirming. Automatic MoMo checking (members pay inside
+  the app and the receipt is written by itself) needs a merchant account
+  with MTN MoMo, Telecel Cash or a payment company such as Paystack or
+  Hubtel; see phase 4.
 
 ## Welfare benefit amounts (More > Welfare > Benefit amounts)
 
@@ -228,3 +249,83 @@ The Founder cannot run or change an election. The main phone's old username logi
 ### Who is on the Electoral Commission
 
 Open More > Elections > Electoral Commission. The **Founder** and **General Secretary** appoint the Chairperson (and can add or remove anyone). The **Chairperson** then adds the Secretary and members. Nothing changes while voting is open, and a candidate cannot join. The Commission is kept separately from the ordinary role list, so giving someone a role does not put them on it. The Founder can appoint from the main phone; voting and running elections need the member ID sign-in.
+
+## Committee offices
+
+Each committee gets its own digital office in the app, open only to the people on that committee. The Electoral Commission is the first; the next committees (Welfare, Treasury and so on) plug in the same way.
+
+Commission members find it on the More screen (or the member home) under **My committee office**, and in More > Elections > **Commission office**. It needs internet and the member ID sign-in. The Founder and other officers do not see inside it unless they sit on the Commission.
+
+The office has four tabs and a private chat (the speech-bubble button):
+
+- **Overview**: the Commission's members and roles, each election with its checklist progress and turnout, the **voter roll** (active members, and how many have activated their sign-in, zone by zone, so you know whom to remind before voting opens), and recent activity.
+- **Tasks**: anyone in the office adds a task, gives it to a member and sets a due date, and anyone ticks it done. For each election the Chairperson or Secretary can tap **Add the standard steps** on the Overview to add the usual checklist (timetable, nominations, vetting, candidate list, ballot, opening, reminders, results, complaints).
+- **Minutes**: meeting minutes, decisions and notes, kept for later. The writer, the Chairperson or the Secretary can change or remove an entry.
+- **Notices**: the Chairperson or Secretary posts notices (for example "Nominations are open"). Every member sees them at the top of Elections, in the app and on the member website. A notice can be withdrawn.
+
+Every change is written to the office's activity list. Office records live in the cloud only, like elections.
+
+### Disciplinary Committee office
+
+The second office. Its members are whoever holds a Disciplinary Committee role: the Founder or General Secretary gives these roles on the member's page under **Roles and access**, as **Disciplinary Committee Chairperson**, **Disciplinary Committee Secretary** or **Disciplinary Committee** (member). The Chairperson and Secretary lead the office.
+
+- **Cases** (on the Overview): open complaints and warnings sent, and the latest cases, open ones first. Complaints still come from Zone Mayors, Zone Secretaries and the General Secretary on a member's page. **Open the case book** to send a warning or close a complaint, as before.
+- For each open complaint, the Chairperson or Secretary can tap **Add the hearing steps**: acknowledge the complaint, tell the member, hear the member, hear the zone and witnesses, decide and record the decision in Minutes, then warn or close. Each case shows how far its steps have got.
+- Tasks, Minutes and Notices work as in every office. The office chat is the committee's existing Disciplinary Committee chat, which the Chairperson and Secretary now join too.
+- Notices from any committee appear on every member's home page.
+
+### Organizing Committee office
+
+The third office. The national **Organizer** leads it; **Zone Organizers** and **organizing helpers** are its members. They join automatically from their roles (given on the member's page under **Roles and access**).
+
+- **Events** (on the Overview): planned events soonest first, then the latest held ones, with the date, venue and how many attended. Events are still created in More > Events and meetings.
+- For each planned event, the Organizer can tap **Add the planning steps**: agree the date, venue and budget, book the venue, arrange transport and accommodation, announce it, arrange any Silver Collection, share the attendance QR codes, take attendance, and report attendance and spending afterwards. Each event shows how far its steps have got.
+- Tasks, Minutes and Notices work as in every office. The office chat is the existing Organizing chat.
+
+### Welfare Committee office
+
+The fourth office. The **Welfare Chairman** and **Welfare Secretary** lead it; the **Welfare Treasurer**, welfare committee members, **Zone Welfare Officers** and **Zone Welfare Helpers** are its members. They join automatically from their roles.
+
+- **Welfare cases** (on the Overview): how many cases wait for approval and how many are approved but not yet paid, what is still to pay and what has been paid, then the latest cases with the member, case type, amount and who prepared and approved them. Zone Welfare Officers and Helpers see only the cases of members in their own zones; the national team sees all.
+- **Benefit amounts**: any amount the Treasurer has proposed that still waits for the Chairman, and how many case types have no amount yet.
+- For each open case, the Chairman or Secretary can tap **Add the case steps**: confirm the details with the member's zone, check the member is in good standing, prepare the case with the fixed benefit, approve it (Chairman, or Secretary if the Chairman is away), pay and record the payout, and visit or call the family. Each case shows how far its steps have got.
+- Cases are still prepared, approved and paid in More > Welfare, with the same rules as before. The office is where the team plans and follows up. The office chat is the existing Welfare chat.
+
+### Secretariat office
+
+The fifth office. The **General Secretary** leads it; **Zone Secretaries** are its members. They join automatically from their roles.
+
+- **Membership register** (on the Overview): active members and how many have activated their sign-in, how many are suspended, inactive or deceased, and the records still to complete (members who have not picked their zone, or have no phone number or emergency contact). The latest status changes are listed. Zone Secretaries see only their own zones.
+- **Meetings**: upcoming meetings soonest first, then the latest held, with attendance, and whether the agenda and minutes have been written. Zone Secretaries see their zones' meetings and association-wide ones. Meetings, agendas and minutes are still written in More > Events and meetings.
+- For each meeting, the General Secretary can tap **Add the meeting steps**: agree the date and agenda with the Chairperson, send the notice and agenda, prepare the attendance register or QR codes, take attendance, write the minutes, have them adopted at the next meeting, and follow up on the decisions.
+- Tasks, Minutes and Notices work as in every office. The office chat is the existing Secretariat chat.
+
+### Treasury office
+
+The sixth office. The **Treasurer** leads it; **Zone Treasurers** and the **Welfare Treasurer** are its members. They join automatically from their roles.
+
+- **This month** (on the Overview): money received and paid out (expenses and welfare payouts), the number of receipts and any voided ones, welfare cases approved but not yet paid, and the totals by contribution type and by collector, so the Treasurer can check each collector's money.
+- **Monthly dues**: how many active members have paid this month's dues.
+- **Amounts waiting**: any dues amount the Treasurer has proposed that waits for the Founder or General Secretary, and monthly dues with no amount yet.
+- Zone Treasurers see only payments from members in their own zones, and not the association's spending.
+- **Month end**: for this month and last month, the Treasurer can tap **Add the month-end steps**: collect the money and receipt books from the Zone Treasurers, bank it, check receipts against the bank, record every expense, pay approved welfare cases, review voided receipts, prepare the finance report and present it to the executives.
+- Payments, expenses and dues are still recorded in Payments, More > Expenses and More > Contribution types, with the same rules. The office chat is the existing Treasury chat.
+
+### Leadership Council office
+
+The seventh office. The **Founder** and the **General Secretary** lead it. Its members are the **Directors** (and Patron), the **Organizer**, the **Treasurer**, the **Welfare Chairman** and every zone executive (Mayor, Deputy Mayor, Secretary, Treasurer, Organizer and Welfare Officer). They join automatically from their roles. The office uses the existing Leadership Council chat, which now also includes the Welfare Chairman.
+
+- **Waiting for the Council** (on the Overview): dues and welfare benefit amounts waiting for approval, welfare cases waiting for approval, open complaints with the Disciplinary Committee, and national posts that no one holds yet.
+- **Zones**: each active zone with its Mayor, active members, how many of its 6 executive posts are filled (and which are missing), and how many members have paid this month's dues.
+- **Council meetings**: executive and general meetings, with attendance, agenda and minutes. The Founder or General Secretary can tap **Add the meeting steps**: circulate the agenda, collect a report from every Zone Mayor and from the committees, hold the meeting and take attendance, record the decisions, and follow them up. These steps are separate from the Secretariat's own meeting steps.
+
+### Executive Council office
+
+The eighth office. The **Founder** and the **General Secretary** lead it. Its members are the **Directors** (and Patron), the **Treasurer**, the **Organizer** and the **Auditor**. They join automatically from their roles. The office uses the existing Board chat, which now also includes the Auditor.
+
+- **Money** (on the Overview): received and paid out this month and this year, and the money held according to the app's records (everything received less everything paid out since records began in the app; it does not include any opening balance from before).
+- **Waiting for a decision**: dues amounts waiting for the Founder or General Secretary, monthly dues with no amount yet, welfare benefit amounts and cases waiting for approval, and open complaints.
+- **Committee offices**: every other office with its number of members, open and late tasks, and when it was last used, so the Council can see which committees are working.
+- **Executive meetings**: the Founder or General Secretary can tap **Add the meeting steps**: agree the agenda with the Founder, send papers a week before, review the finance report and committee reports, hold the meeting, record the decisions and follow them up.
+
+For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

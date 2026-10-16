@@ -6,6 +6,8 @@ import '../../core/format.dart';
 import '../../core/ui.dart';
 import '../../data/sync/sync_api.dart';
 import '../chats/chats_screen.dart' show ChatAccess;
+import '../offices/office_api.dart';
+import '../offices/office_screen.dart';
 import 'election_screen.dart';
 import 'commission_screen.dart';
 import 'election_admin.dart';
@@ -27,8 +29,13 @@ class _ElectionsScreenState extends State<ElectionsScreen> {
     context.read<AppServices>().sync.api,
     widget.access.token,
   );
+  late final _office = OfficeApi(
+    context.read<AppServices>().sync.api,
+    widget.access.token,
+  );
   bool _isEc = false;
   List<Map<String, dynamic>>? _items;
+  List<Map<String, dynamic>> _notices = const [];
   String? _error;
 
   @override
@@ -38,6 +45,12 @@ class _ElectionsScreenState extends State<ElectionsScreen> {
   }
 
   Future<void> _load() async {
+    _office
+        .notices(committee: 'ec')
+        .then((n) {
+          if (mounted) setState(() => _notices = n);
+        })
+        .catchError((Object _) {});
     try {
       final r = await _api.list();
       if (!mounted) return;
@@ -102,6 +115,53 @@ class _ElectionsScreenState extends State<ElectionsScreen> {
                 ),
               ),
             ),
+            if (_isEc)
+              Card(
+                child: ListTile(
+                  leading: const IconBadge(Icons.work_outline_rounded),
+                  title: const Text(
+                    'Commission office',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Tasks, minutes, notices, voter roll and chat',
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => OfficeScreen(
+                          api: _office,
+                          committee: 'ec',
+                          title: 'Electoral Commission',
+                        ),
+                      ),
+                    );
+                    _load();
+                  },
+                ),
+              ),
+            for (final n in _notices)
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.campaign_outlined),
+                  title: Text(
+                    '${n['title']}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    [
+                      '${n['body']}',
+                      [
+                        'From the ${n['from'] ?? 'Electoral Commission'}',
+                        if (DateTime.tryParse('${n['at']}') case final at?)
+                          formatDate(at),
+                      ].join(' · '),
+                    ].join('\n'),
+                  ),
+                  isThreeLine: true,
+                ),
+              ),
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),

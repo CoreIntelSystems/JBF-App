@@ -17,6 +17,8 @@ import '../cloud/cloud_sync_screen.dart';
 import '../elections/elections_screen.dart';
 import '../events/events_screen.dart';
 import '../executives/executives_screen.dart';
+import '../offices/offices_screen.dart';
+import '../pay_requests/pay_requests_screen.dart';
 import '../finance/expenses_screen.dart';
 import '../reminders/reminders_screen.dart';
 import '../reports/reports_screen.dart';
@@ -59,6 +61,11 @@ class MoreScreen extends StatelessWidget {
               subtitle: Text('${user?.username} · ${user?.roleName}'),
             ),
           ),
+          if (chat != null) ...[
+            MyPaymentRequests(access: chat),
+            MyOffices(access: chat),
+            PayRequestsEntry(access: chat),
+          ],
           const SectionTitle('Tools and settings'),
           GroupCard(
             children: [

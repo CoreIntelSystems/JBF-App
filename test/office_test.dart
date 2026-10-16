@@ -1,0 +1,706 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:jbf_app/data/sync/sync_api.dart';
+import 'package:jbf_app/features/offices/office_api.dart';
+import 'package:jbf_app/features/offices/office_screen.dart';
+
+Map<String, Object?> _home({required bool lead, int steps = 0}) => {
+  'key': 'ec',
+  'name': 'Electoral Commission',
+  'purpose': 'Prepares and runs the elections.',
+  'me': 'm1',
+  'role': lead ? 'chair' : 'member',
+  'role_name': lead ? 'Chairperson' : 'Member',
+  'lead': lead,
+  'has_checklist': true,
+  'members': [
+    {
+      'key': 'm1',
+      'name': 'Ama Mensah',
+      'member_no': 'JBF-000001',
+      'role_name': lead ? 'Chairperson' : 'Member',
+      'lead': lead,
+    },
+    {
+      'key': 'm2',
+      'name': 'Kofi Boateng',
+      'member_no': 'JBF-000002',
+      'role_name': 'Secretary',
+      'lead': true,
+    },
+  ],
+  'tasks': [
+    {
+      'id': 't1',
+      'title': 'Book the hall',
+      'status': 'open',
+      'assignee': 'm1',
+      'assignee_name': 'Ama Mensah',
+      'mine': false,
+    },
+    {
+      'id': 't2',
+      'title': 'Agree the timetable',
+      'status': 'done',
+      'done_by': 'Kofi Boateng',
+      'mine': false,
+    },
+  ],
+  'notes': [
+    {
+      'id': 'n1',
+      'kind': 'decision',
+      'title': 'Voting closes at 6 pm',
+      'body': 'Agreed by all.',
+      'by': 'Kofi Boateng',
+      'mine': false,
+    },
+  ],
+  'notices': <Object>[],
+  'log': [
+    {'by': 'Kofi Boateng', 'event': 'Added a task', 'detail': 'Book the hall'},
+  ],
+  'roll': {
+    'active': 453,
+    'ready': 4,
+    'zones': [
+      {'zone': 'Zone 1', 'active': 3, 'ready': 2},
+    ],
+  },
+  'elections': [
+    {
+      'id': 'e1',
+      'title': '2027 Elections',
+      'status': 'draft',
+      'voters': 0,
+      'steps': steps,
+      'steps_done': 0,
+    },
+  ],
+};
+
+void main() {
+  late List<(String, Map<String, Object?>)> calls;
+
+  Future<void> pumpOffice(WidgetTester tester, {required bool lead}) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    calls = [];
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? _home(lead: lead) : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'ec',
+          title: 'Electoral Commission',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('the overview shows the people, elections and voter roll', (
+    tester,
+  ) async {
+    await pumpOffice(tester, lead: true);
+    expect(find.text('You: Chairperson'), findsOneWidget);
+    expect(find.text('2027 Elections'), findsOneWidget);
+    expect(find.text('453'), findsOneWidget);
+    expect(find.textContaining('449 active members have not'), findsOneWidget);
+    expect(find.text('Secretary'), findsOneWidget);
+
+    await tester.tap(find.text('Add the standard steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_checklist').single.$2,
+      containsPair('election', 'e1'),
+    );
+  });
+
+  testWidgets('tasks can be ticked off and added', (tester) async {
+    await pumpOffice(tester, lead: false);
+    expect(find.text('Add the standard steps'), findsNothing);
+    await tester.tap(find.text('Tasks'));
+    await tester.pumpAndSettle();
+    expect(find.text('Book the hall'), findsOneWidget);
+    expect(find.text('Agree the timetable'), findsNothing, reason: 'done');
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pumpAndSettle();
+    final done = calls.where((c) => c.$1 == 'office_task_done').single.$2;
+    expect(done['id'], 't1');
+    expect(done['done'], true);
+
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Agree the timetable'), findsOneWidget);
+
+    await tester.tap(find.text('New task'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'What needs doing'),
+      'Print the voter list',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    final saved = calls.where((c) => c.$1 == 'office_task_save').single.$2;
+    expect(saved['title'], 'Print the voter list');
+    expect(saved['id'], isNull);
+  });
+
+  testWidgets('only leads can post notices; anyone can read the minutes', (
+    tester,
+  ) async {
+    await pumpOffice(tester, lead: false);
+    await tester.tap(find.text('Minutes'));
+    await tester.pumpAndSettle();
+    expect(find.text('Voting closes at 6 pm'), findsOneWidget);
+    await tester.tap(find.text('Notices'));
+    await tester.pumpAndSettle();
+    expect(find.text('Post notice'), findsNothing);
+  });
+
+  testWidgets('a lead posts a notice to every member', (tester) async {
+    await pumpOffice(tester, lead: true);
+    await tester.tap(find.text('Notices'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Post notice'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Title'),
+      'Nominations are open',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Notice'),
+      'Send names to the Secretary by Friday.',
+    );
+    await tester.tap(find.text('Post'));
+    await tester.pumpAndSettle();
+    final posted = calls.where((c) => c.$1 == 'office_notice_post').single.$2;
+    expect(posted['title'], 'Nominations are open');
+  });
+
+  testWidgets(
+    'the Disciplinary office shows its cases and adds hearing steps',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final calls = <(String, Map<String, Object?>)>[];
+      final home = {
+        ..._home(lead: true),
+        'key': 'discipline',
+        'name': 'Disciplinary Committee',
+        'chat': 'discipline',
+        'elections': null,
+        'roll': null,
+        'cases': {
+          'open': 1,
+          'closed': 0,
+          'warnings': 2,
+          'recent': [
+            {
+              'id': 'c1',
+              'kind': 'complaint',
+              'status': 'open',
+              'member_name': 'Eddie Nii',
+              'member_no': 'JBF-000106',
+              'details': 'Rude at the meeting',
+              'by': 'Zone 1 Secretary',
+              'steps': 0,
+              'steps_done': 0,
+            },
+          ],
+        },
+      }..removeWhere((k, v) => v == null);
+      final api = OfficeApi(
+        SyncApi((fn, args) async {
+          calls.add((fn, args));
+          return fn == 'office_home' ? home : {'ok': true};
+        }),
+        'tok',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: OfficeScreen(
+            api: api,
+            committee: 'discipline',
+            title: 'Disciplinary Committee',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Open complaints'), findsOneWidget);
+      expect(find.text('Eddie Nii · JBF-000106'), findsOneWidget);
+      expect(find.text('Voter roll'.toUpperCase()), findsNothing);
+      await tester.tap(find.text('Add the hearing steps'));
+      await tester.pumpAndSettle();
+      expect(
+        calls.where((c) => c.$1 == 'office_add_case_steps').single.$2,
+        containsPair('case_id', 'c1'),
+      );
+    },
+  );
+
+  testWidgets('the Organizing office lists events and adds planning steps', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'organizing',
+      'name': 'Organizing Committee',
+      'chat': 'organizing',
+      'events': [
+        {
+          'id': 'ev-1',
+          'name': 'End of year party',
+          'status': 'planned',
+          'starts_on': '2026-12-20T15:00:00.000',
+          'venue': 'Accra',
+          'present': 0,
+          'steps': 0,
+          'steps_done': 0,
+        },
+        {
+          'id': 'ev-0',
+          'name': 'Picnic',
+          'status': 'held',
+          'starts_on': '2026-08-01T10:00:00.000',
+          'present': 42,
+          'steps': 0,
+          'steps_done': 0,
+        },
+      ],
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'organizing',
+          title: 'Organizing Committee',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('End of year party'), findsOneWidget);
+    expect(find.text('42 attended'), findsOneWidget);
+    await tester.tap(find.text('Add the planning steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_event_steps').single.$2,
+      containsPair('event', 'ev-1'),
+    );
+  });
+
+  testWidgets('the Welfare office shows cases, benefits and adds case steps', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'welfare',
+      'name': 'Welfare Committee',
+      'chat': 'welfare',
+      'welfare': {
+        'pending': 1,
+        'approved': 0,
+        'paid': 1,
+        'rejected': 0,
+        'to_pay': 0,
+        'paid_total': 30000,
+        'unset_types': 6,
+        'proposals': [
+          {
+            'id': 'wt1',
+            'name': 'Death of a member',
+            'amount': null,
+            'proposed': 100000,
+            'by': 'Treasurer',
+          },
+        ],
+        'recent': [
+          {
+            'id': 'wc1',
+            'case_no': 'WF-0001',
+            'status': 'pending',
+            'amount': 50000,
+            'type': 'Death of a member',
+            'member_name': 'Abel Mensah',
+            'member_no': 'JBF-000003',
+            'steps': 0,
+            'steps_done': 0,
+          },
+        ],
+      },
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'welfare',
+          title: 'Welfare Committee',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Waiting for approval'), findsOneWidget);
+    expect(find.text('Abel Mensah · JBF-000003'), findsOneWidget);
+    expect(find.textContaining('waiting for the Chairman'), findsOneWidget);
+    expect(find.textContaining('6 case types have no benefit'), findsOneWidget);
+    await tester.tap(find.text('Add the case steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_welfare_steps').single.$2,
+      containsPair('welfare_case', 'wc1'),
+    );
+  });
+
+  testWidgets('the Secretariat office shows the register and meetings', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'secretariat',
+      'name': 'Secretariat',
+      'chat': 'secretariat',
+      'register': {
+        'active': 453,
+        'ready': 4,
+        'suspended': 1,
+        'inactive': 0,
+        'deceased': 0,
+        'no_zone': 446,
+        'no_phone': 0,
+        'no_emergency': 451,
+        'changes': [
+          {
+            'name': 'Kojo Asante',
+            'member_no': 'JBF-000050',
+            'status': 'suspended',
+            'on': '2026-10-01',
+          },
+        ],
+      },
+      'meetings': [
+        {
+          'id': 'mt1',
+          'title': 'Annual general meeting',
+          'held_on': '2026-12-05T10:00:00.000',
+          'upcoming': true,
+          'has_agenda': false,
+          'has_minutes': false,
+          'present': 0,
+          'steps': 0,
+          'steps_done': 0,
+        },
+        {
+          'id': 'mt2',
+          'title': 'Zone 2 meeting',
+          'zone': 'Zone 2',
+          'held_on': '2026-09-01T10:00:00.000',
+          'upcoming': false,
+          'has_minutes': true,
+          'present': 12,
+          'steps': 7,
+          'steps_done': 7,
+        },
+      ],
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'secretariat',
+          title: 'Secretariat',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('446 active members have not picked'),
+      findsOneWidget,
+    );
+    expect(find.text('Kojo Asante · JBF-000050'), findsOneWidget);
+    expect(find.text('Minutes kept'), findsOneWidget);
+    expect(find.text('12 attended'), findsOneWidget);
+    await tester.tap(find.text('Add the meeting steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_meeting_steps').single.$2,
+      containsPair('meeting', 'mt1'),
+    );
+  });
+
+  testWidgets('the Treasury office shows the month and adds month-end steps', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'treasury',
+      'name': 'Treasury',
+      'chat': 'treasury',
+      'treasury': {
+        'month': '2026-10',
+        'zone_only': false,
+        'received': 4000,
+        'receipts': 2,
+        'voided': 1,
+        'spent': 15000,
+        'welfare_paid': 0,
+        'to_pay': 0,
+        'unset_dues': 1,
+        'dues': {
+          'name': 'Monthly welfare dues',
+          'amount': 2000,
+          'paid': 2,
+          'active': 453,
+        },
+        'proposals': [
+          {
+            'name': 'Monthly welfare dues',
+            'amount': 2000,
+            'proposed': 2500,
+            'by': 'Miz Akosua',
+          },
+        ],
+        'by_type': [
+          {'name': 'Monthly welfare dues', 'amount': 4000, 'count': 2},
+        ],
+        'by_collector': [
+          {'name': 'Zone 1 Treasurer', 'amount': 2000, 'count': 1},
+        ],
+        'months': [
+          {'period': '2026-10', 'steps': 0, 'steps_done': 0},
+          {'period': '2026-09', 'steps': 8, 'steps_done': 3},
+        ],
+      },
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(api: api, committee: 'treasury', title: 'Treasury'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('2 of 453 active members'), findsOneWidget);
+    expect(find.text('Zone 1 Treasurer'), findsOneWidget);
+    expect(find.textContaining('waiting for the Founder'), findsOneWidget);
+    expect(find.text('3 of 8 steps done'), findsOneWidget);
+    await tester.tap(find.text('Add the month-end steps'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((c) => c.$1 == 'office_add_month_steps').single.$2,
+      containsPair('period', '2026-10'),
+    );
+  });
+
+  testWidgets('the Leadership Council office shows zones and what waits', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'leadership',
+      'name': 'Leadership Council',
+      'chat': 'leadership',
+      'council': {
+        'month': '2026-10',
+        'zones': [
+          {
+            'id': 'z1',
+            'name': 'Zone 1',
+            'mayor': 'Adjoa Oppong',
+            'members': 3,
+            'executives': 1,
+            'dues_paid': 0,
+            'missing': ['Zone Secretary'],
+          },
+        ],
+        'waiting': {
+          'dues_amounts': 1,
+          'benefit_amounts': 0,
+          'welfare_cases': 2,
+          'complaints': 0,
+        },
+        'positions': ['Welfare Chairman'],
+        'meetings': [
+          {
+            'id': 'mt1',
+            'title': 'Council meeting',
+            'kind': 'executive',
+            'held_on': '2026-11-05T10:00:00.000',
+            'upcoming': true,
+            'has_agenda': false,
+            'has_minutes': false,
+            'present': 0,
+            'steps': 0,
+            'steps_done': 0,
+          },
+        ],
+      },
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'leadership',
+          title: 'Leadership Council',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Zone 1 · Mayor Adjoa Oppong'), findsOneWidget);
+    expect(find.textContaining('2 welfare cases waiting'), findsOneWidget);
+    expect(
+      find.textContaining('No one holds: Welfare Chairman'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Add the meeting steps'));
+    await tester.pumpAndSettle();
+    final added = calls
+        .where((c) => c.$1 == 'office_add_meeting_steps')
+        .single
+        .$2;
+    expect(added['meeting'], 'mt1');
+    expect(added['committee'], 'leadership');
+  });
+
+  testWidgets('the Executive Council office shows money and committees', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 3200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'executive',
+      'name': 'Executive Council',
+      'chat': 'board',
+      'executive': {
+        'month': '2026-10',
+        'year': '2026',
+        'money': {
+          'month_in': 2000,
+          'month_out': 500,
+          'month_welfare': 0,
+          'year_in': 2000,
+          'year_out': 500,
+          'balance': 1500,
+        },
+        'waiting': {'unset_dues': 2, 'welfare_cases': 1},
+        'offices': [
+          {
+            'key': 'treasury',
+            'name': 'Treasury',
+            'members': 1,
+            'open': 3,
+            'late': 1,
+            'last_at': null,
+          },
+        ],
+        'meetings': [
+          {
+            'id': 'mt1',
+            'title': 'Executive meeting',
+            'kind': 'executive',
+            'held_on': '2026-11-05T10:00:00.000',
+            'upcoming': true,
+            'present': 0,
+            'steps': 0,
+            'steps_done': 0,
+          },
+        ],
+      },
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'executive',
+          title: 'Executive Council',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('2026 so far'), findsOneWidget);
+    expect(
+      find.textContaining('2 monthly dues have no amount'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('3 open tasks · 1 late'), findsOneWidget);
+    await tester.tap(find.text('Add the meeting steps'));
+    await tester.pumpAndSettle();
+    final added = calls
+        .where((c) => c.$1 == 'office_add_meeting_steps')
+        .single
+        .$2;
+    expect(added['committee'], 'executive');
+  });
+}

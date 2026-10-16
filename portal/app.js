@@ -221,9 +221,10 @@ function viewHome() {
   }
   if (home.officer || (home.roles || []).length) {
     out.append(h('div', { class: 'notice' }, h('b', null, 'Executive'), h('br'),
-      'Your roles show on your card and in your chats. To record payments and manage records, open the full app: ',
+      'Your roles show on your card and in your chats. To record payments, confirm what members paid and manage records, open the full app: ',
       h('a', { href: 'https://jbf-app.onrender.com', target: '_blank' }, 'jbf-app.onrender.com'), '.'));
   }
+  if (!offline) out.append(payReminder());
   out.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('span', null, '🗳 Elections'),
     h('button', { class: 'small', onclick: openElections }, 'Open'))));
   out.append(idCard());
@@ -249,8 +250,108 @@ function needsZone() {
   return home.self_edit && !home.zones_locked && !(home.zone_ids || []).some((z) => (home.zone_options || []).some((o) => o.id === z));
 }
 
+// ---------- payment requests ----------
+// The Treasury or the Welfare Committee asks members to pay; the member
+// says how they paid and a treasurer confirms it, which writes a receipt.
+const officeName = (o) => (o === 'welfare' ? 'Welfare Committee' : 'Treasury');
+
+function askLine(r) {
+  return [r.amount != null ? money(r.amount) : '', r.type, r.period ? monthName(r.period) : '',
+    r.due_on ? 'due ' + day(r.due_on) : ''].filter(Boolean).join(' · ');
+}
+
+// Home: a reminder when something asked of the member is not yet reported.
+function payReminder() {
+  const box = h('div');
+  rpc('pay_requests_mine', { token: session.token }).then((list) => {
+    const open = list.filter((r) => !r.closed && (!r.mine || r.mine.status === 'rejected'));
+    if (!open.length) return;
+    box.append(h('div', { class: 'notice' }, h('b', null, open.length === 1 ? open[0].title : open.length + ' payments asked of you'), h('br'),
+      'Pay, then tell the Treasurer how you paid.',
+      h('div', null, h('button', { class: 'small', onclick: () => show('pay') }, 'Open'))));
+  }).catch(() => {});
+  return box;
+}
+
+function payRequests() {
+  const box = h('div');
+  const load = () => rpc('pay_requests_mine', { token: session.token }).then((list) => {
+    box.replaceChildren(...(list.length ? [h('h2', null, 'Payments asked of me')] : []), ...list.map((r) => requestCard(r, load)));
+  }).catch((ex) => { if (ex.expired) signOutLocal(); });
+  load();
+  return box;
+}
+
+function requestCard(r, reload) {
+  const mine = r.mine;
+  const card = h('div', { class: 'card' },
+    h('div', { class: 'top' }, h('b', null, r.title)),
+    h('div', { class: 'sub' }, 'From the ' + officeName(r.office)),
+    h('p', null, askLine(r)),
+    r.details ? h('p', null, r.details) : null,
+    r.pay_to ? h('div', { class: 'notice' }, h('b', null, 'How to pay: '), r.pay_to) : null);
+  if (mine && mine.status === 'pending') {
+    card.append(h('p', { class: 'hint' }, `⏳ You reported ${money(mine.amount)} by ${methods[mine.method] || mine.method}. Waiting for the Treasurer to confirm.`));
+    return card;
+  }
+  if (mine && mine.status === 'confirmed') {
+    card.append(h('p', { class: 'clear' }, '✅ Confirmed. Receipt ' + mine.receipt_no + '.'));
+    return card;
+  }
+  if (mine && mine.status === 'rejected') {
+    card.append(h('p', { class: 'error' }, 'Your report was not accepted: ' + (mine.decision_note || '')));
+  }
+  if (r.closed) { card.append(h('p', { class: 'hint' }, 'This request is closed.')); return card; }
+  const open = h('button', { onclick: () => { open.replaceWith(paidForm(r, reload)); } }, mine ? 'Report again' : 'I have paid');
+  card.append(open);
+  return card;
+}
+
+function paidForm(r, reload) {
+  const amount = h('input', { type: 'text', inputmode: 'decimal', value: r.amount != null ? (r.amount / 100).toFixed(2) : '' });
+  const method = h('select', null, ...['momo', 'bank', 'cash'].map((m) => h('option', { value: m }, methods[m])));
+  const refLabel = h('label', null, 'Transaction ID (from your Mobile Money or bank message)');
+  const ref = h('input', { type: 'text', maxlength: 80 });
+  method.addEventListener('change', () => {
+    refLabel.textContent = method.value === 'cash' ? 'Who you gave it to (optional)' : 'Transaction ID (from your Mobile Money or bank message)';
+  });
+  const today = new Date().toISOString().slice(0, 10);
+  const paidOn = h('input', { type: 'date', value: today, max: today });
+  const note = h('input', { type: 'text', maxlength: 200 });
+  const err = h('p', { class: 'error', role: 'alert', hidden: true });
+  const btn = h('button', { type: 'submit' }, 'Send');
+  return h('form', { onsubmit: async (e) => {
+    e.preventDefault();
+    err.hidden = true;
+    const t = amount.value.trim().replace(/,/g, '');
+    const m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(t);
+    const pesewas = m ? Number(m[1]) * 100 + Number((m[2] || '').padEnd(2, '0')) : 0;
+    if (!pesewas) { err.textContent = 'Enter the amount you paid.'; err.hidden = false; return; }
+    if (method.value !== 'cash' && !ref.value.trim()) {
+      err.textContent = 'Enter the transaction ID from your Mobile Money or bank message.'; err.hidden = false; return;
+    }
+    btn.disabled = true;
+    try {
+      await rpc('pay_claim_submit', { token: session.token, request: r.id, amount: pesewas, method: method.value,
+        reference: ref.value.trim() || null, paid_on: paidOn.value || null, note: note.value.trim() || null });
+      await reload();
+    } catch (ex) {
+      if (ex.expired) return signOutLocal();
+      err.textContent = ex.message; err.hidden = false; btn.disabled = false;
+    }
+  } },
+    h('label', null, 'Amount paid (GHS)'), amount,
+    h('label', null, 'How you paid'), method,
+    refLabel, ref,
+    h('label', null, 'Date paid'), paidOn,
+    h('label', null, 'Note for the Treasurer (optional)'), note,
+    err, btn);
+}
+
 function viewPay() {
+  const out = h('div', null, payRequests());
   const card = h('div', { class: 'card' }, h('h2', null, 'Payments'));
+  out.append(card);
   const pays = home.payments || [];
   if (!pays.length) card.append(h('p', { class: 'hint' }, 'No payments recorded yet.'));
   for (const p of pays) {
@@ -258,7 +359,7 @@ function viewPay() {
       h('div', { class: 'top' }, h('span', null, p.type || 'Payment'), h('span', null, money(p.amount))),
       h('div', { class: 'sub' }, [day(p.paid_on), p.period ? 'for ' + monthName(p.period) : '', methods[p.method] || p.method, p.receipt_no].filter(Boolean).join(' · '))));
   }
-  return card;
+  return out;
 }
 
 function viewCommunity() {
@@ -357,8 +458,13 @@ async function openElections() {
     h('h2', null, 'Elections'), h('p', { class: 'hint' }, 'Loading...'));
   app.replaceChildren(box);
   try {
-    const r = await rpc('election_list', { token: session.token });
+    const [r, notices] = await Promise.all([rpc('election_list', { token: session.token }),
+      rpc('office_notices', { token: session.token, committee: 'ec' }).catch(() => [])]);
     box.lastChild.remove();
+    for (const n of notices) {
+      box.append(h('div', { class: 'notice' }, h('b', null, '📣 ' + n.title), h('div', null, n.body),
+        h('div', { class: 'sub' }, `From the ${n.from || 'Electoral Commission'} · ` + new Date(n.at).toLocaleDateString('en-GB', { dateStyle: 'medium' }))));
+    }
     if (!r.elections.length) box.append(h('p', { class: 'hint' }, 'There are no elections yet.'));
     for (const e of r.elections) {
       const state = e.status === 'open' ? (e.voted_all ? 'You have voted' : e.can_vote ? 'Vote now' : 'Open')
@@ -367,7 +473,7 @@ async function openElections() {
         h('div', { class: 'sub' }, e.status === 'open' ? 'Closes ' + new Date(e.closes_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : 'Voting closed'),
         h('button', { class: 'small', onclick: () => openElection(e.id) }, state)));
     }
-    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'To set up or open an election, use the full app.'));
+    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'To set up or open an election, or to use the Commission office (tasks, minutes, notices, voter roll and chat), use the full app.'));
   } catch (ex) { box.lastChild.replaceWith(h('p', { class: 'error' }, electionError(ex))); }
 }
 

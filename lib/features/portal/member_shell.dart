@@ -6,11 +6,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../app_services.dart';
 import '../../core/format.dart';
 import '../../core/money.dart';
+import '../../core/ui.dart';
 import '../../core/org_config.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/sync/sync_api.dart';
 import '../auth/auth_cubit.dart';
 import '../chats/chats_screen.dart';
+import '../elections/elections_screen.dart';
 import 'member_profile_screen.dart';
 import 'member_statement_screen.dart';
 
@@ -430,6 +432,21 @@ class _MeTab extends StatelessWidget {
               isThreeLine: true,
             ),
           ),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            leading: const IconBadge(Icons.how_to_vote_rounded),
+            title: const Text('Elections'),
+            subtitle: const Text('Vote, or see candidates and results'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) =>
+                    ElectionsScreen(access: ChatAccess(session.token)),
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 8),
         Text('My welfare cases', style: theme.textTheme.titleMedium),
         if (home.welfare.isEmpty)

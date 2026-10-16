@@ -71,6 +71,12 @@
   .row span:last-child { text-align: right; font-weight: 600; }
   .big { font-size: 2rem; font-weight: 700; letter-spacing: -.03em; }
   .owed { color: var(--danger); } .clear { color: var(--ok); }
+  .cand { display: flex; gap: 12px; align-items: center; padding: 10px; margin: 8px 0; border: 2px solid var(--line); border-radius: 14px; cursor: pointer; }
+  .cand.picked { border-color: var(--green); background: rgba(27,138,75,.08); }
+  .cphoto { border-radius: 18px; object-fit: cover; flex: none; }
+  .cphoto.init { display: flex; align-items: center; justify-content: center; background: rgba(27,138,75,.14); color: var(--green); font-weight: 700; }
+  .bar { height: 8px; border-radius: 99px; background: var(--line); margin-top: 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--green); }
   .hint { color: var(--muted); font-size: .88rem; margin: 6px 0; }
   .error { color: var(--danger); font-weight: 600; font-size: .92rem; }
   .notice { background: var(--gold-tint); border: 1px solid rgba(201,162,39,.35); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; font-size: .94rem; }

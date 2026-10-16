@@ -695,6 +695,8 @@ class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
+      // Roles added in later versions appear on phones that already exist.
+      if (!details.wasCreated) await _insertMissingRoles();
     },
   );
 

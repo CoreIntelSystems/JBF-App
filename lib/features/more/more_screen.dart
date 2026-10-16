@@ -14,6 +14,7 @@ import '../contributions/contribution_types_screen.dart';
 import '../discipline/discipline_screen.dart';
 import '../backup/backup_screen.dart';
 import '../cloud/cloud_sync_screen.dart';
+import '../elections/elections_screen.dart';
 import '../events/events_screen.dart';
 import '../executives/executives_screen.dart';
 import '../finance/expenses_screen.dart';
@@ -80,6 +81,16 @@ class MoreScreen extends StatelessWidget {
                   title: const Text('Discipline'),
                   subtitle: const Text('Complaints and warnings'),
                   onTap: () => open(DisciplineScreen(access: chat)),
+                ),
+              if (chat != null)
+                ListTile(
+                  leading: const IconBadge(
+                    Icons.how_to_vote_outlined,
+                    size: 36,
+                  ),
+                  title: const Text('Elections'),
+                  subtitle: const Text('Vote, or see candidates and results'),
+                  onTap: () => open(ElectionsScreen(access: chat)),
                 ),
               ListTile(
                 leading: const IconBadge(Icons.event, size: 36),

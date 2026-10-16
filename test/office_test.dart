@@ -186,4 +186,66 @@ void main() {
     final posted = calls.where((c) => c.$1 == 'office_notice_post').single.$2;
     expect(posted['title'], 'Nominations are open');
   });
+
+  testWidgets(
+    'the Disciplinary office shows its cases and adds hearing steps',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final calls = <(String, Map<String, Object?>)>[];
+      final home = {
+        ..._home(lead: true),
+        'key': 'discipline',
+        'name': 'Disciplinary Committee',
+        'chat': 'discipline',
+        'elections': null,
+        'roll': null,
+        'cases': {
+          'open': 1,
+          'closed': 0,
+          'warnings': 2,
+          'recent': [
+            {
+              'id': 'c1',
+              'kind': 'complaint',
+              'status': 'open',
+              'member_name': 'Eddie Nii',
+              'member_no': 'JBF-000106',
+              'details': 'Rude at the meeting',
+              'by': 'Zone 1 Secretary',
+              'steps': 0,
+              'steps_done': 0,
+            },
+          ],
+        },
+      }..removeWhere((k, v) => v == null);
+      final api = OfficeApi(
+        SyncApi((fn, args) async {
+          calls.add((fn, args));
+          return fn == 'office_home' ? home : {'ok': true};
+        }),
+        'tok',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: OfficeScreen(
+            api: api,
+            committee: 'discipline',
+            title: 'Disciplinary Committee',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Open complaints'), findsOneWidget);
+      expect(find.text('Eddie Nii · JBF-000106'), findsOneWidget);
+      expect(find.text('Voter roll'.toUpperCase()), findsNothing);
+      await tester.tap(find.text('Add the hearing steps'));
+      await tester.pumpAndSettle();
+      expect(
+        calls.where((c) => c.$1 == 'office_add_case_steps').single.$2,
+        containsPair('case_id', 'c1'),
+      );
+    },
+  );
 }

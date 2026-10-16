@@ -61,6 +61,13 @@ class OfficeApi {
     {'token': token, 'committee': committee, 'election': electionId},
   );
 
+  /// Adds the Disciplinary Committee's standard hearing steps to a
+  /// complaint.
+  Future<void> addCaseSteps(String committee, String caseId) => _api.rpc(
+    'office_add_case_steps',
+    {'token': token, 'committee': committee, 'case_id': caseId},
+  );
+
   /// [kind] is `meeting`, `decision` or `note`.
   Future<void> saveNote(
     String committee, {

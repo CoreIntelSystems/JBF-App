@@ -276,6 +276,18 @@ final defaultRoles = <RoleSeed>[
     ..._memberRead,
     Perm.disciplineHandle,
   }),
+  RoleSeed(
+    'discipline_chair',
+    'Disciplinary Committee Chairperson',
+    'oversight',
+    {..._memberRead, Perm.disciplineHandle},
+  ),
+  RoleSeed(
+    'discipline_secretary',
+    'Disciplinary Committee Secretary',
+    'oversight',
+    {..._memberRead, Perm.disciplineHandle},
+  ),
   RoleSeed('auditor', 'Auditor', 'oversight', {
     ..._memberRead,
     Perm.financeView,

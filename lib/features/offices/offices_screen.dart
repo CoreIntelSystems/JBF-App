@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app_services.dart';
+import '../../core/format.dart';
 import '../../core/ui.dart';
 import '../chats/chats_screen.dart' show ChatAccess;
 import 'office_api.dart';
@@ -95,5 +96,55 @@ class _MyOfficesState extends State<MyOffices> {
       else if (open > 0)
         '$open open ${open == 1 ? 'task' : 'tasks'}',
     ].join(' · ');
+  }
+}
+
+/// The latest notices committees have posted to every member. Shows
+/// nothing when there are none or the cloud cannot be reached.
+class CommitteeNotices extends StatefulWidget {
+  const CommitteeNotices({super.key, required this.access});
+
+  final ChatAccess access;
+
+  @override
+  State<CommitteeNotices> createState() => _CommitteeNoticesState();
+}
+
+class _CommitteeNoticesState extends State<CommitteeNotices> {
+  List<Map<String, dynamic>> _notices = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    OfficeApi(context.read<AppServices>().sync.api, widget.access.token)
+        .notices()
+        .then((n) {
+          if (mounted) setState(() => _notices = n.take(5).toList());
+        })
+        .catchError((Object _) {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final n in _notices)
+          Card(
+            child: ListTile(
+              leading: IconBadge(officeIcon('${n['committee']}'), size: 36),
+              title: Text(
+                '${n['title']}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                '${n['body']}\n'
+                '${['From the ${n['from'] ?? 'committee'}', if (DateTime.tryParse('${n['at']}') case final at?) formatDate(at)].join(' · ')}',
+              ),
+              isThreeLine: true,
+            ),
+          ),
+      ],
+    );
   }
 }

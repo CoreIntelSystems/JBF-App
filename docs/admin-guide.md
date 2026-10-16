@@ -60,7 +60,7 @@ members are taken off the phone.
 | Zone Secretary | Their zone's members and attendance, reset sign-ins, file complaints |
 | Other zone executives | Their zone's members; zone treasurers record payments; zone organizers and welfare officers add helpers |
 | Zone helpers | Their zone's members; organizing helpers take attendance |
-| Disciplinary Committee | See members, handle complaints |
+| Disciplinary Committee (Chairperson, Secretary, member) | See members, handle complaints; Chairperson and Secretary lead the committee office |
 | Auditor | View finance, reports and the audit log |
 | Electoral Commission | See members |
 
@@ -243,5 +243,14 @@ The office has four tabs and a private chat (the speech-bubble button):
 - **Notices**: the Chairperson or Secretary posts notices (for example "Nominations are open"). Every member sees them at the top of Elections, in the app and on the member website. A notice can be withdrawn.
 
 Every change is written to the office's activity list. Office records live in the cloud only, like elections.
+
+### Disciplinary Committee office
+
+The second office. Its members are whoever holds a Disciplinary Committee role: the Founder or General Secretary gives these roles on the member's page under **Roles and access**, as **Disciplinary Committee Chairperson**, **Disciplinary Committee Secretary** or **Disciplinary Committee** (member). The Chairperson and Secretary lead the office.
+
+- **Cases** (on the Overview): open complaints and warnings sent, and the latest cases, open ones first. Complaints still come from Zone Mayors, Zone Secretaries and the General Secretary on a member's page. **Open the case book** to send a warning or close a complaint, as before.
+- For each open complaint, the Chairperson or Secretary can tap **Add the hearing steps**: acknowledge the complaint, tell the member, hear the member, hear the zone and witnesses, decide and record the decision in Minutes, then warn or close. Each case shows how far its steps have got.
+- Tasks, Minutes and Notices work as in every office. The office chat is the committee's existing Disciplinary Committee chat, which the Chairperson and Secretary now join too.
+- Notices from any committee appear on every member's home page.
 
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

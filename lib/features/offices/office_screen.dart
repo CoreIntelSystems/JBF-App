@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../data/sync/sync_api.dart' show ChatChannel;
 import '../chats/chats_screen.dart';
+import '../discipline/discipline_screen.dart';
 import 'office_api.dart';
 
 /// A committee's digital office: its people, tasks, minutes and decisions,
@@ -109,7 +110,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       builder: (_) => ChatScreen(
         access: ChatAccess(_api.token),
         channel: ChatChannel(
-          id: 'office:$_c',
+          id: '${_home?['chat'] ?? 'office:$_c'}',
           name: widget.title,
           canPost: true,
         ),
@@ -160,6 +161,8 @@ class _OfficeScreenState extends State<OfficeScreen>
   Widget _tasksTab() {
     final elections = {
       for (final e in _items('elections')) e['id']: '${e['title']}',
+      for (final c in _cases())
+        c['id']: 'Case: ${c['member_name'] ?? 'member'}',
     };
     final tasks = _items('tasks').where((t) {
       return switch (_taskFilter) {
@@ -232,6 +235,7 @@ class _OfficeScreenState extends State<OfficeScreen>
         '${t['assignee_name']}',
       if (due != null) '${late ? 'Was due' : 'Due'} ${formatDate(due)}',
       if (elections[t['election_id']] != null) elections[t['election_id']]!,
+      if (elections[t['case_id']] != null) elections[t['case_id']]!,
     ];
     if (parts.isEmpty) return null;
     return Text(
@@ -413,7 +417,8 @@ class _OfficeScreenState extends State<OfficeScreen>
     final notices = _items('notices');
     return _refreshable([
       Text(
-        'Notices appear for every member on the Elections page, in the app '
+        'Notices appear for every member on their home page'
+        '${_c == 'ec' ? ' and at the top of Elections' : ''}, in the app '
         'and on the member website. '
         '${_lead ? 'You can post and withdraw them.' : 'The Chairperson and Secretary post them.'}',
         style: TextStyle(color: Tones.of(context).muted),
@@ -527,6 +532,7 @@ class _OfficeScreenState extends State<OfficeScreen>
         for (final e in elections) _electionCard(e),
       ],
       if (roll != null) ..._rollSection(roll),
+      if (h['cases'] is Map) ..._casesSection(),
       SectionTitle('Members (${members.length})'),
       GroupCard(
         children: [
@@ -617,6 +623,146 @@ class _OfficeScreenState extends State<OfficeScreen>
               )
             else
               const Text('No checklist yet.'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- Disciplinary Committee: the case book ----------
+
+  List<Map<String, dynamic>> _cases() {
+    final c = _home?['cases'];
+    if (c is! Map) return const [];
+    return [
+      for (final x in (c['recent'] as List?) ?? const [])
+        Map<String, dynamic>.from(x as Map),
+    ];
+  }
+
+  List<Widget> _casesSection() {
+    final c = Map<String, dynamic>.from(_home!['cases'] as Map);
+    final cases = _cases();
+    return [
+      SectionTitle(
+        'Cases',
+        trailing: TextButton(
+          onPressed: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) =>
+                    DisciplineScreen(access: ChatAccess(_api.token)),
+              ),
+            );
+            _load();
+          },
+          child: const Text('Open the case book'),
+        ),
+      ),
+      Row(
+        children: [
+          Expanded(
+            child: MetricTile(
+              label: 'Open complaints',
+              value: '${c['open'] ?? 0}',
+              icon: Icons.report_outlined,
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: MetricTile(
+              label: 'Warnings sent',
+              value: '${c['warnings'] ?? 0}',
+              icon: Icons.gavel_rounded,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      if (cases.isEmpty)
+        const Text(
+          'No complaints yet. Zone Mayors and Zone Secretaries send them from '
+          "a member's page; they arrive here.",
+        ),
+      for (final x in cases) _caseCard(x),
+    ];
+  }
+
+  Widget _caseCard(Map<String, dynamic> x) {
+    final complaint = x['kind'] == 'complaint';
+    final open = x['status'] == 'open';
+    final steps = (x['steps'] as num?)?.toInt() ?? 0;
+    final done = (x['steps_done'] as num?)?.toInt() ?? 0;
+    final at = DateTime.tryParse('${x['at']}');
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${x['member_name'] ?? 'Member'}'
+                    '${x['member_no'] == null ? '' : ' · ${x['member_no']}'}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Pill(
+                  !complaint
+                      ? 'Warning'
+                      : open
+                      ? 'Open'
+                      : 'Closed',
+                  color: complaint && open
+                      ? Theme.of(context).colorScheme.error
+                      : Colors.grey.shade600,
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${x['details']}',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              [
+                complaint ? 'From ${x['by']}' : 'Sent by ${x['by']}',
+                if (at != null) formatDate(at),
+              ].join(' · '),
+              style: TextStyle(fontSize: 12, color: Tones.of(context).muted),
+            ),
+            if (complaint && steps > 0) ...[
+              const SizedBox(height: 10),
+              Text('Hearing steps: $done of $steps done'),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: done / steps,
+                  minHeight: 8,
+                ),
+              ),
+            ] else if (complaint && open && _lead)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: OutlinedButton.icon(
+                  onPressed: () => _run(
+                    () => _api.addCaseSteps(_c, x['id'] as String),
+                    'Hearing steps added to Tasks.',
+                  ),
+                  icon: const Icon(Icons.checklist_rounded),
+                  label: const Text('Add the hearing steps'),
+                ),
+              ),
           ],
         ),
       ),

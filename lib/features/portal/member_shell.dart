@@ -448,6 +448,7 @@ class _MeTab extends StatelessWidget {
             ),
           ),
         ),
+        CommitteeNotices(access: ChatAccess(session.token)),
         MyOffices(access: ChatAccess(session.token)),
         const SizedBox(height: 8),
         Text('My welfare cases', style: theme.textTheme.titleMedium),

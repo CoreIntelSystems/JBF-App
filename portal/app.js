@@ -221,7 +221,8 @@ function viewHome() {
   }
   if (home.officer || (home.roles || []).length) {
     out.append(h('div', { class: 'notice' }, h('b', null, 'Executive'), h('br'),
-      'Your roles show on your card and in your chats. Recording payments and managing records is still done in the JBF Android app; more of it is coming here.'));
+      'Your roles show on your card and in your chats. To record payments and manage records, open the full app: ',
+      h('a', { href: 'https://jbf-app.onrender.com', target: '_blank' }, 'jbf-app.onrender.com'), '.'));
   }
   out.append(idCard());
   for (const d of home.dues || []) {

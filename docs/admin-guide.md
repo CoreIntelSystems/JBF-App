@@ -196,4 +196,13 @@ JBF logo and opens like an app. They sign in with their member ID and
 password (first time: **Activate** with member ID and phone number), see
 their ID card, dues, payments, events, executives and chats, and, if they were
 on the founding list, correct their details and choose their zone once.
-People with an executive role still use the Android app for their role.
+
+### The full app in a browser (executives on iPhone)
+
+Executives can also run the whole JBF app in a browser at
+**https://jbf-app.onrender.com** (iPhone: Safari, Share, **Add to Home
+Screen**). Sign in with your member ID like on Android. It syncs through the
+cloud like a phone. Limits: no backup/restore or field-phone files, no member
+photos, no reminders or fingerprint sign-in, and the data kept in the browser
+is not encrypted, so use it only on your own phone. Clearing Safari data
+removes it, but signing in again re-downloads everything.

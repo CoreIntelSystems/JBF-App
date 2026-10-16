@@ -105,6 +105,27 @@ silver collection and event contributions (one-off, no arrears), emergency
 levy, charity, executive council dues and voluntary donations. Add new
 types as needed; old ones can be switched off but not deleted.
 
+## Payment requests (More > Payment requests)
+
+The Treasury or the Welfare Committee asks members to pay; members report
+how they paid; a treasurer confirms, which writes the receipt. How each
+step works is in the user guide.
+
+- **Who can ask:** for the Treasury, anyone whose role can record payments
+  or manage dues; for Welfare, anyone who can prepare, approve or pay
+  welfare. Zone officers ask their own zones only.
+- **Who can confirm:** anyone whose role can record payments or pay
+  welfare, never for their own payment. Zone treasurers see and confirm
+  their own zones' members only. Confirmed receipts are numbered
+  `ONL-YYYY-000001` so they never clash with phone receipts, and are voided
+  like any other receipt.
+- **Checking is by hand for now.** The app does not see the MoMo account,
+  so the treasurer matches each transaction ID against the MoMo or bank
+  messages before confirming. Automatic MoMo checking (members pay inside
+  the app and the receipt is written by itself) needs a merchant account
+  with MTN MoMo, Telecel Cash or a payment company such as Paystack or
+  Hubtel; see phase 4.
+
 ## Welfare benefit amounts (More > Welfare > Benefit amounts)
 
 The Treasurer proposes a fixed amount for each type of case. It applies to

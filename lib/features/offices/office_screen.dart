@@ -7,6 +7,8 @@ import '../../core/ui.dart';
 import '../../data/sync/sync_api.dart' show ChatChannel;
 import '../chats/chats_screen.dart';
 import '../discipline/discipline_screen.dart';
+import '../pay_requests/pay_api.dart';
+import '../pay_requests/pay_requests_screen.dart';
 import 'office_api.dart';
 import 'offices_screen.dart' show officeIcon;
 
@@ -900,6 +902,7 @@ class _OfficeScreenState extends State<OfficeScreen>
           ],
         );
     return [
+      PayRequestsEntry(api: PayApi(_api.sync, _api.token), office: 'treasury'),
       SectionTitle(zoneOnly ? '$month in your zones' : month),
       Row(
         children: [
@@ -1281,6 +1284,7 @@ class _OfficeScreenState extends State<OfficeScreen>
     final toPay = (w['to_pay'] as num?)?.toInt() ?? 0;
     final paidTotal = (w['paid_total'] as num?)?.toInt() ?? 0;
     return [
+      PayRequestsEntry(api: PayApi(_api.sync, _api.token), office: 'welfare'),
       const SectionTitle('Welfare cases'),
       Row(
         children: [

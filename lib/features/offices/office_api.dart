@@ -7,6 +7,9 @@ class OfficeApi {
   OfficeApi(this._api, this.token);
 
   final SyncApi _api;
+
+  /// The cloud connection, for screens the office links to.
+  SyncApi get sync => _api;
   final String token;
 
   static Map<String, dynamic> _map(Object? o) =>

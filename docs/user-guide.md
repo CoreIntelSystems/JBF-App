@@ -74,6 +74,26 @@ recent registrations. Zone officers see figures for their own zone(s) only.
   Tap the chat icon next to a name to send a polite WhatsApp reminder, or
   the share button to send the whole list to a group.
 
+### Asking members to pay (payment requests)
+
+Treasurers and the Welfare team can ask members to pay from **More >
+Payment requests** (or the button in the Treasury or Welfare office). Tap
+**Ask members to pay**, choose what it is for (and the month for monthly
+dues), the amount each member pays (leave it empty for "give what you
+can"), how to pay (for example the MoMo number and name) and a due date,
+then tick zones or leave them all unticked to ask every active member.
+Zone treasurers and zone welfare officers can only ask their own zones.
+
+Members see the request in their app and on the member website. After
+paying they tap **I have paid** and enter the amount, how they paid and the
+Mobile Money or bank transaction ID. The request then shows **to confirm**.
+Open it, check the money really arrived (match the transaction ID in your
+MoMo or bank messages) and tap **Confirm**: this writes a normal receipt
+(`ONL-2026-000001`) that appears on the member's statement and syncs to the
+phones. If nothing arrived, tap **Reject** and give the reason; the member
+sees it and can report again. Nobody can confirm their own payment, and a
+transaction ID can only be used once. Close a request when it is finished.
+
 ## Welfare (More > Welfare)
 
 1. A welfare officer reports a case: the member, the type of case (for
@@ -156,6 +176,12 @@ Members can also check their own dues and receipts online at
 It shows what the phones have synced to the cloud. Five wrong tries lock
 that member ID for 15 minutes. If a member's phone number is wrong or
 missing, correct it on their member page.
+
+When the Treasury or the Welfare Committee asks you to pay, it shows on your
+Home and Payments pages with the amount and how to pay. Pay, then tap **I
+have paid** and enter the amount, how you paid and the transaction ID from
+your Mobile Money or bank message. You see **Waiting for the Treasurer**
+until they confirm it, then your receipt number.
 
 If you were on the founding member list, your Me page has **Edit my
 details and zones**. Check that your name, phone number and zone are right

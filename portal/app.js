@@ -357,8 +357,13 @@ async function openElections() {
     h('h2', null, 'Elections'), h('p', { class: 'hint' }, 'Loading...'));
   app.replaceChildren(box);
   try {
-    const r = await rpc('election_list', { token: session.token });
+    const [r, notices] = await Promise.all([rpc('election_list', { token: session.token }),
+      rpc('office_notices', { token: session.token, committee: 'ec' }).catch(() => [])]);
     box.lastChild.remove();
+    for (const n of notices) {
+      box.append(h('div', { class: 'notice' }, h('b', null, '📣 ' + n.title), h('div', null, n.body),
+        h('div', { class: 'sub' }, `From the ${n.from || 'Electoral Commission'} · ` + new Date(n.at).toLocaleDateString('en-GB', { dateStyle: 'medium' }))));
+    }
     if (!r.elections.length) box.append(h('p', { class: 'hint' }, 'There are no elections yet.'));
     for (const e of r.elections) {
       const state = e.status === 'open' ? (e.voted_all ? 'You have voted' : e.can_vote ? 'Vote now' : 'Open')
@@ -367,7 +372,7 @@ async function openElections() {
         h('div', { class: 'sub' }, e.status === 'open' ? 'Closes ' + new Date(e.closes_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : 'Voting closed'),
         h('button', { class: 'small', onclick: () => openElection(e.id) }, state)));
     }
-    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'To set up or open an election, use the full app.'));
+    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'To set up or open an election, or to use the Commission office (tasks, minutes, notices, voter roll and chat), use the full app.'));
   } catch (ex) { box.lastChild.replaceWith(h('p', { class: 'error' }, electionError(ex))); }
 }
 

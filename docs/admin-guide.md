@@ -228,3 +228,20 @@ The Founder cannot run or change an election. The main phone's old username logi
 ### Who is on the Electoral Commission
 
 Open More > Elections > Electoral Commission. The **Founder** and **General Secretary** appoint the Chairperson (and can add or remove anyone). The **Chairperson** then adds the Secretary and members. Nothing changes while voting is open, and a candidate cannot join. The Commission is kept separately from the ordinary role list, so giving someone a role does not put them on it. The Founder can appoint from the main phone; voting and running elections need the member ID sign-in.
+
+## Committee offices
+
+Each committee gets its own digital office in the app, open only to the people on that committee. The Electoral Commission is the first; the next committees (Welfare, Treasury and so on) plug in the same way.
+
+Commission members find it on the More screen (or the member home) under **My committee office**, and in More > Elections > **Commission office**. It needs internet and the member ID sign-in. The Founder and other officers do not see inside it unless they sit on the Commission.
+
+The office has four tabs and a private chat (the speech-bubble button):
+
+- **Overview**: the Commission's members and roles, each election with its checklist progress and turnout, the **voter roll** (active members, and how many have activated their sign-in, zone by zone, so you know whom to remind before voting opens), and recent activity.
+- **Tasks**: anyone in the office adds a task, gives it to a member and sets a due date, and anyone ticks it done. For each election the Chairperson or Secretary can tap **Add the standard steps** on the Overview to add the usual checklist (timetable, nominations, vetting, candidate list, ballot, opening, reminders, results, complaints).
+- **Minutes**: meeting minutes, decisions and notes, kept for later. The writer, the Chairperson or the Secretary can change or remove an entry.
+- **Notices**: the Chairperson or Secretary posts notices (for example "Nominations are open"). Every member sees them at the top of Elections, in the app and on the member website. A notice can be withdrawn.
+
+Every change is written to the office's activity list. Office records live in the cloud only, like elections.
+
+For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

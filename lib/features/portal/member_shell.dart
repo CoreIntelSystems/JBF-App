@@ -13,6 +13,7 @@ import '../../data/sync/sync_api.dart';
 import '../auth/auth_cubit.dart';
 import '../chats/chats_screen.dart';
 import '../elections/elections_screen.dart';
+import '../offices/offices_screen.dart';
 import 'member_profile_screen.dart';
 import 'member_statement_screen.dart';
 
@@ -447,6 +448,7 @@ class _MeTab extends StatelessWidget {
             ),
           ),
         ),
+        MyOffices(access: ChatAccess(session.token)),
         const SizedBox(height: 8),
         Text('My welfare cases', style: theme.textTheme.titleMedium),
         if (home.welfare.isEmpty)

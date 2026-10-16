@@ -145,6 +145,10 @@ committee sees every complaint under **More > Discipline**, can send the
 member a warning (the member sees it on their **Me** page), and closes the
 complaint when it is dealt with.
 
+## Committee offices
+
+If you sit on a committee (the Electoral Commission for now), you get its office under **My committee office**: the team's tasks, meeting minutes and decisions, notices to members, the voter roll and a private chat. See the admin guide for details. Notices that committees post to everyone appear at the top of Elections.
+
 ## Member portal (for ordinary members)
 
 Members can also check their own dues and receipts online at

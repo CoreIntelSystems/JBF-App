@@ -16,6 +16,7 @@ IconData officeIcon(String key) => switch (key) {
   'secretariat' => Icons.edit_note_rounded,
   'treasury' => Icons.account_balance_wallet_outlined,
   'leadership' => Icons.account_tree_outlined,
+  'executive' => Icons.shield_outlined,
   _ => Icons.groups_2_outlined,
 };
 

@@ -298,4 +298,13 @@ The seventh office. The **Founder** and the **General Secretary** lead it. Its m
 - **Zones**: each active zone with its Mayor, active members, how many of its 6 executive posts are filled (and which are missing), and how many members have paid this month's dues.
 - **Council meetings**: executive and general meetings, with attendance, agenda and minutes. The Founder or General Secretary can tap **Add the meeting steps**: circulate the agenda, collect a report from every Zone Mayor and from the committees, hold the meeting and take attendance, record the decisions, and follow them up. These steps are separate from the Secretariat's own meeting steps.
 
+### Executive Council office
+
+The eighth office. The **Founder** and the **General Secretary** lead it. Its members are the **Directors** (and Patron), the **Treasurer**, the **Organizer** and the **Auditor**. They join automatically from their roles. The office uses the existing Board chat, which now also includes the Auditor.
+
+- **Money** (on the Overview): received and paid out this month and this year, and the money held according to the app's records (everything received less everything paid out since records began in the app; it does not include any opening balance from before).
+- **Waiting for a decision**: dues amounts waiting for the Founder or General Secretary, monthly dues with no amount yet, welfare benefit amounts and cases waiting for approval, and open complaints.
+- **Committee offices**: every other office with its number of members, open and late tasks, and when it was last used, so the Council can see which committees are working.
+- **Executive meetings**: the Founder or General Secretary can tap **Add the meeting steps**: agree the agenda with the Founder, send papers a week before, review the finance report and committee reports, hold the meeting, record the decisions and follow them up.
+
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.

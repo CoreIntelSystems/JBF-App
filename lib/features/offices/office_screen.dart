@@ -8,6 +8,7 @@ import '../../data/sync/sync_api.dart' show ChatChannel;
 import '../chats/chats_screen.dart';
 import '../discipline/discipline_screen.dart';
 import 'office_api.dart';
+import 'offices_screen.dart' show officeIcon;
 
 /// A committee's digital office: its people, tasks, minutes and decisions,
 /// notices to members and a private chat. The Electoral Commission's office
@@ -169,6 +170,7 @@ class _OfficeScreenState extends State<OfficeScreen>
         w['id']: '${w['case_no'] ?? 'Case'} · ${w['member_name'] ?? 'member'}',
       for (final m in _items('meetings')) m['id']: '${m['title']}',
       for (final m in _councilMeetings()) m['id']: '${m['title']}',
+      for (final m in _executiveMeetings()) m['id']: '${m['title']}',
     };
     final tasks = _items('tasks').where((t) {
       return switch (_taskFilter) {
@@ -550,6 +552,7 @@ class _OfficeScreenState extends State<OfficeScreen>
       if (h['meetings'] is List) ..._meetingsSection(),
       if (h['treasury'] is Map) ..._treasurySection(),
       if (h['council'] is Map) ..._councilSection(),
+      if (h['executive'] is Map) ..._executiveSection(),
       SectionTitle('Members (${members.length})'),
       GroupCard(
         children: [
@@ -644,6 +647,126 @@ class _OfficeScreenState extends State<OfficeScreen>
         ),
       ),
     );
+  }
+
+  // ---------- Executive Council: money, decisions and committees ----------
+
+  List<Map<String, dynamic>> _executiveMeetings() {
+    final x = _home?['executive'];
+    if (x is! Map) return const [];
+    return [
+      for (final m in (x['meetings'] as List?) ?? const [])
+        Map<String, dynamic>.from(m as Map),
+    ];
+  }
+
+  List<Widget> _executiveSection() {
+    final x = Map<String, dynamic>.from(_home!['executive'] as Map);
+    final money = Map<String, dynamic>.from((x['money'] as Map?) ?? const {});
+    int m(String k) => (money[k] as num?)?.toInt() ?? 0;
+    final waiting = Map<String, dynamic>.from(
+      (x['waiting'] as Map?) ?? const {},
+    );
+    int w(String k) => (waiting[k] as num?)?.toInt() ?? 0;
+    final offices = [
+      for (final o in (x['offices'] as List?) ?? const [])
+        Map<String, dynamic>.from(o as Map),
+    ];
+    final decisions = [
+      if (w('dues_amounts') > 0)
+        '${w('dues_amounts')} dues ${w('dues_amounts') == 1 ? 'amount' : 'amounts'} waiting for the Founder or General Secretary',
+      if (w('unset_dues') > 0)
+        '${w('unset_dues')} monthly ${w('unset_dues') == 1 ? 'due has' : 'dues have'} no amount yet',
+      if (w('benefit_amounts') > 0)
+        '${w('benefit_amounts')} welfare benefit ${w('benefit_amounts') == 1 ? 'amount' : 'amounts'} waiting for approval',
+      if (w('welfare_cases') > 0)
+        '${w('welfare_cases')} welfare ${w('welfare_cases') == 1 ? 'case' : 'cases'} waiting for approval',
+      if (w('complaints') > 0)
+        '${w('complaints')} open ${w('complaints') == 1 ? 'complaint' : 'complaints'} with the Disciplinary Committee',
+    ];
+    final meetings = _executiveMeetings();
+    return [
+      SectionTitle('Money (${formatPeriod('${x['month']}')})'),
+      Row(
+        children: [
+          Expanded(
+            child: MetricTile(
+              label: 'Received',
+              value: formatMoney(m('month_in')),
+              icon: Icons.south_west_rounded,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: MetricTile(
+              label: 'Paid out',
+              value: formatMoney(m('month_out') + m('month_welfare')),
+              icon: Icons.north_east_rounded,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      Text(
+        '${x['year']} so far: ${formatMoney(m('year_in'))} received, '
+        '${formatMoney(m('year_out'))} paid out.\n'
+        'Money held by the app\'s records: ${formatMoney(m('balance'))} '
+        '(everything received less everything paid out since records '
+        'began in the app).',
+      ),
+      const SectionTitle('Waiting for a decision'),
+      if (decisions.isEmpty)
+        const Text('Nothing is waiting for a decision.')
+      else
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final d in decisions)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Text('• $d'),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      const SectionTitle('Committee offices'),
+      GroupCard(
+        children: [
+          for (final o in offices)
+            ListTile(
+              leading: IconBadge(officeIcon('${o['key']}'), size: 36),
+              title: Text(
+                '${o['name']}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                [
+                  '${o['members']} ${o['members'] == 1 ? 'member' : 'members'}',
+                  '${o['open']} open ${o['open'] == 1 ? 'task' : 'tasks'}',
+                  if (((o['late'] as num?) ?? 0) > 0) '${o['late']} late',
+                  if (DateTime.tryParse('${o['last_at']}') case final at?)
+                    'last active ${formatDate(at.toLocal())}'
+                  else
+                    'not used yet',
+                ].join(' · '),
+              ),
+            ),
+        ],
+      ),
+      const SectionTitle('Executive meetings'),
+      if (meetings.isEmpty)
+        const Text(
+          'No executive or general meetings yet. Add them in More > Events '
+          'and meetings; the Founder or General Secretary can then add the '
+          'meeting steps.',
+        ),
+      for (final mt in meetings) _meetingCard(mt),
+    ];
   }
 
   // ---------- Leadership Council: the association at a glance ----------

@@ -623,4 +623,84 @@ void main() {
     expect(added['meeting'], 'mt1');
     expect(added['committee'], 'leadership');
   });
+
+  testWidgets('the Executive Council office shows money and committees', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 3200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final home = {
+      ..._home(lead: true),
+      'key': 'executive',
+      'name': 'Executive Council',
+      'chat': 'board',
+      'executive': {
+        'month': '2026-10',
+        'year': '2026',
+        'money': {
+          'month_in': 2000,
+          'month_out': 500,
+          'month_welfare': 0,
+          'year_in': 2000,
+          'year_out': 500,
+          'balance': 1500,
+        },
+        'waiting': {'unset_dues': 2, 'welfare_cases': 1},
+        'offices': [
+          {
+            'key': 'treasury',
+            'name': 'Treasury',
+            'members': 1,
+            'open': 3,
+            'late': 1,
+            'last_at': null,
+          },
+        ],
+        'meetings': [
+          {
+            'id': 'mt1',
+            'title': 'Executive meeting',
+            'kind': 'executive',
+            'held_on': '2026-11-05T10:00:00.000',
+            'upcoming': true,
+            'present': 0,
+            'steps': 0,
+            'steps_done': 0,
+          },
+        ],
+      },
+    }..removeWhere((k, _) => k == 'elections' || k == 'roll');
+    final api = OfficeApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return fn == 'office_home' ? home : {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficeScreen(
+          api: api,
+          committee: 'executive',
+          title: 'Executive Council',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('2026 so far'), findsOneWidget);
+    expect(
+      find.textContaining('2 monthly dues have no amount'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('3 open tasks · 1 late'), findsOneWidget);
+    await tester.tap(find.text('Add the meeting steps'));
+    await tester.pumpAndSettle();
+    final added = calls
+        .where((c) => c.$1 == 'office_add_meeting_steps')
+        .single
+        .$2;
+    expect(added['committee'], 'executive');
+  });
 }

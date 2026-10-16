@@ -60,6 +60,8 @@ class _MemberSignInScreenState extends State<MemberSignInScreen> {
       }
     } on AuthException catch (e) {
       if (mounted) setState(() => _error = e.message);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Sign-in failed: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

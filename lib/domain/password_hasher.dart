@@ -4,10 +4,16 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// PBKDF2-HMAC-SHA256 hashing for passwords and PINs.
 ///
 /// Stored format: `pbkdf2-sha256$<iterations>$<salt b64>$<hash b64>`.
+/// Heavy hashing runs in a background isolate on phones; browsers have no
+/// isolates here, so it runs in place.
+Future<T> _run<T>(T Function() work) =>
+    kIsWeb ? Future<T>.delayed(Duration.zero, work) : Isolate.run(work);
+
 class PasswordHasher {
   const PasswordHasher({this.iterations = 60000});
 
@@ -16,7 +22,7 @@ class PasswordHasher {
   Future<String> hash(String secret) {
     final salt = _randomBytes(16);
     final iters = iterations;
-    return Isolate.run(
+    return _run(
       () => _encode(iters, salt, _pbkdf2(secret, salt, iters)),
     );
   }
@@ -30,7 +36,7 @@ class PasswordHasher {
     if (iters == null) return Future.value(false);
     final salt = base64Decode(parts[2]);
     final expected = base64Decode(parts[3]);
-    return Isolate.run(
+    return _run(
       () => _constantTimeEquals(_pbkdf2(secret, salt, iters), expected),
     );
   }
@@ -43,7 +49,7 @@ class PasswordHasher {
     String secret,
     List<int> salt, {
     int iterations = 100000,
-  }) => Isolate.run(() => _pbkdf2(secret, salt, iterations));
+  }) => _run(() => _pbkdf2(secret, salt, iterations));
 
   static Uint8List _pbkdf2(String secret, List<int> salt, int iterations) {
     final hmac = Hmac(sha256, utf8.encode(secret));

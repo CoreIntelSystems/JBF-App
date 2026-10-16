@@ -186,3 +186,14 @@ phone first and import again).
 
 See the [backup and restore guide](backup-restore-guide.md). Make a
 backup at least once a month and after any big day of collections.
+
+## The member web app (iPhone and any browser)
+
+Members who do not have the Android app open **https://jbf-members.onrender.com**
+in their phone's browser. On an iPhone use Safari, tap the Share button, then
+**Add to Home Screen**; on Android use the browser menu. It installs with the
+JBF logo and opens like an app. They sign in with their member ID and
+password (first time: **Activate** with member ID and phone number), see
+their ID card, dues, payments, events, executives and chats, and, if they were
+on the founding list, correct their details and choose their zone once.
+People with an executive role still use the Android app for their role.

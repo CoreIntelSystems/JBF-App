@@ -26,6 +26,18 @@ void main() {
     expect(link.queryParameters['text'], text);
   });
 
+  test('executives get the full app link', () {
+    final text = idInviteMessage(
+      name: 'Ama Boateng',
+      memberNo: 'JBF-000003',
+      orgName: 'June Borns Family',
+      executive: true,
+    );
+    expect(text, contains('https://jbf-app.onrender.com'));
+    expect(text, isNot(contains('jbf-members')));
+    expect(text, contains('First time? Activate your account'));
+  });
+
   test('people with no saved name get a plain greeting', () {
     final text = idInviteMessage(
       name: 'Member 0265778617',

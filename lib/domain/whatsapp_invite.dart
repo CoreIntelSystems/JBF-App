@@ -15,6 +15,9 @@ String? whatsappNumber(String? stored) {
 /// Where members open the installable member app.
 const memberAppUrl = 'https://jbf-members.onrender.com';
 
+/// Where executives open the full app (records, payments, reports).
+const fullAppUrl = 'https://jbf-app.onrender.com';
+
 /// The message the Founder sends so a member learns their ID and how to
 /// install and sign in to the member app.
 String idInviteMessage({
@@ -22,6 +25,7 @@ String idInviteMessage({
   required String memberNo,
   required String orgName,
   String appUrl = memberAppUrl,
+  bool executive = false,
 }) {
   final parts = name.trim().split(RegExp(r'\s+'));
   final unnamed =
@@ -32,7 +36,7 @@ String idInviteMessage({
   return '$hello, this is $orgName.\n'
       'Your member ID is *$memberNo*.\n\n'
       'To get the $orgName app on your phone:\n'
-      '1. Open this link: $appUrl\n'
+      '1. Open this link: ${executive && appUrl == memberAppUrl ? fullAppUrl : appUrl}\n'
       '   (iPhone: use Safari. Android: use Chrome.)\n'
       '2. iPhone: tap the Share button, then "Add to Home Screen", then "Add".\n'
       '   Android: tap the 3 dots, then "Install app" or "Add to Home screen".\n'
@@ -40,7 +44,8 @@ String idInviteMessage({
       'your account".\n'
       '4. Enter your member ID, this phone number, and choose a password.\n'
       '5. Choose your zone. You can only choose it once.\n\n'
-      'Next time, just sign in with your member ID and password.';
+      'Next time, just sign in with your member ID and password. '
+      '${executive ? 'Your executive tools are inside the app.' : 'You can also see your dues and vote in elections there.'}';
 }
 
 Uri whatsappLink(String number, String message) =>

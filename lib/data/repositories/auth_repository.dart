@@ -666,10 +666,14 @@ class AuthRepository {
             ok = true;
             await rememberMemberPassword(member.id, secret);
           } on SyncException catch (e) {
-            if (e.offline && saved == null) {
+            if (e.offline) {
               throw AuthException(
-                'Connect to the internet the first time you sign in on '
-                'this phone.',
+                saved == null
+                    ? 'Connect to the internet the first time you sign in on '
+                          'this phone.'
+                    : 'This password does not match the one saved on this '
+                          'phone, and the internet is too weak to check it '
+                          'online. Try again when the connection is better.',
               );
             }
             if (!e.offline && !e.message.startsWith('Wrong')) {

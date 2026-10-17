@@ -230,4 +230,77 @@ void main() {
     expect(c.$2['period'], matches(RegExp(r'^\d{4}-\d{2}$')));
     expect(got?['id'], 'r9');
   });
+
+  testWidgets('a member pays by MTN MoMo and gets a receipt', (tester) async {
+    var polls = 0;
+    calls = [];
+    final momoApi = PayApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        if (fn == 'pay_self_options') {
+          return {
+            'pay_to': null,
+            'types': [
+              {
+                'id': 'dues',
+                'name': 'Monthly dues',
+                'frequency': 'monthly',
+                'amount': 2000,
+              },
+            ],
+          };
+        }
+        switch (args['action']) {
+          case 'enabled':
+            return {'enabled': true};
+          case 'start':
+            return {'id': 'p1', 'status': 'pending'};
+          default:
+            polls++;
+            return polls < 2
+                ? {'status': 'pending'}
+                : {'status': 'successful', 'receipt_no': 'ONL-2026-000007'};
+        }
+      }),
+      'tok',
+    );
+    Map<String, dynamic>? got;
+    await pump(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async => got = await showDialog<Map<String, dynamic>>(
+              context: context,
+              builder: (_) => SelfPayDialog(api: momoApi),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pay with MoMo'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Your MTN Mobile Money number'),
+      '024 123 4567',
+    );
+    await tester.tap(find.text('Pay with MoMo'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Approve on your phone'), findsOneWidget);
+    final start = calls.firstWhere((c) => c.$2['action'] == 'start');
+    expect(start.$2['amount'], 2000);
+    expect(start.$2['type_id'], 'dues');
+    expect(start.$2['phone'], '024 123 4567');
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+    expect(find.text('Payment received'), findsOneWidget);
+    expect(find.textContaining('ONL-2026-000007'), findsOneWidget);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    expect(got?['receipt_no'], 'ONL-2026-000007');
+  });
 }

@@ -366,4 +366,8 @@ Members do not have to wait for a request. In the app (More, or the member site'
 
 The Treasurer sets the Mobile Money number members see: **Payment requests**, then the phone icon at the top (**Where members pay**). Until it is set, members are told to ask the Treasurer for the number.
 
-Paying inside the app by Mobile Money or card, with no confirmation step, needs a CoreIntel payment provider account (for example Paystack or Hubtel). It is not switched on yet.
+### Paying with MTN MoMo inside the app
+
+When MTN MoMo is switched on, **Pay my dues** shows an amount, the member's own MTN number and a **Pay with MoMo** button. MTN asks the member to approve on their phone; when MTN confirms, the receipt is written automatically with no Treasurer step. **Paid already** is still there for payments made by hand.
+
+It is switched on by adding these secrets in Supabase (Edge Functions, Secrets) for the `momo` function: `MOMO_SUBSCRIPTION_KEY` (the Primary key of the MTN Collection subscription), `MOMO_API_USER`, `MOMO_API_KEY`, and `MOMO_ENV` (`sandbox` while testing, `mtnghana` when live). Until all four are set, members only see the hand-payment option. Nothing is trusted from the phone: a receipt is written only when MTN itself says the payment succeeded for the same amount.

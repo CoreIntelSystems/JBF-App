@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
 
+import '../../domain/dues.dart';
+import '../../domain/welfare_membership.dart';
 import '../access_scope.dart';
 import '../../core/ids.dart';
 import '../database.dart';
@@ -211,6 +213,147 @@ class WelfareRepository {
     });
   }
 
+  // ---- Welfare membership -------------------------------------------------
+
+  Future<Member> _member(String id) =>
+      (_db.select(_db.members)..where((m) => m.id.equals(id))).getSingle();
+
+  Future<void> _setMembership(
+    Member m,
+    WelfareActor by,
+    String action, {
+    required WelfareMembership to,
+    DateTime? since,
+    DateTime? endedOn,
+    String? note,
+  }) async {
+    await (_db.update(_db.members)..where((x) => x.id.equals(m.id))).write(
+      MembersCompanion(
+        welfareMembership: Value(to),
+        welfareSince: since == null ? const Value.absent() : Value(since),
+        welfareEndedOn: Value(endedOn),
+        welfareNote: Value(_clean(note)),
+        updatedAt: Value(_now()),
+        deviceId: Value(by.actor.deviceId),
+      ),
+    );
+    await _audit.log(
+      by.actor,
+      action,
+      entity: 'members',
+      entityId: m.id,
+      oldValue: {'welfare': m.welfareMembership.name},
+      newValue: {'welfare': to.name, 'by': by.name, 'note': _clean(note)},
+    );
+  }
+
+  /// Welfare is by choice: a member (or an officer for them) joins.
+  Future<void> joinWelfare(String memberId, WelfareActor by) async {
+    final m = await _member(memberId);
+    if (m.welfareMembership == WelfareMembership.member) return;
+    if (m.welfareMembership == WelfareMembership.disqualified) {
+      throw WelfareException(
+        '${m.fullName} was disqualified from welfare. Reinstate them instead.',
+      );
+    }
+    await _setMembership(
+      m,
+      by,
+      'welfare.join',
+      to: WelfareMembership.member,
+      since: _now(),
+    );
+  }
+
+  Future<void> leaveWelfare(String memberId, WelfareActor by) async {
+    final m = await _member(memberId);
+    if (m.welfareMembership == WelfareMembership.none) return;
+    await _setMembership(
+      m,
+      by,
+      'welfare.leave',
+      to: WelfareMembership.none,
+      endedOn: _now(),
+    );
+  }
+
+  /// An officer brings a disqualified member back. Dues owed while they were
+  /// out are not charged: they start again from today.
+  Future<void> reinstateWelfare(
+    String memberId,
+    WelfareActor by, {
+    String? note,
+  }) async {
+    final m = await _member(memberId);
+    if (m.welfareMembership != WelfareMembership.disqualified) return;
+    await _setMembership(
+      m,
+      by,
+      'welfare.reinstate',
+      to: WelfareMembership.member,
+      since: _now(),
+      note: note,
+    );
+  }
+
+  /// Why a member cannot receive welfare benefits, or null when they can.
+  Future<String?> benefitBlock(String memberId) async {
+    final m = await _member(memberId);
+    switch (m.welfareMembership) {
+      case WelfareMembership.none:
+        return '${m.fullName} is not a welfare member. Welfare is by choice: '
+            'they join first.';
+      case WelfareMembership.disqualified:
+        return '${m.fullName} is disqualified from welfare after missing '
+            '${WelfareRules.missedLimit} payments in a row.';
+      case WelfareMembership.member:
+        break;
+    }
+    final since = m.welfareSince;
+    if (since == null) return null;
+    final types =
+        await (_db.select(_db.contributionTypes)..where(
+              (t) =>
+                  t.deletedAt.isNull() &
+                  t.isActive.equals(true) &
+                  t.welfareRule.equals(WelfareRule.dues.name) &
+                  t.amount.isNotNull(),
+            ))
+            .get();
+    if (types.isEmpty) return null;
+    final paid =
+        await (_db.select(_db.payments)..where(
+              (p) =>
+                  p.memberId.equals(memberId) &
+                  p.status.equalsValue(PaymentStatus.valid),
+            ))
+            .get();
+    for (final t in types) {
+      // Only completed months count as missed.
+      final now = _now();
+      final months = Dues.liableMonths(
+        joined: since,
+        now: DateTime(now.year, now.month - 1),
+        duesStart: t.startDate,
+        duesEnd: t.endDate,
+      );
+      final paidByPeriod = <String?, int>{};
+      for (final p in paid.where((p) => p.contributionTypeId == t.id)) {
+        paidByPeriod[p.period] = (paidByPeriod[p.period] ?? 0) + p.amount;
+      }
+      final summary = Dues.summarise(
+        monthlyAmount: t.amount!,
+        liableMonths: months,
+        paidByPeriod: paidByPeriod,
+      );
+      if (WelfareRules.tooManyMissed(summary.monthsBehind)) {
+        return '${m.fullName} has missed ${summary.monthsBehind} months of '
+            '${t.name}, so welfare benefits are on hold.';
+      }
+    }
+    return null;
+  }
+
   // ---- Cases --------------------------------------------------------------
 
   Future<WelfareCase> createCase(WelfareCaseDraft d, WelfareActor by) async {
@@ -223,6 +366,8 @@ class WelfareRepository {
     if (d.occurredOn.isAfter(_now())) {
       throw WelfareException('The date cannot be in the future.');
     }
+    final block = await benefitBlock(d.memberId);
+    if (block != null) throw WelfareException(block);
     return _db.transaction(() async {
       final org = await _db.select(_db.orgSettings).getSingle();
       final year = _now().year;

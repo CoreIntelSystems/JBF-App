@@ -67,6 +67,32 @@ class ElectionApi {
     return r['id'] as String;
   }
 
+  /// Changes a draft. Posts with an id are kept and updated, posts without
+  /// one are added, and posts left out are taken off with their candidates.
+  Future<void> update(
+    String id, {
+    required String title,
+    required String notes,
+    required DateTime closesAt,
+    required List<({String? id, String title, int seats})> posts,
+  }) => _api.rpc('election_update', {
+    'token': token,
+    'eid': id,
+    'title': title,
+    'notes': notes,
+    'closes_at': closesAt.toUtc().toIso8601String(),
+    'posts': [
+      for (final p in posts)
+        {if (p.id != null) 'id': p.id, 'title': p.title, 'seats': p.seats},
+    ],
+  });
+
+  /// Takes a candidate off a draft election.
+  Future<void> removeCandidate(String candidateId) => _api.rpc(
+    'election_remove_candidate',
+    {'token': token, 'cid': candidateId},
+  );
+
   Future<List<Map<String, dynamic>>> findMember(String q) async => [
     for (final m
         in (await _api.rpc('election_find_member', {'token': token, 'q': q}))!

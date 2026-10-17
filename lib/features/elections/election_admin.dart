@@ -8,31 +8,80 @@ import '../../core/format.dart';
 import 'candidate_photo.dart';
 import 'election_api.dart';
 
-/// Electoral Commission: set up a new election (posts and closing time).
+/// Electoral Commission: set up a new election (posts and closing time),
+/// or change one still being prepared when [existing] is given.
 class CreateElectionScreen extends StatefulWidget {
-  const CreateElectionScreen({super.key, required this.api});
+  const CreateElectionScreen({super.key, required this.api, this.existing});
 
   final ElectionApi api;
+
+  /// A draft election as election_get returns it.
+  final Map<String, dynamic>? existing;
 
   @override
   State<CreateElectionScreen> createState() => _CreateElectionScreenState();
 }
 
 class _CreateElectionScreenState extends State<CreateElectionScreen> {
-  final _title = TextEditingController();
-  final _notes = TextEditingController();
-  final _posts = <({TextEditingController title, int seats})>[
-    (title: TextEditingController(), seats: 1),
+  late final Map<String, dynamic>? _e = widget.existing;
+  late final _title = TextEditingController(text: _e?['title'] as String?);
+  late final _notes = TextEditingController(text: _e?['notes'] as String?);
+  late final _posts = <({String? id, TextEditingController title, int seats})>[
+    if (_e == null)
+      (id: null, title: TextEditingController(), seats: 1)
+    else
+      for (final p in (_e['posts'] as List).cast<Map>())
+        (
+          id: p['id'] as String,
+          title: TextEditingController(text: p['title'] as String),
+          seats: p['seats'] as int,
+        ),
   ];
-  DateTime _closes = DateTime.now().add(const Duration(days: 3));
+  late DateTime _closes =
+      DateTime.tryParse('${_e?['closes_at']}')?.toLocal() ??
+      DateTime.now().add(const Duration(days: 3));
   bool _saving = false;
   String? _error;
+
+  /// Posts already in the draft that have candidates.
+  bool _hasCandidates(String? postId) =>
+      postId != null &&
+      (_e!['posts'] as List).cast<Map>().any(
+        (p) => p['id'] == postId && (p['candidates'] as List).isNotEmpty,
+      );
+
+  Future<void> _removePost(int i) async {
+    final p = _posts[i];
+    if (_hasCandidates(p.id)) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text(
+            'Take "${p.title.text}" out of this election? Its candidates '
+            'are taken off too.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Keep it'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Take it out'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    setState(() => _posts.removeAt(i));
+  }
 
   Future<void> _pickTime() async {
     final date = await showDatePicker(
       context: context,
       initialDate: _closes,
-      firstDate: DateTime.now(),
+      firstDate: DateTime.now().isAfter(_closes) ? _closes : DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 120)),
     );
     if (date == null || !mounted) return;
@@ -56,7 +105,7 @@ class _CreateElectionScreenState extends State<CreateElectionScreen> {
     final posts = [
       for (final p in _posts)
         if (p.title.text.trim().isNotEmpty)
-          (title: p.title.text.trim(), seats: p.seats),
+          (id: p.id, title: p.title.text.trim(), seats: p.seats),
     ];
     if (_title.text.trim().length < 3 || posts.isEmpty) {
       setState(
@@ -69,12 +118,24 @@ class _CreateElectionScreenState extends State<CreateElectionScreen> {
       _error = null;
     });
     try {
-      final id = await widget.api.create(
-        title: _title.text.trim(),
-        notes: _notes.text.trim(),
-        closesAt: _closes,
-        posts: posts,
-      );
+      final String id;
+      if (_e == null) {
+        id = await widget.api.create(
+          title: _title.text.trim(),
+          notes: _notes.text.trim(),
+          closesAt: _closes,
+          posts: [for (final p in posts) (title: p.title, seats: p.seats)],
+        );
+      } else {
+        id = _e['id'] as String;
+        await widget.api.update(
+          id,
+          title: _title.text.trim(),
+          notes: _notes.text.trim(),
+          closesAt: _closes,
+          posts: posts,
+        );
+      }
       if (mounted) Navigator.of(context).pop(id);
     } catch (e) {
       if (mounted) {
@@ -89,7 +150,9 @@ class _CreateElectionScreenState extends State<CreateElectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New election')),
+      appBar: AppBar(
+        title: Text(_e == null ? 'New election' : 'Change election'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -145,16 +208,30 @@ class _CreateElectionScreenState extends State<CreateElectionScreen> {
                       ),
                   ],
                   onChanged: (n) => setState(
-                    () => _posts[i] = (title: _posts[i].title, seats: n ?? 1),
+                    () => _posts[i] = (
+                      id: _posts[i].id,
+                      title: _posts[i].title,
+                      seats: n ?? 1,
+                    ),
                   ),
                 ),
+                if (_posts.length > 1)
+                  IconButton(
+                    tooltip: 'Take this post out',
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: () => _removePost(i),
+                  ),
               ],
             ),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: () => setState(
-                () => _posts.add((title: TextEditingController(), seats: 1)),
+                () => _posts.add((
+                  id: null,
+                  title: TextEditingController(),
+                  seats: 1,
+                )),
               ),
               icon: const Icon(Icons.add),
               label: const Text('Add another post'),
@@ -171,13 +248,20 @@ class _CreateElectionScreenState extends State<CreateElectionScreen> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _saving ? null : _save,
-            child: Text(_saving ? 'Saving...' : 'Create election'),
+            child: Text(
+              _saving
+                  ? 'Saving...'
+                  : _e == null
+                  ? 'Create election'
+                  : 'Save changes',
+            ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Next you add the candidates. A different Commission officer '
-            'then opens the voting.',
-          ),
+          if (_e == null)
+            const Text(
+              'Next you add the candidates. A different Commission officer '
+              'then opens the voting.',
+            ),
         ],
       ),
     );
@@ -185,18 +269,22 @@ class _CreateElectionScreenState extends State<CreateElectionScreen> {
 }
 
 /// Electoral Commission: add a candidate to a post, with a picture and a
-/// short message to voters.
+/// short message to voters, or change or take off [existing] one.
 class CandidateEditor extends StatefulWidget {
   const CandidateEditor({
     super.key,
     required this.api,
     required this.postId,
     required this.postTitle,
+    this.existing,
   });
 
   final ElectionApi api;
   final String postId;
   final String postTitle;
+
+  /// A candidate as election_get returns it.
+  final Map<String, dynamic>? existing;
 
   @override
   State<CandidateEditor> createState() => _CandidateEditorState();
@@ -207,10 +295,60 @@ class _CandidateEditorState extends State<CandidateEditor> {
   final _manifesto = TextEditingController();
   Timer? _debounce;
   List<Map<String, dynamic>> _found = [];
-  Map<String, dynamic>? _member;
-  String? _photo;
+  late final Map<String, dynamic>? _was = widget.existing;
+  late Map<String, dynamic>? _member = _was == null
+      ? null
+      : {
+          'key': _was['member_key'],
+          'name': _was['name'],
+          'member_no': _was['member_no'],
+        };
+  late String? _photo = _was?['photo'] as String?;
   bool _saving = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _manifesto.text = (_was?['manifesto'] as String?) ?? '';
+  }
+
+  Future<void> _remove() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(
+          'Take ${_was!['name']} off the ballot for ${widget.postTitle}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Take off'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await widget.api.removeCandidate(_was!['id'] as String);
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = electionError(e);
+          _saving = false;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -265,6 +403,11 @@ class _CandidateEditorState extends State<CandidateEditor> {
         manifesto: _manifesto.text,
         photo: _photo,
       );
+      // Someone else now stands in place of the candidate being changed.
+      final was = _was;
+      if (was != null && was['member_key'] != m['key']) {
+        await widget.api.removeCandidate(was['id'] as String);
+      }
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
@@ -344,6 +487,14 @@ class _CandidateEditorState extends State<CandidateEditor> {
             onPressed: m == null || _saving ? null : _save,
             child: Text(_saving ? 'Saving...' : 'Save candidate'),
           ),
+          if (_was != null) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _saving ? null : _remove,
+              icon: const Icon(Icons.person_remove_outlined),
+              label: const Text('Take off the ballot'),
+            ),
+          ],
         ],
       ),
     );

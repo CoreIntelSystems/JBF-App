@@ -1,6 +1,6 @@
 // Keeps the app shell available offline. Member data is never cached here:
 // it is fetched fresh, and the page keeps its own copy of the last statement.
-const SHELL = 'jbf-shell-v6';
+const SHELL = 'jbf-shell-v8';
 const FILES = ['./', 'index.html', 'app.js', 'manifest.webmanifest', 'logo.png',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'Inter-Regular.woff2', 'Inter-SemiBold.woff2'];
 

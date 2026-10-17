@@ -1881,6 +1881,50 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
     defaultValue: const Constant(false),
   );
   @override
+  late final GeneratedColumnWithTypeConverter<WelfareMembership, String>
+  welfareMembership = GeneratedColumn<String>(
+    'welfare_membership',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: Constant(WelfareMembership.none.name),
+  ).withConverter<WelfareMembership>($MembersTable.$converterwelfareMembership);
+  static const VerificationMeta _welfareSinceMeta = const VerificationMeta(
+    'welfareSince',
+  );
+  @override
+  late final GeneratedColumn<DateTime> welfareSince = GeneratedColumn<DateTime>(
+    'welfare_since',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _welfareEndedOnMeta = const VerificationMeta(
+    'welfareEndedOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> welfareEndedOn =
+      GeneratedColumn<DateTime>(
+        'welfare_ended_on',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _welfareNoteMeta = const VerificationMeta(
+    'welfareNote',
+  );
+  @override
+  late final GeneratedColumn<String> welfareNote = GeneratedColumn<String>(
+    'welfare_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     createdAt,
@@ -1909,6 +1953,10 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
     statusDate,
     photoPath,
     selfEdit,
+    welfareMembership,
+    welfareSince,
+    welfareEndedOn,
+    welfareNote,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2099,6 +2147,33 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
         selfEdit.isAcceptableOrUnknown(data['self_edit']!, _selfEditMeta),
       );
     }
+    if (data.containsKey('welfare_since')) {
+      context.handle(
+        _welfareSinceMeta,
+        welfareSince.isAcceptableOrUnknown(
+          data['welfare_since']!,
+          _welfareSinceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('welfare_ended_on')) {
+      context.handle(
+        _welfareEndedOnMeta,
+        welfareEndedOn.isAcceptableOrUnknown(
+          data['welfare_ended_on']!,
+          _welfareEndedOnMeta,
+        ),
+      );
+    }
+    if (data.containsKey('welfare_note')) {
+      context.handle(
+        _welfareNoteMeta,
+        welfareNote.isAcceptableOrUnknown(
+          data['welfare_note']!,
+          _welfareNoteMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2218,6 +2293,24 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
         DriftSqlType.bool,
         data['${effectivePrefix}self_edit'],
       )!,
+      welfareMembership: $MembersTable.$converterwelfareMembership.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}welfare_membership'],
+        )!,
+      ),
+      welfareSince: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}welfare_since'],
+      ),
+      welfareEndedOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}welfare_ended_on'],
+      ),
+      welfareNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}welfare_note'],
+      ),
     );
   }
 
@@ -2228,6 +2321,10 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
 
   static JsonTypeConverter2<MemberStatus, String, String> $converterstatus =
       const EnumNameConverter<MemberStatus>(MemberStatus.values);
+  static JsonTypeConverter2<WelfareMembership, String, String>
+  $converterwelfareMembership = const EnumNameConverter<WelfareMembership>(
+    WelfareMembership.values,
+  );
 }
 
 class Member extends DataClass implements Insertable<Member> {
@@ -2266,6 +2363,20 @@ class Member extends DataClass implements Insertable<Member> {
   /// registered later are updated by the Founder, General Secretary or
   /// their Zone Secretary.
   final bool selfEdit;
+
+  /// Whether the member chose to be in welfare. Welfare dues are owed only
+  /// by members; welfare benefits are paid only to members in good standing.
+  final WelfareMembership welfareMembership;
+
+  /// When welfare dues start for this member: the day they joined, or were
+  /// taken back after being disqualified.
+  final DateTime? welfareSince;
+
+  /// When they left welfare or were disqualified; dues stop here.
+  final DateTime? welfareEndedOn;
+
+  /// Why they were disqualified, or who took them back.
+  final String? welfareNote;
   const Member({
     required this.id,
     required this.createdAt,
@@ -2294,6 +2405,10 @@ class Member extends DataClass implements Insertable<Member> {
     this.statusDate,
     this.photoPath,
     required this.selfEdit,
+    required this.welfareMembership,
+    this.welfareSince,
+    this.welfareEndedOn,
+    this.welfareNote,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2367,6 +2482,20 @@ class Member extends DataClass implements Insertable<Member> {
       map['photo_path'] = Variable<String>(photoPath);
     }
     map['self_edit'] = Variable<bool>(selfEdit);
+    {
+      map['welfare_membership'] = Variable<String>(
+        $MembersTable.$converterwelfareMembership.toSql(welfareMembership),
+      );
+    }
+    if (!nullToAbsent || welfareSince != null) {
+      map['welfare_since'] = Variable<DateTime>(welfareSince);
+    }
+    if (!nullToAbsent || welfareEndedOn != null) {
+      map['welfare_ended_on'] = Variable<DateTime>(welfareEndedOn);
+    }
+    if (!nullToAbsent || welfareNote != null) {
+      map['welfare_note'] = Variable<String>(welfareNote);
+    }
     return map;
   }
 
@@ -2437,6 +2566,16 @@ class Member extends DataClass implements Insertable<Member> {
           ? const Value.absent()
           : Value(photoPath),
       selfEdit: Value(selfEdit),
+      welfareMembership: Value(welfareMembership),
+      welfareSince: welfareSince == null && nullToAbsent
+          ? const Value.absent()
+          : Value(welfareSince),
+      welfareEndedOn: welfareEndedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(welfareEndedOn),
+      welfareNote: welfareNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(welfareNote),
     );
   }
 
@@ -2475,6 +2614,12 @@ class Member extends DataClass implements Insertable<Member> {
       statusDate: serializer.fromJson<DateTime?>(json['statusDate']),
       photoPath: serializer.fromJson<String?>(json['photoPath']),
       selfEdit: serializer.fromJson<bool>(json['selfEdit']),
+      welfareMembership: $MembersTable.$converterwelfareMembership.fromJson(
+        serializer.fromJson<String>(json['welfareMembership']),
+      ),
+      welfareSince: serializer.fromJson<DateTime?>(json['welfareSince']),
+      welfareEndedOn: serializer.fromJson<DateTime?>(json['welfareEndedOn']),
+      welfareNote: serializer.fromJson<String?>(json['welfareNote']),
     );
   }
   @override
@@ -2510,6 +2655,12 @@ class Member extends DataClass implements Insertable<Member> {
       'statusDate': serializer.toJson<DateTime?>(statusDate),
       'photoPath': serializer.toJson<String?>(photoPath),
       'selfEdit': serializer.toJson<bool>(selfEdit),
+      'welfareMembership': serializer.toJson<String>(
+        $MembersTable.$converterwelfareMembership.toJson(welfareMembership),
+      ),
+      'welfareSince': serializer.toJson<DateTime?>(welfareSince),
+      'welfareEndedOn': serializer.toJson<DateTime?>(welfareEndedOn),
+      'welfareNote': serializer.toJson<String?>(welfareNote),
     };
   }
 
@@ -2541,6 +2692,10 @@ class Member extends DataClass implements Insertable<Member> {
     Value<DateTime?> statusDate = const Value.absent(),
     Value<String?> photoPath = const Value.absent(),
     bool? selfEdit,
+    WelfareMembership? welfareMembership,
+    Value<DateTime?> welfareSince = const Value.absent(),
+    Value<DateTime?> welfareEndedOn = const Value.absent(),
+    Value<String?> welfareNote = const Value.absent(),
   }) => Member(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -2575,6 +2730,12 @@ class Member extends DataClass implements Insertable<Member> {
     statusDate: statusDate.present ? statusDate.value : this.statusDate,
     photoPath: photoPath.present ? photoPath.value : this.photoPath,
     selfEdit: selfEdit ?? this.selfEdit,
+    welfareMembership: welfareMembership ?? this.welfareMembership,
+    welfareSince: welfareSince.present ? welfareSince.value : this.welfareSince,
+    welfareEndedOn: welfareEndedOn.present
+        ? welfareEndedOn.value
+        : this.welfareEndedOn,
+    welfareNote: welfareNote.present ? welfareNote.value : this.welfareNote,
   );
   Member copyWithCompanion(MembersCompanion data) {
     return Member(
@@ -2625,6 +2786,18 @@ class Member extends DataClass implements Insertable<Member> {
           : this.statusDate,
       photoPath: data.photoPath.present ? data.photoPath.value : this.photoPath,
       selfEdit: data.selfEdit.present ? data.selfEdit.value : this.selfEdit,
+      welfareMembership: data.welfareMembership.present
+          ? data.welfareMembership.value
+          : this.welfareMembership,
+      welfareSince: data.welfareSince.present
+          ? data.welfareSince.value
+          : this.welfareSince,
+      welfareEndedOn: data.welfareEndedOn.present
+          ? data.welfareEndedOn.value
+          : this.welfareEndedOn,
+      welfareNote: data.welfareNote.present
+          ? data.welfareNote.value
+          : this.welfareNote,
     );
   }
 
@@ -2657,7 +2830,11 @@ class Member extends DataClass implements Insertable<Member> {
           ..write('status: $status, ')
           ..write('statusDate: $statusDate, ')
           ..write('photoPath: $photoPath, ')
-          ..write('selfEdit: $selfEdit')
+          ..write('selfEdit: $selfEdit, ')
+          ..write('welfareMembership: $welfareMembership, ')
+          ..write('welfareSince: $welfareSince, ')
+          ..write('welfareEndedOn: $welfareEndedOn, ')
+          ..write('welfareNote: $welfareNote')
           ..write(')'))
         .toString();
   }
@@ -2691,6 +2868,10 @@ class Member extends DataClass implements Insertable<Member> {
     statusDate,
     photoPath,
     selfEdit,
+    welfareMembership,
+    welfareSince,
+    welfareEndedOn,
+    welfareNote,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2722,7 +2903,11 @@ class Member extends DataClass implements Insertable<Member> {
           other.status == this.status &&
           other.statusDate == this.statusDate &&
           other.photoPath == this.photoPath &&
-          other.selfEdit == this.selfEdit);
+          other.selfEdit == this.selfEdit &&
+          other.welfareMembership == this.welfareMembership &&
+          other.welfareSince == this.welfareSince &&
+          other.welfareEndedOn == this.welfareEndedOn &&
+          other.welfareNote == this.welfareNote);
 }
 
 class MembersCompanion extends UpdateCompanion<Member> {
@@ -2753,6 +2938,10 @@ class MembersCompanion extends UpdateCompanion<Member> {
   final Value<DateTime?> statusDate;
   final Value<String?> photoPath;
   final Value<bool> selfEdit;
+  final Value<WelfareMembership> welfareMembership;
+  final Value<DateTime?> welfareSince;
+  final Value<DateTime?> welfareEndedOn;
+  final Value<String?> welfareNote;
   final Value<int> rowid;
   const MembersCompanion({
     this.id = const Value.absent(),
@@ -2782,6 +2971,10 @@ class MembersCompanion extends UpdateCompanion<Member> {
     this.statusDate = const Value.absent(),
     this.photoPath = const Value.absent(),
     this.selfEdit = const Value.absent(),
+    this.welfareMembership = const Value.absent(),
+    this.welfareSince = const Value.absent(),
+    this.welfareEndedOn = const Value.absent(),
+    this.welfareNote = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MembersCompanion.insert({
@@ -2812,6 +3005,10 @@ class MembersCompanion extends UpdateCompanion<Member> {
     this.statusDate = const Value.absent(),
     this.photoPath = const Value.absent(),
     this.selfEdit = const Value.absent(),
+    this.welfareMembership = const Value.absent(),
+    this.welfareSince = const Value.absent(),
+    this.welfareEndedOn = const Value.absent(),
+    this.welfareNote = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : memberNo = Value(memberNo),
        fullName = Value(fullName),
@@ -2844,6 +3041,10 @@ class MembersCompanion extends UpdateCompanion<Member> {
     Expression<DateTime>? statusDate,
     Expression<String>? photoPath,
     Expression<bool>? selfEdit,
+    Expression<String>? welfareMembership,
+    Expression<DateTime>? welfareSince,
+    Expression<DateTime>? welfareEndedOn,
+    Expression<String>? welfareNote,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2874,6 +3075,10 @@ class MembersCompanion extends UpdateCompanion<Member> {
       if (statusDate != null) 'status_date': statusDate,
       if (photoPath != null) 'photo_path': photoPath,
       if (selfEdit != null) 'self_edit': selfEdit,
+      if (welfareMembership != null) 'welfare_membership': welfareMembership,
+      if (welfareSince != null) 'welfare_since': welfareSince,
+      if (welfareEndedOn != null) 'welfare_ended_on': welfareEndedOn,
+      if (welfareNote != null) 'welfare_note': welfareNote,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2906,6 +3111,10 @@ class MembersCompanion extends UpdateCompanion<Member> {
     Value<DateTime?>? statusDate,
     Value<String?>? photoPath,
     Value<bool>? selfEdit,
+    Value<WelfareMembership>? welfareMembership,
+    Value<DateTime?>? welfareSince,
+    Value<DateTime?>? welfareEndedOn,
+    Value<String?>? welfareNote,
     Value<int>? rowid,
   }) {
     return MembersCompanion(
@@ -2936,6 +3145,10 @@ class MembersCompanion extends UpdateCompanion<Member> {
       statusDate: statusDate ?? this.statusDate,
       photoPath: photoPath ?? this.photoPath,
       selfEdit: selfEdit ?? this.selfEdit,
+      welfareMembership: welfareMembership ?? this.welfareMembership,
+      welfareSince: welfareSince ?? this.welfareSince,
+      welfareEndedOn: welfareEndedOn ?? this.welfareEndedOn,
+      welfareNote: welfareNote ?? this.welfareNote,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3026,6 +3239,22 @@ class MembersCompanion extends UpdateCompanion<Member> {
     if (selfEdit.present) {
       map['self_edit'] = Variable<bool>(selfEdit.value);
     }
+    if (welfareMembership.present) {
+      map['welfare_membership'] = Variable<String>(
+        $MembersTable.$converterwelfareMembership.toSql(
+          welfareMembership.value,
+        ),
+      );
+    }
+    if (welfareSince.present) {
+      map['welfare_since'] = Variable<DateTime>(welfareSince.value);
+    }
+    if (welfareEndedOn.present) {
+      map['welfare_ended_on'] = Variable<DateTime>(welfareEndedOn.value);
+    }
+    if (welfareNote.present) {
+      map['welfare_note'] = Variable<String>(welfareNote.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3062,6 +3291,10 @@ class MembersCompanion extends UpdateCompanion<Member> {
           ..write('statusDate: $statusDate, ')
           ..write('photoPath: $photoPath, ')
           ..write('selfEdit: $selfEdit, ')
+          ..write('welfareMembership: $welfareMembership, ')
+          ..write('welfareSince: $welfareSince, ')
+          ..write('welfareEndedOn: $welfareEndedOn, ')
+          ..write('welfareNote: $welfareNote, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7126,6 +7359,29 @@ class $ContributionTypesTable extends ContributionTypes
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _minimumAmountMeta = const VerificationMeta(
+    'minimumAmount',
+  );
+  @override
+  late final GeneratedColumn<int> minimumAmount = GeneratedColumn<int>(
+    'minimum_amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<WelfareRule, String> welfareRule =
+      GeneratedColumn<String>(
+        'welfare_rule',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(WelfareRule.none.name),
+      ).withConverter<WelfareRule>(
+        $ContributionTypesTable.$converterwelfareRule,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -7147,6 +7403,8 @@ class $ContributionTypesTable extends ContributionTypes
     proposedByName,
     proposedAt,
     approvedByName,
+    minimumAmount,
+    welfareRule,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7273,6 +7531,15 @@ class $ContributionTypesTable extends ContributionTypes
         ),
       );
     }
+    if (data.containsKey('minimum_amount')) {
+      context.handle(
+        _minimumAmountMeta,
+        minimumAmount.isAcceptableOrUnknown(
+          data['minimum_amount']!,
+          _minimumAmountMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -7362,6 +7629,16 @@ class $ContributionTypesTable extends ContributionTypes
         DriftSqlType.string,
         data['${effectivePrefix}approved_by_name'],
       ),
+      minimumAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}minimum_amount'],
+      ),
+      welfareRule: $ContributionTypesTable.$converterwelfareRule.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}welfare_rule'],
+        )!,
+      ),
     );
   }
 
@@ -7378,6 +7655,8 @@ class $ContributionTypesTable extends ContributionTypes
   $converterfrequency = const EnumNameConverter<ContributionFrequency>(
     ContributionFrequency.values,
   );
+  static JsonTypeConverter2<WelfareRule, String, String> $converterwelfareRule =
+      const EnumNameConverter<WelfareRule>(WelfareRule.values);
 }
 
 class ContributionType extends DataClass
@@ -7406,6 +7685,10 @@ class ContributionType extends DataClass
   final String? proposedByName;
   final DateTime? proposedAt;
   final String? approvedByName;
+
+  /// The least a payment may be, for types that have no fixed [amount].
+  final int? minimumAmount;
+  final WelfareRule welfareRule;
   const ContributionType({
     required this.id,
     required this.createdAt,
@@ -7426,6 +7709,8 @@ class ContributionType extends DataClass
     this.proposedByName,
     this.proposedAt,
     this.approvedByName,
+    this.minimumAmount,
+    required this.welfareRule,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7479,6 +7764,14 @@ class ContributionType extends DataClass
     if (!nullToAbsent || approvedByName != null) {
       map['approved_by_name'] = Variable<String>(approvedByName);
     }
+    if (!nullToAbsent || minimumAmount != null) {
+      map['minimum_amount'] = Variable<int>(minimumAmount);
+    }
+    {
+      map['welfare_rule'] = Variable<String>(
+        $ContributionTypesTable.$converterwelfareRule.toSql(welfareRule),
+      );
+    }
     return map;
   }
 
@@ -7525,6 +7818,10 @@ class ContributionType extends DataClass
       approvedByName: approvedByName == null && nullToAbsent
           ? const Value.absent()
           : Value(approvedByName),
+      minimumAmount: minimumAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minimumAmount),
+      welfareRule: Value(welfareRule),
     );
   }
 
@@ -7557,6 +7854,10 @@ class ContributionType extends DataClass
       proposedByName: serializer.fromJson<String?>(json['proposedByName']),
       proposedAt: serializer.fromJson<DateTime?>(json['proposedAt']),
       approvedByName: serializer.fromJson<String?>(json['approvedByName']),
+      minimumAmount: serializer.fromJson<int?>(json['minimumAmount']),
+      welfareRule: $ContributionTypesTable.$converterwelfareRule.fromJson(
+        serializer.fromJson<String>(json['welfareRule']),
+      ),
     );
   }
   @override
@@ -7586,6 +7887,10 @@ class ContributionType extends DataClass
       'proposedByName': serializer.toJson<String?>(proposedByName),
       'proposedAt': serializer.toJson<DateTime?>(proposedAt),
       'approvedByName': serializer.toJson<String?>(approvedByName),
+      'minimumAmount': serializer.toJson<int?>(minimumAmount),
+      'welfareRule': serializer.toJson<String>(
+        $ContributionTypesTable.$converterwelfareRule.toJson(welfareRule),
+      ),
     };
   }
 
@@ -7609,6 +7914,8 @@ class ContributionType extends DataClass
     Value<String?> proposedByName = const Value.absent(),
     Value<DateTime?> proposedAt = const Value.absent(),
     Value<String?> approvedByName = const Value.absent(),
+    Value<int?> minimumAmount = const Value.absent(),
+    WelfareRule? welfareRule,
   }) => ContributionType(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -7635,6 +7942,10 @@ class ContributionType extends DataClass
     approvedByName: approvedByName.present
         ? approvedByName.value
         : this.approvedByName,
+    minimumAmount: minimumAmount.present
+        ? minimumAmount.value
+        : this.minimumAmount,
+    welfareRule: welfareRule ?? this.welfareRule,
   );
   ContributionType copyWithCompanion(ContributionTypesCompanion data) {
     return ContributionType(
@@ -7667,6 +7978,12 @@ class ContributionType extends DataClass
       approvedByName: data.approvedByName.present
           ? data.approvedByName.value
           : this.approvedByName,
+      minimumAmount: data.minimumAmount.present
+          ? data.minimumAmount.value
+          : this.minimumAmount,
+      welfareRule: data.welfareRule.present
+          ? data.welfareRule.value
+          : this.welfareRule,
     );
   }
 
@@ -7691,13 +8008,15 @@ class ContributionType extends DataClass
           ..write('proposedAmount: $proposedAmount, ')
           ..write('proposedByName: $proposedByName, ')
           ..write('proposedAt: $proposedAt, ')
-          ..write('approvedByName: $approvedByName')
+          ..write('approvedByName: $approvedByName, ')
+          ..write('minimumAmount: $minimumAmount, ')
+          ..write('welfareRule: $welfareRule')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     createdAt,
     updatedAt,
@@ -7717,7 +8036,9 @@ class ContributionType extends DataClass
     proposedByName,
     proposedAt,
     approvedByName,
-  );
+    minimumAmount,
+    welfareRule,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7740,7 +8061,9 @@ class ContributionType extends DataClass
           other.proposedAmount == this.proposedAmount &&
           other.proposedByName == this.proposedByName &&
           other.proposedAt == this.proposedAt &&
-          other.approvedByName == this.approvedByName);
+          other.approvedByName == this.approvedByName &&
+          other.minimumAmount == this.minimumAmount &&
+          other.welfareRule == this.welfareRule);
 }
 
 class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
@@ -7763,6 +8086,8 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
   final Value<String?> proposedByName;
   final Value<DateTime?> proposedAt;
   final Value<String?> approvedByName;
+  final Value<int?> minimumAmount;
+  final Value<WelfareRule> welfareRule;
   final Value<int> rowid;
   const ContributionTypesCompanion({
     this.id = const Value.absent(),
@@ -7784,6 +8109,8 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
     this.proposedByName = const Value.absent(),
     this.proposedAt = const Value.absent(),
     this.approvedByName = const Value.absent(),
+    this.minimumAmount = const Value.absent(),
+    this.welfareRule = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ContributionTypesCompanion.insert({
@@ -7806,6 +8133,8 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
     this.proposedByName = const Value.absent(),
     this.proposedAt = const Value.absent(),
     this.approvedByName = const Value.absent(),
+    this.minimumAmount = const Value.absent(),
+    this.welfareRule = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name),
        category = Value(category),
@@ -7830,6 +8159,8 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
     Expression<String>? proposedByName,
     Expression<DateTime>? proposedAt,
     Expression<String>? approvedByName,
+    Expression<int>? minimumAmount,
+    Expression<String>? welfareRule,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -7852,6 +8183,8 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
       if (proposedByName != null) 'proposed_by_name': proposedByName,
       if (proposedAt != null) 'proposed_at': proposedAt,
       if (approvedByName != null) 'approved_by_name': approvedByName,
+      if (minimumAmount != null) 'minimum_amount': minimumAmount,
+      if (welfareRule != null) 'welfare_rule': welfareRule,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -7876,6 +8209,8 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
     Value<String?>? proposedByName,
     Value<DateTime?>? proposedAt,
     Value<String?>? approvedByName,
+    Value<int?>? minimumAmount,
+    Value<WelfareRule>? welfareRule,
     Value<int>? rowid,
   }) {
     return ContributionTypesCompanion(
@@ -7898,6 +8233,8 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
       proposedByName: proposedByName ?? this.proposedByName,
       proposedAt: proposedAt ?? this.proposedAt,
       approvedByName: approvedByName ?? this.approvedByName,
+      minimumAmount: minimumAmount ?? this.minimumAmount,
+      welfareRule: welfareRule ?? this.welfareRule,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -7966,6 +8303,14 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
     if (approvedByName.present) {
       map['approved_by_name'] = Variable<String>(approvedByName.value);
     }
+    if (minimumAmount.present) {
+      map['minimum_amount'] = Variable<int>(minimumAmount.value);
+    }
+    if (welfareRule.present) {
+      map['welfare_rule'] = Variable<String>(
+        $ContributionTypesTable.$converterwelfareRule.toSql(welfareRule.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -7994,6 +8339,8 @@ class ContributionTypesCompanion extends UpdateCompanion<ContributionType> {
           ..write('proposedByName: $proposedByName, ')
           ..write('proposedAt: $proposedAt, ')
           ..write('approvedByName: $approvedByName, ')
+          ..write('minimumAmount: $minimumAmount, ')
+          ..write('welfareRule: $welfareRule, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -18415,6 +18762,10 @@ typedef $$MembersTableCreateCompanionBuilder =
       Value<DateTime?> statusDate,
       Value<String?> photoPath,
       Value<bool> selfEdit,
+      Value<WelfareMembership> welfareMembership,
+      Value<DateTime?> welfareSince,
+      Value<DateTime?> welfareEndedOn,
+      Value<String?> welfareNote,
       Value<int> rowid,
     });
 typedef $$MembersTableUpdateCompanionBuilder =
@@ -18446,6 +18797,10 @@ typedef $$MembersTableUpdateCompanionBuilder =
       Value<DateTime?> statusDate,
       Value<String?> photoPath,
       Value<bool> selfEdit,
+      Value<WelfareMembership> welfareMembership,
+      Value<DateTime?> welfareSince,
+      Value<DateTime?> welfareEndedOn,
+      Value<String?> welfareNote,
       Value<int> rowid,
     });
 
@@ -18729,6 +19084,27 @@ class $$MembersTableFilterComposer
 
   ColumnFilters<bool> get selfEdit => $composableBuilder(
     column: $table.selfEdit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<WelfareMembership, WelfareMembership, String>
+  get welfareMembership => $composableBuilder(
+    column: $table.welfareMembership,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get welfareSince => $composableBuilder(
+    column: $table.welfareSince,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get welfareEndedOn => $composableBuilder(
+    column: $table.welfareEndedOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get welfareNote => $composableBuilder(
+    column: $table.welfareNote,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19051,6 +19427,26 @@ class $$MembersTableOrderingComposer
     column: $table.selfEdit,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get welfareMembership => $composableBuilder(
+    column: $table.welfareMembership,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get welfareSince => $composableBuilder(
+    column: $table.welfareSince,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get welfareEndedOn => $composableBuilder(
+    column: $table.welfareEndedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get welfareNote => $composableBuilder(
+    column: $table.welfareNote,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MembersTableAnnotationComposer
@@ -19162,6 +19558,27 @@ class $$MembersTableAnnotationComposer
 
   GeneratedColumn<bool> get selfEdit =>
       $composableBuilder(column: $table.selfEdit, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<WelfareMembership, String>
+  get welfareMembership => $composableBuilder(
+    column: $table.welfareMembership,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get welfareSince => $composableBuilder(
+    column: $table.welfareSince,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get welfareEndedOn => $composableBuilder(
+    column: $table.welfareEndedOn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get welfareNote => $composableBuilder(
+    column: $table.welfareNote,
+    builder: (column) => column,
+  );
 
   Expression<T> memberZonesRefs<T extends Object>(
     Expression<T> Function($$MemberZonesTableAnnotationComposer a) f,
@@ -19403,6 +19820,11 @@ class $$MembersTableTableManager
                 Value<DateTime?> statusDate = const Value.absent(),
                 Value<String?> photoPath = const Value.absent(),
                 Value<bool> selfEdit = const Value.absent(),
+                Value<WelfareMembership> welfareMembership =
+                    const Value.absent(),
+                Value<DateTime?> welfareSince = const Value.absent(),
+                Value<DateTime?> welfareEndedOn = const Value.absent(),
+                Value<String?> welfareNote = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MembersCompanion(
                 id: id,
@@ -19432,6 +19854,10 @@ class $$MembersTableTableManager
                 statusDate: statusDate,
                 photoPath: photoPath,
                 selfEdit: selfEdit,
+                welfareMembership: welfareMembership,
+                welfareSince: welfareSince,
+                welfareEndedOn: welfareEndedOn,
+                welfareNote: welfareNote,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -19463,6 +19889,11 @@ class $$MembersTableTableManager
                 Value<DateTime?> statusDate = const Value.absent(),
                 Value<String?> photoPath = const Value.absent(),
                 Value<bool> selfEdit = const Value.absent(),
+                Value<WelfareMembership> welfareMembership =
+                    const Value.absent(),
+                Value<DateTime?> welfareSince = const Value.absent(),
+                Value<DateTime?> welfareEndedOn = const Value.absent(),
+                Value<String?> welfareNote = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MembersCompanion.insert(
                 id: id,
@@ -19492,6 +19923,10 @@ class $$MembersTableTableManager
                 statusDate: statusDate,
                 photoPath: photoPath,
                 selfEdit: selfEdit,
+                welfareMembership: welfareMembership,
+                welfareSince: welfareSince,
+                welfareEndedOn: welfareEndedOn,
+                welfareNote: welfareNote,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -22605,6 +23040,8 @@ typedef $$ContributionTypesTableCreateCompanionBuilder =
       Value<String?> proposedByName,
       Value<DateTime?> proposedAt,
       Value<String?> approvedByName,
+      Value<int?> minimumAmount,
+      Value<WelfareRule> welfareRule,
       Value<int> rowid,
     });
 typedef $$ContributionTypesTableUpdateCompanionBuilder =
@@ -22628,6 +23065,8 @@ typedef $$ContributionTypesTableUpdateCompanionBuilder =
       Value<String?> proposedByName,
       Value<DateTime?> proposedAt,
       Value<String?> approvedByName,
+      Value<int?> minimumAmount,
+      Value<WelfareRule> welfareRule,
       Value<int> rowid,
     });
 
@@ -22777,6 +23216,17 @@ class $$ContributionTypesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get minimumAmount => $composableBuilder(
+    column: $table.minimumAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<WelfareRule, WelfareRule, String>
+  get welfareRule => $composableBuilder(
+    column: $table.welfareRule,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
   Expression<bool> paymentsRefs(
     Expression<bool> Function($$PaymentsTableFilterComposer f) f,
   ) {
@@ -22906,6 +23356,16 @@ class $$ContributionTypesTableOrderingComposer
     column: $table.approvedByName,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get minimumAmount => $composableBuilder(
+    column: $table.minimumAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get welfareRule => $composableBuilder(
+    column: $table.welfareRule,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ContributionTypesTableAnnotationComposer
@@ -22985,6 +23445,17 @@ class $$ContributionTypesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get minimumAmount => $composableBuilder(
+    column: $table.minimumAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<WelfareRule, String> get welfareRule =>
+      $composableBuilder(
+        column: $table.welfareRule,
+        builder: (column) => column,
+      );
+
   Expression<T> paymentsRefs<T extends Object>(
     Expression<T> Function($$PaymentsTableAnnotationComposer a) f,
   ) {
@@ -23063,6 +23534,8 @@ class $$ContributionTypesTableTableManager
                 Value<String?> proposedByName = const Value.absent(),
                 Value<DateTime?> proposedAt = const Value.absent(),
                 Value<String?> approvedByName = const Value.absent(),
+                Value<int?> minimumAmount = const Value.absent(),
+                Value<WelfareRule> welfareRule = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ContributionTypesCompanion(
                 id: id,
@@ -23084,6 +23557,8 @@ class $$ContributionTypesTableTableManager
                 proposedByName: proposedByName,
                 proposedAt: proposedAt,
                 approvedByName: approvedByName,
+                minimumAmount: minimumAmount,
+                welfareRule: welfareRule,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -23107,6 +23582,8 @@ class $$ContributionTypesTableTableManager
                 Value<String?> proposedByName = const Value.absent(),
                 Value<DateTime?> proposedAt = const Value.absent(),
                 Value<String?> approvedByName = const Value.absent(),
+                Value<int?> minimumAmount = const Value.absent(),
+                Value<WelfareRule> welfareRule = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ContributionTypesCompanion.insert(
                 id: id,
@@ -23128,6 +23605,8 @@ class $$ContributionTypesTableTableManager
                 proposedByName: proposedByName,
                 proposedAt: proposedAt,
                 approvedByName: approvedByName,
+                minimumAmount: minimumAmount,
+                welfareRule: welfareRule,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

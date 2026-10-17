@@ -268,9 +268,12 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _amount,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Amount',
                       prefixText: 'GHS ',
+                      helperText: _type?.minimumAmount == null
+                          ? null
+                          : 'From ${formatMoney(_type!.minimumAmount!)}',
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -278,6 +281,10 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                     validator: (v) {
                       final a = parseMoney(v ?? '');
                       if (a == null || a <= 0) return 'Enter an amount';
+                      final min = _type?.minimumAmount;
+                      if (min != null && a < min) {
+                        return 'At least ${formatMoney(min)}';
+                      }
                       return null;
                     },
                   ),

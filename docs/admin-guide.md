@@ -239,6 +239,7 @@ removes it, but signing in again re-downloads everything.
 Only the Electoral Commission (Chairperson and Secretary) runs elections. Everyone else just votes.
 
 1. **Commission officer 1** opens More > Elections > New election, names the posts and sets the closing time, then adds each candidate (search the member, add a picture and a short message). Commission officers cannot stand.
+   Until voting opens, a Commission officer can tap **Change details** to change the name, notes, closing time, posts and seats (or take a post out), and tap a candidate to change their picture or message, swap them for another member, or **Take off the ballot**. **Cancel election** removes a draft from the list; it stays in the election record.
 2. **Commission officer 2** (a different person) opens the voting. At that moment the voters list is fixed to all active members, and candidates can no longer change.
 3. Each member signs in with their own member ID, opens Elections and chooses one candidate per post (or abstains). One vote each, final, and secret: the ballot box holds no names or times.
 4. Nobody, the Commission included, can see counts while voting is open, only how many have voted. Voting closes at the set time (or early, by an officer other than the one who opened it).
@@ -335,3 +336,26 @@ The eighth office. The **Founder** and the **General Secretary** lead it. Its me
 - **Executive meetings**: the Founder or General Secretary can tap **Add the meeting steps**: agree the agenda with the Founder, send papers a week before, review the finance report and committee reports, hold the meeting, record the decisions and follow them up.
 
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.
+
+## Welfare membership and the welfare contribution
+
+Welfare is by choice. Not every member is in welfare.
+
+- A member is **not in welfare**, a **welfare member**, or **disqualified**.
+  A member joins on their own page (Me tab, or the website), or an officer
+  with the welfare permission presses **Join** on the member's page.
+  Paying welfare dues or a **Welfare contribution** also makes them a welfare
+  member automatically.
+- **Monthly welfare dues** are owed only by welfare members, from the day
+  they joined. Members outside welfare owe nothing and are not in defaulters.
+- **Welfare contribution** is a type with no fixed amount. Set a **Minimum
+  amount** in More > Contribution types; payments below it are refused.
+  Ask for it through a payment request like any other type.
+- **Three payments missed in a row** (three finished months of welfare dues,
+  or three finished welfare contribution requests) disqualifies a member.
+  Welfare cases cannot be created for them. The check runs every night and
+  when a request is closed. A Welfare Chairman, Secretary or other holder of
+  the welfare approve permission presses **Reinstate** on the member's page;
+  dues then start again from that day.
+- Paying does not bring back a disqualified member, only reinstatement does.
+- Phones must update: an older build saving a member wipes these fields.

@@ -54,6 +54,7 @@ class _ElectionScreenState extends State<ElectionScreen> {
     Future<void> Function() run, {
     required String confirm,
     required String done,
+    bool leave = false,
   }) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -77,11 +78,40 @@ class _ElectionScreenState extends State<ElectionScreen> {
     try {
       await run();
       messenger.showSnackBar(SnackBar(content: Text(done)));
+      if (leave && mounted) {
+        Navigator.of(context).pop();
+        return;
+      }
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(electionError(e))));
     }
     if (mounted) setState(() => _busy = false);
     _load();
+  }
+
+  Future<void> _edit() async {
+    final saved = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => CreateElectionScreen(api: widget.api, existing: _e),
+      ),
+    );
+    if (saved != null) _load();
+  }
+
+  Future<void> _candidate(Map post, [Map? candidate]) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => CandidateEditor(
+          api: widget.api,
+          postId: post['id'] as String,
+          postTitle: post['title'] as String,
+          existing: candidate == null
+              ? null
+              : Map<String, dynamic>.from(candidate),
+        ),
+      ),
+    );
+    if (changed == true) _load();
   }
 
   Future<void> _vote() async {
@@ -240,6 +270,11 @@ class _ElectionScreenState extends State<ElectionScreen> {
                       label: const Text('See results'),
                     ),
                   if (isEc && status == 'draft') ...[
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _edit,
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text('Change details'),
+                    ),
                     FilledButton(
                       onPressed: _busy || e['created_by_me'] == true
                           ? null
@@ -258,8 +293,11 @@ class _ElectionScreenState extends State<ElectionScreen> {
                           ? null
                           : () => _act(
                               () => widget.api.cancel(widget.id),
-                              confirm: 'Cancel this election?',
+                              confirm:
+                                  'Cancel this election? It will be taken '
+                                  'off the list of elections.',
                               done: 'Election cancelled.',
+                              leave: true,
                             ),
                       child: const Text('Cancel election'),
                     ),
@@ -308,18 +346,7 @@ class _ElectionScreenState extends State<ElectionScreen> {
           '${p['title']}${(p['seats'] as int) > 1 ? ' · ${p['seats']} seats' : ''}',
           trailing: draft && widget.isEc
               ? TextButton.icon(
-                  onPressed: () async {
-                    final added = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(
-                        builder: (_) => CandidateEditor(
-                          api: widget.api,
-                          postId: p['id'] as String,
-                          postTitle: p['title'] as String,
-                        ),
-                      ),
-                    );
-                    if (added == true) _load();
-                  },
+                  onPressed: () => _candidate(p),
                   icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
                   label: const Text('Add candidate'),
                 )
@@ -328,38 +355,44 @@ class _ElectionScreenState extends State<ElectionScreen> {
         if ((p['candidates'] as List).isEmpty) const Text('No candidates yet.'),
         for (final c in (p['candidates'] as List).cast<Map>())
           Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CandidatePhoto(
-                    name: c['name'] as String,
-                    photo: c['photo'] as String?,
-                    size: 72,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          c['name'] as String,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text('${c['member_no'] ?? ''}'),
-                        if ((c['manifesto'] as String?)?.isNotEmpty ?? false)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(c['manifesto'] as String),
-                          ),
-                      ],
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: draft && widget.isEc ? () => _candidate(p, c) : null,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CandidatePhoto(
+                      name: c['name'] as String,
+                      photo: c['photo'] as String?,
+                      size: 72,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            c['name'] as String,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text('${c['member_no'] ?? ''}'),
+                          if ((c['manifesto'] as String?)?.isNotEmpty ?? false)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(c['manifesto'] as String),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (draft && widget.isEc)
+                      const Icon(Icons.edit_outlined, size: 18),
+                  ],
+                ),
               ),
             ),
           ),

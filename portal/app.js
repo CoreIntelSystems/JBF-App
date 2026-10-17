@@ -257,7 +257,7 @@ function needsZone() {
 const officeName = (o) => (o === 'welfare' ? 'Welfare Committee' : 'Treasury');
 
 function askLine(r) {
-  return [r.amount != null ? money(r.amount) : '', r.type, r.period ? monthName(r.period) : '',
+  return [r.amount != null ? money(r.amount) : r.minimum != null ? 'from ' + money(r.minimum) : '', r.type, r.period ? monthName(r.period) : '',
     r.due_on ? 'due ' + day(r.due_on) : ''].filter(Boolean).join(' · ');
 }
 
@@ -374,6 +374,7 @@ function viewCommunity() {
       e.description ? h('div', { class: 'sub' }, e.description) : null));
   }
   out.append(ev);
+  out.append(welfareStandingCard());
   const welfare = home.welfare || [];
   if (welfare.length) {
     const w = h('div', { class: 'card' }, h('h2', null, 'My welfare cases'));
@@ -390,6 +391,36 @@ function viewCommunity() {
   out.append(ex);
   out.append(directoryCard());
   return out;
+}
+
+// Welfare is by choice: join or leave here, or by paying welfare dues or a
+// welfare contribution. Three payments missed in a row end the benefits.
+function welfareStandingCard() {
+  const w = home.welfare_standing || { status: 'none' };
+  const card = h('div', { class: 'card' }, h('h2', null, 'Welfare membership'));
+  const err = h('p', { class: 'err', hidden: true });
+  let text;
+  if (w.status === 'member') {
+    text = 'You are a welfare member' + (w.since ? ' since ' + day(w.since) : '') + '. Missing 3 payments in a row ends your welfare benefits.';
+    if (w.dues_behind || w.rounds_missed) text += ` Months of dues missed: ${w.dues_behind}. Welfare contributions missed: ${w.rounds_missed}.`;
+  } else if (w.status === 'disqualified') {
+    text = (w.note || 'You missed 3 payments in a row.') + ' Welfare benefits have stopped. Speak to the Welfare Committee to be reinstated.';
+  } else {
+    text = 'You are not in welfare. Welfare is by choice: join here, or pay welfare dues or a welfare contribution to be covered.';
+  }
+  card.append(h('p', null, text), err);
+  if (w.status !== 'disqualified') {
+    const join = w.status !== 'member';
+    const btn = h('button', { class: join ? '' : 'secondary', onclick: async () => {
+      btn.disabled = true;
+      try {
+        await rpc(join ? 'welfare_join' : 'welfare_leave', { token: session.token });
+        await loadHome();
+      } catch (ex) { err.textContent = ex.message; err.hidden = false; btn.disabled = false; }
+    } }, join ? 'Join welfare' : 'Leave welfare');
+    card.append(btn);
+  }
+  return card;
 }
 
 // Members can find each other by name or WhatsApp name.
@@ -488,12 +519,13 @@ async function openElections() {
     if (!r.elections.length) box.append(h('p', { class: 'hint' }, 'There are no elections yet.'));
     for (const e of r.elections) {
       const state = e.status === 'open' ? (e.voted_all ? 'You have voted' : e.can_vote ? 'Vote now' : 'Open')
-        : e.status === 'closed' ? 'See results' : e.status;
+        : e.status === 'closed' ? 'See results' : 'View';
       box.append(h('div', { class: 'card' }, h('h2', null, e.title),
-        h('div', { class: 'sub' }, e.status === 'open' ? 'Closes ' + new Date(e.closes_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : 'Voting closed'),
+        h('div', { class: 'sub' }, e.status === 'open' ? 'Closes ' + new Date(e.closes_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+          : e.status === 'closed' ? 'Voting closed' : e.status === 'draft' ? 'Being prepared. Voting has not opened.' : 'Cancelled'),
         h('button', { class: 'small', onclick: () => openElection(e.id) }, state)));
     }
-    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'To set up or open an election, or to use the Commission office (tasks, minutes, notices, voter roll and chat), use the full app.'));
+    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'To set up, change, cancel or open an election, or to use the Commission office (tasks, minutes, notices, voter roll and chat), use the full app.'));
   } catch (ex) { box.lastChild.replaceWith(h('p', { class: 'error' }, electionError(ex))); }
 }
 

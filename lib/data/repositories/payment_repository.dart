@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../domain/dues.dart';
+import '../../domain/welfare_membership.dart';
 import '../access_scope.dart';
 import '../../core/ids.dart';
 import '../database.dart';
@@ -245,6 +246,8 @@ class PaymentRepository {
     'category': t.category.name,
     'frequency': t.frequency.name,
     'amount': t.amount,
+    'minimumAmount': t.minimumAmount,
+    'welfareRule': t.welfareRule.name,
     'isActive': t.isActive,
     if (t.proposedAmount != null) 'proposedAmount': t.proposedAmount,
   };
@@ -265,6 +268,14 @@ class PaymentRepository {
     }
     if (type.frequency == ContributionFrequency.monthly && d.period == null) {
       throw PaymentException('Choose the month being paid for.');
+    }
+    if (type.minimumAmount != null && d.amount < type.minimumAmount!) {
+      throw PaymentException(
+        '${type.name} starts at GHS ${type.minimumAmount}. Enter that or more.',
+      );
+    }
+    if (type.welfareRule != WelfareRule.none && d.memberId == null) {
+      throw PaymentException('Choose the member paying ${type.name}.');
     }
     return _db.transaction(() async {
       final org = await _db.select(_db.orgSettings).getSingle();
@@ -313,8 +324,47 @@ class PaymentRepository {
           'period': d.period,
         },
       );
+      if (type.welfareRule != WelfareRule.none) {
+        await _joinWelfare(d, actor, p.id);
+      }
       return p;
     });
+  }
+
+  /// Paying welfare dues or a welfare contribution makes a member a welfare
+  /// member. A disqualified member is not brought back by paying: an officer
+  /// reinstates them.
+  Future<void> _joinWelfare(
+    PaymentDraft d,
+    Actor actor,
+    String paymentId,
+  ) async {
+    final m = await (_db.select(
+      _db.members,
+    )..where((x) => x.id.equals(d.memberId!))).getSingleOrNull();
+    if (m == null || m.welfareMembership != WelfareMembership.none) return;
+    var since = d.paidOn;
+    final p = d.period;
+    if (p != null && p.length == 7) {
+      final start = DateTime.tryParse('$p-01');
+      if (start != null && start.isBefore(since)) since = start;
+    }
+    await (_db.update(_db.members)..where((x) => x.id.equals(m.id))).write(
+      MembersCompanion(
+        welfareMembership: Value(WelfareMembership.member),
+        welfareSince: Value(since),
+        welfareEndedOn: const Value(null),
+        updatedAt: Value(_now()),
+        deviceId: Value(actor.deviceId),
+      ),
+    );
+    await _audit.log(
+      actor,
+      'welfare.join',
+      entity: 'members',
+      entityId: m.id,
+      newValue: {'how': 'payment', 'paymentId': paymentId},
+    );
   }
 
   /// Records several payments at once (e.g. dues collected at a monthly
@@ -432,14 +482,29 @@ class PaymentRepository {
       }
       paidByPeriod[p.period] = (paidByPeriod[p.period] ?? 0) + p.amount;
     }
+    var joined = m.dateJoined;
+    var stoppedOn = m.status == MemberStatus.active ? null : m.statusDate;
+    if (t.welfareRule == WelfareRule.dues) {
+      // Welfare is by choice: nothing is owed unless the member joined.
+      final since = m.welfareSince;
+      if (since == null) {
+        return Dues.summarise(
+          monthlyAmount: t.amount!,
+          liableMonths: const [],
+          paidByPeriod: paidByPeriod,
+        );
+      }
+      joined = since;
+      stoppedOn = WelfareRules.dutyEnds(stoppedOn, m.welfareEndedOn);
+    }
     return Dues.summarise(
       monthlyAmount: t.amount!,
       liableMonths: Dues.liableMonths(
-        joined: m.dateJoined,
+        joined: joined,
         now: _now(),
         duesStart: t.startDate,
         duesEnd: t.endDate,
-        stoppedOn: m.status == MemberStatus.active ? null : m.statusDate,
+        stoppedOn: stoppedOn,
       ),
       paidByPeriod: paidByPeriod,
     );

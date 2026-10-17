@@ -202,3 +202,11 @@ Every member can set their **WhatsApp name** on the Me page, whoever keeps
 their other details. It shows on your membership card and next to your name
 in chats, and members can search for each other by it.
 
+
+## Welfare
+
+Welfare is your choice. On the **Me** tab (or the **Community** page of the
+website) you can **Join** or **Leave** welfare. Paying welfare dues or a
+welfare contribution also makes you a welfare member. Welfare contributions
+have no fixed amount, only a minimum. If you miss three payments in a row you
+lose welfare benefits until the Welfare Committee reinstates you.

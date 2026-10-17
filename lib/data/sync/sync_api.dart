@@ -286,6 +286,12 @@ class SyncApi {
     'zone_ids': zoneIds,
   });
 
+  /// A member chooses to be in welfare, or leaves it.
+  Future<void> welfareJoin(String sessionToken) =>
+      _call('welfare_join', {'token': sessionToken});
+  Future<void> welfareLeave(String sessionToken) =>
+      _call('welfare_leave', {'token': sessionToken});
+
   Future<void> memberSignOut(String sessionToken) =>
       _call('member_sign_out', {'token': sessionToken});
 
@@ -582,8 +588,12 @@ class MemberHome {
     this.zoneIds = const [],
     this.zonesLocked = false,
     this.whatsappName,
+    this.standing = const WelfareStanding(),
   });
   final MemberStatement statement;
+
+  /// Whether they are in welfare (a choice), and how they are doing.
+  final WelfareStanding standing;
 
   /// The name the member uses on WhatsApp. Every member may change it.
   final String? whatsappName;
@@ -675,11 +685,44 @@ class MemberHome {
     zoneIds: [for (final z in (r['zone_ids'] as List? ?? const [])) '$z'],
     zonesLocked: r['zones_locked'] == true,
     whatsappName: r['whatsapp_name'] as String?,
+    standing: WelfareStanding.fromJson(
+      (r['welfare_standing'] as Map?) ?? const {},
+    ),
     warnings: [
       for (final w in _list(r['warnings']))
         (DateTime.tryParse('${w['at']}')?.toLocal(), '${w['details']}'),
     ],
   );
+}
+
+class WelfareStanding {
+  const WelfareStanding({
+    this.status = 'none',
+    this.since,
+    this.note,
+    this.duesBehind = 0,
+    this.roundsMissed = 0,
+  });
+  factory WelfareStanding.fromJson(Map r) => WelfareStanding(
+    status: r['status'] as String? ?? 'none',
+    since: DateTime.tryParse('${r['since']}'),
+    note: r['note'] as String?,
+    duesBehind: (r['dues_behind'] as num?)?.toInt() ?? 0,
+    roundsMissed: (r['rounds_missed'] as num?)?.toInt() ?? 0,
+  );
+
+  /// none, member or disqualified.
+  final String status;
+  final DateTime? since;
+  final String? note;
+
+  /// Finished months of welfare dues not paid, and finished welfare
+  /// contribution requests not paid. Three in a row disqualifies.
+  final int duesBehind;
+  final int roundsMissed;
+
+  bool get isMember => status == 'member';
+  bool get disqualified => status == 'disqualified';
 }
 
 class HomeWelfareCase {

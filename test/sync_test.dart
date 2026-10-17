@@ -286,6 +286,8 @@ void main() {
   test('welfare cases jump forward when a phone missed a step', () async {
     final kofi = (await main.db.select(main.db.members).get()).single;
     final type = (await main.db.select(main.db.welfareCaseTypes).get()).first;
+    const sec = WelfareActor(actor, name: 'Sec', roleName: 'Secretary');
+    await main.env.welfare.joinWelfare(kofi.id, sec);
     final c = await main.env.welfare.createCase(
       WelfareCaseDraft(
         memberId: kofi.id,

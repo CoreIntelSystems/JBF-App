@@ -475,6 +475,71 @@ class _MeTab extends StatelessWidget {
     }
   }
 
+  Future<void> _setWelfare(BuildContext context, bool join) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final api = context.read<AppServices>().sync.api;
+    try {
+      if (join) {
+        await api.welfareJoin(session.token);
+      } else {
+        await api.welfareLeave(session.token);
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(join ? 'You are now in welfare.' : 'You left welfare.'),
+        ),
+      );
+      await onChanged();
+    } on SyncException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            e.offline ? 'Connect to the internet to do this.' : e.message,
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _welfareCard(BuildContext context) {
+    final w = home.standing;
+    final (title, body) = switch (w.status) {
+      'member' => (
+        'You are a welfare member',
+        w.duesBehind > 0 || w.roundsMissed > 0
+            ? 'Missing 3 payments in a row ends your welfare benefits. '
+                  'Months of dues missed: ${w.duesBehind}. '
+                  'Welfare contributions missed: ${w.roundsMissed}.'
+            : 'Keep paying welfare dues and contributions. Missing 3 in a '
+                  'row ends your welfare benefits.',
+      ),
+      'disqualified' => (
+        'Welfare benefits stopped',
+        '${w.note ?? 'You missed 3 payments in a row.'} Speak to the Welfare '
+            'Committee to be reinstated.',
+      ),
+      _ => (
+        'You are not in welfare',
+        'Welfare is by choice. Join, or pay welfare dues or a welfare '
+            'contribution, to be covered.',
+      ),
+    };
+    return Card(
+      child: ListTile(
+        leading: Icon(w.isMember ? Icons.verified_user : Icons.shield_outlined),
+        title: Text(title),
+        subtitle: Text(body),
+        isThreeLine: true,
+        trailing: w.disqualified
+            ? null
+            : TextButton(
+                onPressed: () => _setWelfare(context, !w.isMember),
+                child: Text(w.isMember ? 'Leave' : 'Join'),
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -515,6 +580,8 @@ class _MeTab extends StatelessWidget {
         CommitteeNotices(access: ChatAccess(session.token)),
         MyOffices(access: ChatAccess(session.token)),
         PayRequestsEntry(access: ChatAccess(session.token)),
+        const SizedBox(height: 8),
+        _welfareCard(context),
         const SizedBox(height: 8),
         Text('My welfare cases', style: theme.textTheme.titleMedium),
         if (home.welfare.isEmpty)

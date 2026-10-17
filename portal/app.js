@@ -349,8 +349,75 @@ function paidForm(r, reload) {
     err, btn);
 }
 
+// Pay without being asked: pick what for (and the month), then report the
+// payment on the standing request the cloud makes for it.
+function selfPay() {
+  const box = h('div', { class: 'card' });
+  const start = h('button', { onclick: async () => {
+    start.disabled = true;
+    try {
+      const o = await rpc('pay_self_options', { token: session.token });
+      start.replaceWith(selfPayForm(o, box));
+    } catch (ex) {
+      if (ex.expired) return signOutLocal();
+      start.disabled = false;
+      box.append(h('p', { class: 'error' }, ex.message));
+    }
+  } }, 'Pay my dues');
+  box.append(h('h2', null, 'Pay my dues'),
+    h('p', { class: 'hint' }, 'Pay by Mobile Money, then tell the Treasurer here. They confirm it and you get a receipt.'), start);
+  return box;
+}
+
+function selfPayForm(o, box) {
+  const types = o.types || [];
+  const type = h('select', null, ...types.map((t) => h('option', { value: t.id }, t.name)));
+  const monthly = types.find((t) => t.frequency === 'monthly');
+  if (monthly) type.value = monthly.id;
+  const now = new Date();
+  const monthOpts = [];
+  for (let i = -2; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    monthOpts.push(h('option', { value: key }, monthName(key)));
+  }
+  const month = h('select', null, ...monthOpts);
+  month.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const monthLabel = h('label', null, 'Month');
+  const sync = () => {
+    const t = types.find((x) => x.id === type.value);
+    const isMonthly = t && t.frequency === 'monthly';
+    month.hidden = !isMonthly; monthLabel.hidden = !isMonthly;
+  };
+  type.addEventListener('change', sync);
+  sync();
+  const err = h('p', { class: 'error', role: 'alert', hidden: true });
+  const btn = h('button', { type: 'submit' }, 'I have paid');
+  return h('form', { onsubmit: async (e) => {
+    e.preventDefault();
+    err.hidden = true; btn.disabled = true;
+    try {
+      const t = types.find((x) => x.id === type.value);
+      const r = await rpc('pay_self_request', { token: session.token, type_id: type.value,
+        period: t && t.frequency === 'monthly' ? month.value : null });
+      const st = r.mine && r.mine.status;
+      if (st === 'pending' || st === 'confirmed') {
+        err.textContent = st === 'pending' ? 'You already told the Treasurer about this one. It is waiting to be confirmed.' : 'This payment is already confirmed.';
+        err.hidden = false; btn.disabled = false; return;
+      }
+      box.replaceWith(requestCard(r, () => show('pay')));
+    } catch (ex) {
+      if (ex.expired) return signOutLocal();
+      err.textContent = ex.message; err.hidden = false; btn.disabled = false;
+    }
+  } },
+    o.pay_to ? h('div', { class: 'notice' }, h('b', null, 'Pay to: '), o.pay_to)
+      : h('p', { class: 'hint' }, 'The Treasurer has not yet said where to pay. Ask them for the Mobile Money number, pay, then come back to tell them.'),
+    h('label', null, 'What are you paying for?'), type, monthLabel, month, err, btn);
+}
+
 function viewPay() {
-  const out = h('div', null, payRequests());
+  const out = h('div', null, selfPay(), payRequests());
   const card = h('div', { class: 'card' }, h('h2', null, 'Payments'));
   out.append(card);
   const pays = home.payments || [];

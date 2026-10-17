@@ -46,6 +46,7 @@ class _MyPaymentRequestsState extends State<MyPaymentRequests> {
     widget.access.token,
   );
   List<Map<String, dynamic>> _requests = const [];
+  bool _online = false;
 
   @override
   void initState() {
@@ -56,7 +57,12 @@ class _MyPaymentRequestsState extends State<MyPaymentRequests> {
   Future<void> _load() async {
     try {
       final r = await _api.mine();
-      if (mounted) setState(() => _requests = r);
+      if (mounted) {
+        setState(() {
+          _requests = r;
+          _online = true;
+        });
+      }
     } catch (_) {
       // No internet or no member sign-in: the cards simply stay hidden.
     }
@@ -79,13 +85,53 @@ class _MyPaymentRequestsState extends State<MyPaymentRequests> {
     }
   }
 
+  /// Pay without being asked: choose what for, then report the payment.
+  Future<void> _payOwn() async {
+    final r = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => SelfPayDialog(api: _api),
+    );
+    if (r == null || !mounted) return;
+    final status = (r['mine'] as Map?)?['status'];
+    if (status == 'pending' || status == 'confirmed') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == 'pending'
+                ? 'You already told the Treasurer about this payment. '
+                      'It is waiting to be confirmed.'
+                : 'This payment is already confirmed.',
+          ),
+        ),
+      );
+      _load();
+      return;
+    }
+    await _pay(r);
+    _load();
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_requests.isEmpty) return const SizedBox.shrink();
+    if (!_online && _requests.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionTitle('Payments asked of me'),
+        Card(
+          child: ListTile(
+            leading: const IconBadge(Icons.payments_outlined, size: 36),
+            title: const Text(
+              'Pay my dues',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text(
+              'Pay by Mobile Money, then tell the Treasurer here',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: _payOwn,
+          ),
+        ),
+        if (_requests.isNotEmpty) const SectionTitle('Payments asked of me'),
         for (final r in _requests) _card(r),
       ],
     );
@@ -209,6 +255,197 @@ class _MyPaymentRequestsState extends State<MyPaymentRequests> {
       Expanded(child: Text(text)),
     ],
   );
+}
+
+/// A member picks what they are paying for (and the month, for monthly
+/// dues). Pops the request to report the payment on.
+class SelfPayDialog extends StatefulWidget {
+  const SelfPayDialog({super.key, required this.api});
+
+  final PayApi api;
+
+  @override
+  State<SelfPayDialog> createState() => _SelfPayDialogState();
+}
+
+class _SelfPayDialogState extends State<SelfPayDialog> {
+  Map<String, dynamic>? _options;
+  String? _typeId;
+  late String _period = _monthKey(DateTime.now());
+  String? _error;
+  bool _busy = false;
+
+  static String _monthKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}';
+
+  /// The last twelve months and the next two, newest first.
+  List<String> get _months {
+    final now = DateTime.now();
+    return [
+      for (var i = -2; i < 12; i++)
+        _monthKey(DateTime(now.year, now.month - i)),
+    ];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.api
+        .selfOptions()
+        .then((o) {
+          if (!mounted) return;
+          final types = (o['types'] as List? ?? const []);
+          setState(() {
+            _options = o;
+            // Monthly dues first: it is what most members pay.
+            final monthly = types.whereType<Map>().where(
+              (t) => t['frequency'] == 'monthly',
+            );
+            _typeId =
+                (monthly.isNotEmpty
+                        ? monthly.first['id']
+                        : types.isNotEmpty
+                        ? (types.first as Map)['id']
+                        : null)
+                    as String?;
+          });
+        })
+        .catchError((Object e) {
+          if (mounted) setState(() => _error = payError(e));
+        });
+  }
+
+  Map<String, dynamic>? get _type {
+    for (final t in (_options?['types'] as List? ?? const [])) {
+      if (t is Map && t['id'] == _typeId) return Map<String, dynamic>.from(t);
+    }
+    return null;
+  }
+
+  Future<void> _next() async {
+    final t = _type;
+    if (t == null) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final r = await widget.api.selfRequest(
+        _typeId!,
+        period: t['frequency'] == 'monthly' ? _period : null,
+      );
+      if (mounted) Navigator.pop(context, r);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = payError(e);
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final o = _options;
+    final types = [
+      for (final t in (o?['types'] as List? ?? const []))
+        if (t is Map) Map<String, dynamic>.from(t),
+    ];
+    final payTo = o?['pay_to'] as String?;
+    return AlertDialog(
+      title: const Text('Pay my dues'),
+      content: SingleChildScrollView(
+        child: o == null
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: _error == null
+                      ? const CircularProgressIndicator()
+                      : Text(_error!),
+                ),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (payTo == null)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'The Treasurer has not yet said where to pay. Ask '
+                        'them for the Mobile Money number, pay, then come '
+                        'back here to tell them.',
+                      ),
+                    )
+                  else
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: .06),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: SelectableText('Pay to: $payTo'),
+                    ),
+                  DropdownButtonFormField<String>(
+                    initialValue: _typeId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'What are you paying for?',
+                    ),
+                    items: [
+                      for (final t in types)
+                        DropdownMenuItem(
+                          value: t['id'] as String,
+                          child: Text('${t['name']}'),
+                        ),
+                    ],
+                    onChanged: (v) => setState(() => _typeId = v),
+                  ),
+                  if (_type?['frequency'] == 'monthly') ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _period,
+                      decoration: const InputDecoration(labelText: 'Month'),
+                      items: [
+                        for (final m in _months)
+                          DropdownMenuItem(
+                            value: m,
+                            child: Text(formatPeriod(m)),
+                          ),
+                      ],
+                      onChanged: (v) => setState(() => _period = v ?? _period),
+                    ),
+                  ],
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _busy || _type == null ? null : _next,
+          child: const Text('I have paid'),
+        ),
+      ],
+    );
+  }
 }
 
 /// Where a member says how they paid. Pops true once it is sent.
@@ -495,6 +732,65 @@ class _PayRequestsScreenState extends State<PayRequestsScreen> {
       'welfare',
   ];
 
+  /// The Mobile Money number members pay to when they pay their own dues.
+  Future<void> _setPayTo() async {
+    String current = '';
+    try {
+      current = ((await widget.api.selfOptions())['pay_to'] as String?) ?? '';
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(payError(e))));
+      }
+      return;
+    }
+    if (!mounted) return;
+    final c = TextEditingController(text: current);
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Where members pay'),
+        content: TextField(
+          controller: c,
+          maxLines: 3,
+          maxLength: 500,
+          decoration: const InputDecoration(
+            hintText: 'e.g. MoMo 024 000 0000 (JBF Treasury)',
+            helperText: 'Shown to every member who pays their own dues.',
+            helperMaxLines: 2,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, c.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    c.dispose();
+    if (text == null) return;
+    try {
+      await widget.api.setPayTo(text);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Saved.')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(payError(e))));
+      }
+    }
+  }
+
   Future<void> _new() async {
     final done = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -517,7 +813,17 @@ class _PayRequestsScreenState extends State<PayRequestsScreen> {
           Map<String, dynamic>.from(r),
     ];
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment requests')),
+      appBar: AppBar(
+        title: const Text('Payment requests'),
+        actions: [
+          if (d?['can_confirm'] == true)
+            IconButton(
+              tooltip: 'Where members pay',
+              icon: const Icon(Icons.phone_android_rounded),
+              onPressed: _setPayTo,
+            ),
+        ],
+      ),
       floatingActionButton: d != null && _offices.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: _new,

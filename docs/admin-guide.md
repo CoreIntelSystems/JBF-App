@@ -359,3 +359,11 @@ Welfare is by choice. Not every member is in welfare.
   dues then start again from that day.
 - Paying does not bring back a disqualified member, only reinstatement does.
 - Phones must update: an older build saving a member wipes these fields.
+
+## Members paying their own dues
+
+Members do not have to wait for a request. In the app (More, or the member site's Payments tab) they tap **Pay my dues**, choose what they are paying for (and the month for monthly dues), pay the Treasury's Mobile Money number, and enter the transaction ID from the payment message. The Treasurer confirms it in **Payment requests**, which writes the receipt like any other.
+
+The Treasurer sets the Mobile Money number members see: **Payment requests**, then the phone icon at the top (**Where members pay**). Until it is set, members are told to ask the Treasurer for the number.
+
+Paying inside the app by Mobile Money or card, with no confirmation step, needs a CoreIntel payment provider account (for example Paystack or Hubtel). It is not switched on yet.

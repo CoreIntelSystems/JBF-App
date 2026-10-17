@@ -20,6 +20,31 @@ class PayApi {
   Future<List<Map<String, dynamic>>> mine() async =>
       _list(await _api.rpc('pay_requests_mine', {'token': token}));
 
+  /// What a member can pay without being asked (`types`), and the Mobile
+  /// Money number to pay to (`pay_to`, may be null).
+  Future<Map<String, dynamic>> selfOptions() async => Map<String, dynamic>.from(
+    await _api.rpc('pay_self_options', {'token': token}) as Map,
+  );
+
+  /// The standing request a member reports their own payment on, for one
+  /// contribution type (and [period] `YYYY-MM` for monthly types).
+  Future<Map<String, dynamic>> selfRequest(
+    String typeId, {
+    String? period,
+  }) async => Map<String, dynamic>.from(
+    await _api.rpc('pay_self_request', {
+          'token': token,
+          'type_id': typeId,
+          'period': period,
+        })
+        as Map,
+  );
+
+  /// A treasurer sets where members pay (for example the Mobile Money
+  /// number); null or empty clears it.
+  Future<void> setPayTo(String? text) =>
+      _api.rpc('pay_to_set', {'token': token, 'pay_to': text});
+
   /// [method] is `momo`, `bank` or `cash`.
   Future<void> submit(
     String requestId, {

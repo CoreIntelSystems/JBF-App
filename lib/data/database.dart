@@ -84,6 +84,10 @@ class Members extends Table with SyncColumns {
   TextColumn get location => text().nullable()();
   TextColumn get phone => text().nullable()();
   TextColumn get whatsapp => text().nullable()();
+
+  /// The name the member uses on WhatsApp, so others can tell who is who
+  /// in the group. Shown on their card and in chats, and searchable.
+  TextColumn get whatsappName => text().nullable()();
   TextColumn get email => text().nullable()();
   TextColumn get address => text().nullable()();
   TextColumn get gpsAddress => text().nullable()();
@@ -551,7 +555,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -690,6 +694,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 11) {
         await m.addColumn(members, members.selfEdit);
+      }
+      if (from < 12) {
+        await m.addColumn(members, members.whatsappName);
+        // The members update trigger lists the shared columns.
         await createSyncTriggers(customStatement, _columnsOf);
       }
     },

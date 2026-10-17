@@ -117,26 +117,41 @@ void main() {
     expect(loaded.primaryZoneId, zone[1]);
   });
 
-  test('search by name, phone and member ID, and filter by zone', () async {
-    await env.members.create(
-      env.draft('Abena Mensah', [zone[1]!]),
-      TestEnv.actor,
-    );
-    final k = env.draft('Kwame Boateng', [zone[2]!])..phone = '0551234567';
-    await env.members.create(k, TestEnv.actor);
+  test(
+    'search by name, WhatsApp name, phone and member ID, and zone',
+    () async {
+      await env.members.create(
+        env.draft('Abena Mensah', [zone[1]!]),
+        TestEnv.actor,
+      );
+      final k = env.draft('Kwame Boateng', [zone[2]!])
+        ..phone = '0551234567'
+        ..whatsappName = ' Kay B 🇬🇭 ';
+      await env.members.create(k, TestEnv.actor);
 
-    Future<List<String>> names(MemberFilter f) async =>
-        (await env.members.watchMembers(f).first)
-            .map((m) => m.member.fullName)
-            .toList();
+      Future<List<String>> names(MemberFilter f) async =>
+          (await env.members.watchMembers(f).first)
+              .map((m) => m.member.fullName)
+              .toList();
 
-    expect(await names(const MemberFilter(query: 'abena')), ['Abena Mensah']);
-    expect(await names(const MemberFilter(query: '0551')), ['Kwame Boateng']);
-    expect(await names(const MemberFilter(query: 'JBF-000001')), [
-      'Abena Mensah',
-    ]);
-    expect(await names(MemberFilter(zoneId: zone[2])), ['Kwame Boateng']);
-  });
+      expect(await names(const MemberFilter(query: 'abena')), ['Abena Mensah']);
+      expect(await names(const MemberFilter(query: '0551')), ['Kwame Boateng']);
+      expect(await names(const MemberFilter(query: 'JBF-000001')), [
+        'Abena Mensah',
+      ]);
+      expect(await names(const MemberFilter(query: 'kay b')), [
+        'Kwame Boateng',
+      ]);
+      expect(await names(MemberFilter(zoneId: zone[2])), ['Kwame Boateng']);
+      final saved =
+          (await env.members
+                  .watchMembers(const MemberFilter(query: 'Kwame'))
+                  .first)
+              .single
+              .member;
+      expect(saved.whatsappName, 'Kay B 🇬🇭');
+    },
+  );
 
   test('status changes and edits are written to the audit log', () async {
     final m = await env.members.create(

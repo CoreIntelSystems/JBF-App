@@ -330,6 +330,7 @@ class SyncApi {
         ChatMessage(
           id: m['id'] as String,
           author: m['author'] as String? ?? '',
+          authorWhatsapp: m['author_whatsapp'] as String?,
           body: m['body'] as String? ?? '',
           at: DateTime.parse(m['at'] as String).toLocal(),
           mine: m['mine'] == true,
@@ -456,9 +457,13 @@ class ChatMessage {
     required this.body,
     required this.at,
     required this.mine,
+    this.authorWhatsapp,
   });
   final String id;
   final String author;
+
+  /// The sender's WhatsApp name, so people recognise them from the group.
+  final String? authorWhatsapp;
   final String body;
   final DateTime at;
   final bool mine;
@@ -576,8 +581,12 @@ class MemberHome {
     this.zoneOptions = const [],
     this.zoneIds = const [],
     this.zonesLocked = false,
+    this.whatsappName,
   });
   final MemberStatement statement;
+
+  /// The name the member uses on WhatsApp. Every member may change it.
+  final String? whatsappName;
 
   /// The member has been given an executive role since signing in.
   final bool officer;
@@ -646,6 +655,7 @@ class MemberHome {
       for (final d in _list(r['directory']))
         HomeDirectoryEntry(
           name: d['name'] as String? ?? '',
+          whatsappName: d['whatsapp_name'] as String?,
           zones: [for (final z in (d['zones'] as List? ?? const [])) '$z'],
         ),
     ],
@@ -664,6 +674,7 @@ class MemberHome {
     ],
     zoneIds: [for (final z in (r['zone_ids'] as List? ?? const [])) '$z'],
     zonesLocked: r['zones_locked'] == true,
+    whatsappName: r['whatsapp_name'] as String?,
     warnings: [
       for (final w in _list(r['warnings']))
         (DateTime.tryParse('${w['at']}')?.toLocal(), '${w['details']}'),
@@ -711,8 +722,13 @@ class HomeExecutive {
 }
 
 class HomeDirectoryEntry {
-  const HomeDirectoryEntry({required this.name, required this.zones});
+  const HomeDirectoryEntry({
+    required this.name,
+    required this.zones,
+    this.whatsappName,
+  });
   final String name;
+  final String? whatsappName;
   final List<String> zones;
 }
 

@@ -148,6 +148,8 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                           m.fullName,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
+                        if (m.whatsappName != null)
+                          Text('WhatsApp: ${m.whatsappName}'),
                         const SizedBox(height: 4),
                         StatusChip(status: m.status),
                       ],
@@ -187,6 +189,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   _Row('Status since', formatDate(m.statusDate)),
               ]),
               _Section('Personal', [
+                _Row('WhatsApp name', m.whatsappName),
                 _Row('Gender', m.gender),
                 _Row('Date of birth', formatDate(m.dateOfBirth)),
                 _Row('Nationality', m.nationality),
@@ -196,7 +199,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
               ]),
               _Section('Contact', [
                 _Row('Mobile', m.phone),
-                _Row('WhatsApp', m.whatsapp),
+                _Row('WhatsApp number', m.whatsapp),
                 _Row('Email', m.email),
                 _Row('Address', m.address),
                 _Row('GPS address', m.gpsAddress),

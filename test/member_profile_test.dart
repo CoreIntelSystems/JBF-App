@@ -42,4 +42,48 @@ void main() {
     );
     expect(find.byType(CheckboxListTile), findsNothing);
   });
+
+  test('member home and chats carry WhatsApp names', () {
+    final home = MemberHome.fromJson({
+      'member': {'name': 'Kofi', 'member_no': 'JBF-000002', 'status': 'active'},
+      'whatsapp_name': 'Kofi B',
+      'directory': [
+        {
+          'name': 'Ama Owusu',
+          'whatsapp_name': 'Ama O',
+          'zones': ['Zone 1'],
+        },
+        {'name': 'Yaw Mensah', 'zones': []},
+      ],
+    });
+    expect(home.whatsappName, 'Kofi B');
+    expect(home.directory.first.whatsappName, 'Ama O');
+    expect(home.directory.last.whatsappName, isNull);
+  });
+
+  testWidgets('members from the founding list edit their WhatsApp name', (
+    tester,
+  ) async {
+    final home = MemberHome.fromJson({
+      'member': {'name': 'Kofi', 'member_no': 'JBF-000002', 'status': 'active'},
+      'self_edit': true,
+      'profile': {'full_name': 'Kofi', 'whatsapp_name': 'Kofi B'},
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MemberProfileScreen(
+          home: home,
+          session: const MemberSession(
+            token: 't',
+            memberKey: 'k',
+            memberNo: 'JBF-000002',
+            name: 'Kofi',
+            orgName: 'JBF',
+          ),
+        ),
+      ),
+    );
+    expect(find.text('WhatsApp name'), findsOneWidget);
+    expect(find.text('Kofi B'), findsOneWidget);
+  });
 }

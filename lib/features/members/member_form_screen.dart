@@ -37,6 +37,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
 
   late final _c = <String, TextEditingController>{
     'fullName': TextEditingController(text: _draft.fullName),
+    'whatsappName': TextEditingController(text: _draft.whatsappName),
     'nationality': TextEditingController(text: _draft.nationality),
     'occupation': TextEditingController(text: _draft.occupation),
     'location': TextEditingController(text: _draft.location),
@@ -151,6 +152,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
     String text(String k) => _c[k]!.text;
     _draft
       ..fullName = text('fullName')
+      ..whatsappName = text('whatsappName')
       ..nationality = text('nationality')
       ..occupation = text('occupation')
       ..location = text('location')
@@ -215,6 +217,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
               validator: (v) =>
                   (v ?? '').trim().isEmpty ? 'Enter the full name.' : null,
             ),
+            _field('whatsappName', 'WhatsApp name'),
             _choice('Gender', genders, _draft.gender, (v) => _draft.gender = v),
             _dateTile(
               'Date of birth',

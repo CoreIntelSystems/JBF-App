@@ -19,6 +19,7 @@ class MemberDraft {
     this.location,
     this.phone,
     this.whatsapp,
+    this.whatsappName,
     this.email,
     this.address,
     this.gpsAddress,
@@ -46,6 +47,7 @@ class MemberDraft {
       location: m.location,
       phone: m.phone,
       whatsapp: m.whatsapp,
+      whatsappName: m.whatsappName,
       email: m.email,
       address: m.address,
       gpsAddress: m.gpsAddress,
@@ -67,6 +69,7 @@ class MemberDraft {
   String? location;
   String? phone;
   String? whatsapp;
+  String? whatsappName;
   String? email;
   String? address;
   String? gpsAddress;
@@ -90,6 +93,7 @@ class MemberDraft {
     location: Value(_clean(location)),
     phone: Value(_clean(phone)),
     whatsapp: Value(_clean(whatsapp)),
+    whatsappName: Value(_clean(whatsappName)),
     email: Value(_clean(email)),
     address: Value(_clean(address)),
     gpsAddress: Value(_clean(gpsAddress)),
@@ -190,7 +194,7 @@ class MemberRepository {
   }
 
   /// Members matching [filter], newest first by member number.
-  /// Searches name, phone, WhatsApp and member ID.
+  /// Searches name, WhatsApp name, phone, WhatsApp number and member ID.
   Stream<List<MemberWithZones>> watchMembers(MemberFilter filter) {
     final q = _db.select(_db.members)..where((m) => m.deletedAt.isNull());
     final text = filter.query.trim();
@@ -199,6 +203,7 @@ class MemberRepository {
       q.where(
         (m) =>
             m.fullName.like(like, escapeChar: r'\') |
+            m.whatsappName.like(like, escapeChar: r'\') |
             m.memberNo.like(like, escapeChar: r'\') |
             m.phone.like(like, escapeChar: r'\') |
             m.whatsapp.like(like, escapeChar: r'\'),

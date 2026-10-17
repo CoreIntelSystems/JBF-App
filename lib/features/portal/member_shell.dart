@@ -283,7 +283,10 @@ class _PeopleTabState extends State<_PeopleTab> {
     final q = _query.toLowerCase();
     final people = [
       for (final d in widget.home.directory)
-        if (q.isEmpty || d.name.toLowerCase().contains(q)) d,
+        if (q.isEmpty ||
+            d.name.toLowerCase().contains(q) ||
+            (d.whatsappName ?? '').toLowerCase().contains(q))
+          d,
     ];
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -313,7 +316,7 @@ class _PeopleTabState extends State<_PeopleTab> {
         TextField(
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.search),
-            hintText: 'Search by name',
+            hintText: 'Search by name or WhatsApp name',
           ),
           onChanged: (v) => setState(() => _query = v.trim()),
         ),
@@ -321,7 +324,14 @@ class _PeopleTabState extends State<_PeopleTab> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(p.name),
-            subtitle: p.zones.isEmpty ? null : Text(p.zones.join(', ')),
+            subtitle: p.zones.isEmpty && p.whatsappName == null
+                ? null
+                : Text(
+                    [
+                      if (p.whatsappName != null) 'WhatsApp: ${p.whatsappName}',
+                      if (p.zones.isNotEmpty) p.zones.join(', '),
+                    ].join(' · '),
+                  ),
           ),
       ],
     );
@@ -413,6 +423,58 @@ class _MeTab extends StatelessWidget {
     }
   }
 
+  /// Every member may set the name they use on WhatsApp.
+  Future<void> _editWhatsappName(BuildContext context) async {
+    final name = TextEditingController(text: home.whatsappName);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('My WhatsApp name'),
+        content: TextField(
+          key: const Key('whatsappNameField'),
+          controller: name,
+          autofocus: true,
+          maxLength: 200,
+          decoration: const InputDecoration(
+            helperText: 'The name others see for you on WhatsApp',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<AppServices>().sync.api.memberUpdateProfile(
+        session.token,
+        {'whatsapp_name': name.text},
+      );
+      messenger.showSnackBar(
+        const SnackBar(content: Text('WhatsApp name saved.')),
+      );
+      await onChanged();
+    } on SyncException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            e.offline
+                ? 'Connect to the internet to save your WhatsApp name.'
+                : e.message,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -490,13 +552,22 @@ class _MeTab extends StatelessWidget {
               if (saved == true) await onChanged();
             },
           )
-        else
+        else ...[
+          ListTile(
+            key: const Key('myWhatsappName'),
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.chat_outlined),
+            title: const Text('My WhatsApp name'),
+            subtitle: Text(home.whatsappName ?? 'Not set yet'),
+            onTap: () => _editWhatsappName(context),
+          ),
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
             child: Text(
-              'To correct your details, speak to your Zone Secretary.',
+              'To correct your other details, speak to your Zone Secretary.',
             ),
           ),
+        ],
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.password),
@@ -595,6 +666,8 @@ class _MemberCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
+                if (home.whatsappName != null)
+                  Text('WhatsApp: ${home.whatsappName}'),
                 Text('Zone: ${s.zones.isEmpty ? 'None' : s.zones.join(', ')}'),
                 Text('Member since ${formatDate(s.joined)}'),
                 Text('Status: ${capitalize(s.status)}'),

@@ -71,6 +71,7 @@ class _ContributionTypesScreenState extends State<ContributionTypesScreen> {
                       t.category.label,
                       t.frequency.label,
                       if (!t.appliesToAll) 'Executives only',
+                      if (t.welfareRule != WelfareRule.none) 'Welfare members',
                       if (!t.isActive) 'Not in use',
                     ].join(' · '),
                   ),
@@ -78,7 +79,9 @@ class _ContributionTypesScreenState extends State<ContributionTypesScreen> {
                     t.amount == null
                         ? (t.frequency == ContributionFrequency.monthly
                               ? 'Not set'
-                              : 'Any amount')
+                              : t.minimumAmount == null
+                              ? 'Any amount'
+                              : 'From ${formatMoney(t.minimumAmount!)}')
                         : formatMoney(t.amount!),
                     style:
                         t.amount == null &&
@@ -183,7 +186,14 @@ class _ContributionTypeFormState extends State<ContributionTypeForm> {
         ? ''
         : moneyInput(widget.existing!.amount!),
   );
+  late final _minimum = TextEditingController(
+    text: widget.existing?.minimumAmount == null
+        ? ''
+        : moneyInput(widget.existing!.minimumAmount!),
+  );
   late final _notes = TextEditingController(text: widget.existing?.notes);
+  late WelfareRule _welfareRule =
+      widget.existing?.welfareRule ?? WelfareRule.none;
   late ContributionCategory _category =
       widget.existing?.category ?? ContributionCategory.voluntary;
   late ContributionFrequency _frequency =
@@ -197,6 +207,7 @@ class _ContributionTypeFormState extends State<ContributionTypeForm> {
   void dispose() {
     _name.dispose();
     _amount.dispose();
+    _minimum.dispose();
     _notes.dispose();
     super.dispose();
   }
@@ -216,6 +227,7 @@ class _ContributionTypeFormState extends State<ContributionTypeForm> {
     final services = context.read<AppServices>();
     final user = context.read<AuthCubit>().user!;
     final amountText = _amount.text.trim();
+    final minimumText = _minimum.text.trim();
     final notes = _notes.text.trim();
     setState(() => _saving = true);
     try {
@@ -226,6 +238,12 @@ class _ContributionTypeFormState extends State<ContributionTypeForm> {
           category: Value(_category),
           frequency: Value(_frequency),
           amount: Value(amountText.isEmpty ? null : parseMoney(amountText)),
+          minimumAmount: Value(
+            amountText.isNotEmpty || minimumText.isEmpty
+                ? null
+                : parseMoney(minimumText),
+          ),
+          welfareRule: Value(_welfareRule),
           startDate: Value(_start),
           isActive: Value(_active),
           appliesToAll: Value(_appliesToAll),
@@ -304,6 +322,48 @@ class _ContributionTypeFormState extends State<ContributionTypeForm> {
                 final a = parseMoney(t);
                 return a == null || a <= 0 ? 'Enter a valid amount' : null;
               },
+            ),
+            if (!monthly) ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _minimum,
+                decoration: const InputDecoration(
+                  labelText: 'Minimum amount',
+                  helperText:
+                      'The least a payment may be. Leave empty for no minimum',
+                  prefixText: 'GHS ',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                validator: (v) {
+                  final t = (v ?? '').trim();
+                  if (t.isEmpty) return null;
+                  final a = parseMoney(t);
+                  return a == null || a <= 0 ? 'Enter a valid amount' : null;
+                },
+              ),
+            ],
+            const SizedBox(height: 16),
+            DropdownButtonFormField<WelfareRule>(
+              isExpanded: true,
+              initialValue: _welfareRule,
+              decoration: const InputDecoration(labelText: 'Welfare'),
+              items: const [
+                DropdownMenuItem(
+                  value: WelfareRule.none,
+                  child: Text('Not part of welfare'),
+                ),
+                DropdownMenuItem(
+                  value: WelfareRule.dues,
+                  child: Text('Welfare dues (welfare members owe it)'),
+                ),
+                DropdownMenuItem(
+                  value: WelfareRule.contribution,
+                  child: Text('Welfare contribution (paying joins welfare)'),
+                ),
+              ],
+              onChanged: (r) => setState(() => _welfareRule = r!),
             ),
             if (monthly) ...[
               const SizedBox(height: 8),

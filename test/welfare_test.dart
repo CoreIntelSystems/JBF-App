@@ -31,6 +31,7 @@ void main() {
       TestEnv.actor,
     );
     types = await env.welfare.activeCaseTypes();
+    await env.welfare.joinWelfare(member.id, treasurer);
   });
   tearDown(() => env.db.close());
 

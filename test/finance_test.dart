@@ -95,6 +95,7 @@ void main() {
 
       // A paid welfare case counts as spending.
       const by = WelfareActor(TestEnv.actor, name: 'T', roleName: 'Treasurer');
+      await env.welfare.joinWelfare(kofi.id, by);
       final type = (await env.welfare.activeCaseTypes()).first;
       final c = await env.welfare.createCase(
         WelfareCaseDraft(

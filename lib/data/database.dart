@@ -71,6 +71,10 @@ class Zones extends Table with SyncColumns {
 
 enum MemberStatus { active, inactive, suspended, deceased }
 
+/// Welfare is by choice: a member is in it, out of it, or has been put out
+/// for missing payments (see lib/domain/welfare_membership.dart).
+enum WelfareMembership { none, member, disqualified }
+
 @TableIndex(name: 'members_full_name', columns: {#fullName})
 @TableIndex(name: 'members_phone', columns: {#phone})
 class Members extends Table with SyncColumns {
@@ -105,6 +109,22 @@ class Members extends Table with SyncColumns {
   /// registered later are updated by the Founder, General Secretary or
   /// their Zone Secretary.
   BoolColumn get selfEdit => boolean().withDefault(const Constant(false))();
+
+  /// Whether the member chose to be in welfare. Welfare dues are owed only
+  /// by members; welfare benefits are paid only to members in good standing.
+  TextColumn get welfareMembership => textEnum<WelfareMembership>().withDefault(
+    Constant(WelfareMembership.none.name),
+  )();
+
+  /// When welfare dues start for this member: the day they joined, or were
+  /// taken back after being disqualified.
+  DateTimeColumn get welfareSince => dateTime().nullable()();
+
+  /// When they left welfare or were disqualified; dues stop here.
+  DateTimeColumn get welfareEndedOn => dateTime().nullable()();
+
+  /// Why they were disqualified, or who took them back.
+  TextColumn get welfareNote => text().nullable()();
 }
 
 @TableIndex(name: 'member_zones_member', columns: {#memberId})
@@ -224,6 +244,21 @@ enum ContributionFrequency {
   final String label;
 }
 
+/// How a contribution type is tied to welfare membership.
+enum WelfareRule {
+  /// Nothing to do with welfare membership.
+  none,
+
+  /// Monthly welfare dues: owed by welfare members only. Three months in a
+  /// row unpaid disqualifies. Paying makes a member a welfare member.
+  dues,
+
+  /// Welfare contribution: any member may pay, from a minimum. Paying makes
+  /// them a welfare member. Welfare members who miss three requests in a
+  /// row are disqualified.
+  contribution,
+}
+
 /// What members contribute towards. Amounts are configurable per
 /// organisation; a null amount means "any amount".
 class ContributionTypes extends Table with SyncColumns {
@@ -245,6 +280,12 @@ class ContributionTypes extends Table with SyncColumns {
   TextColumn get proposedByName => text().nullable()();
   DateTimeColumn get proposedAt => dateTime().nullable()();
   TextColumn get approvedByName => text().nullable()();
+
+  /// The least a payment may be, for types that have no fixed [amount].
+  IntColumn get minimumAmount => integer().nullable()();
+
+  TextColumn get welfareRule =>
+      textEnum<WelfareRule>().withDefault(Constant(WelfareRule.none.name))();
 }
 
 enum PaymentMethod {
@@ -555,7 +596,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -567,6 +608,7 @@ class AppDatabase extends _$AppDatabase {
       await _createPaymentGuards();
       await _seed();
       await _seedContributionTypes();
+      await _tieDuesToWelfare();
       await _createWelfareGuards();
       await _seedWelfareCaseTypes();
       await _createExpenseGuards();
@@ -697,8 +739,20 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 12) {
         await m.addColumn(members, members.whatsappName);
+      }
+      if (from < 13) {
+        await m.addColumn(members, members.welfareMembership);
+        await m.addColumn(members, members.welfareSince);
+        await m.addColumn(members, members.welfareEndedOn);
+        await m.addColumn(members, members.welfareNote);
+        // Created with these already when coming from v1.
+        if (from >= 2) {
+          await m.addColumn(contributionTypes, contributionTypes.minimumAmount);
+          await m.addColumn(contributionTypes, contributionTypes.welfareRule);
+        }
         // The members update trigger lists the shared columns.
         await createSyncTriggers(customStatement, _columnsOf);
+        await _tieDuesToWelfare();
       }
     },
     beforeOpen: (details) async {
@@ -987,6 +1041,42 @@ class AppDatabase extends _$AppDatabase {
         ], mode: InsertMode.insertOrIgnore);
       });
     }
+  }
+
+  /// Monthly welfare dues belong to welfare members only, and a
+  /// "Welfare contribution" (any amount from a minimum) joins people to
+  /// welfare when they pay it. Safe to run again.
+  Future<void> _tieDuesToWelfare() async {
+    await (update(contributionTypes)..where(
+          (t) =>
+              t.name.equals('Monthly welfare dues') &
+              t.frequency.equalsValue(ContributionFrequency.monthly),
+        ))
+        .write(
+          const ContributionTypesCompanion(
+            welfareRule: Value(WelfareRule.dues),
+          ),
+        );
+    final exists =
+        await (select(contributionTypes)..where(
+              (t) =>
+                  t.id.equals('welfare-contribution') |
+                  t.name.equals('Welfare contribution'),
+            ))
+            .get();
+    if (exists.isNotEmpty) return;
+    await into(contributionTypes).insert(
+      ContributionTypesCompanion.insert(
+        id: const Value('welfare-contribution'),
+        name: 'Welfare contribution',
+        category: ContributionCategory.welfare,
+        frequency: ContributionFrequency.open,
+        notes: const Value(
+          'Any amount from the minimum. Paying makes a member a welfare member.',
+        ),
+        welfareRule: const Value(WelfareRule.contribution),
+      ),
+    );
   }
 
   Future<void> _seedContributionTypes() async {

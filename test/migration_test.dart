@@ -12,10 +12,31 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
-    // v12: WhatsApp names.
-    for (final t in ['ins', 'upd', 'stamp']) {
-      await db.customStatement('DROP TRIGGER IF EXISTS sync_members_$t');
+    // v13: welfare membership.
+    for (final table in ['members', 'contribution_types']) {
+      for (final t in ['ins', 'upd', 'stamp']) {
+        await db.customStatement('DROP TRIGGER IF EXISTS sync_${table}_$t');
+      }
     }
+    for (final c in [
+      'welfare_membership',
+      'welfare_since',
+      'welfare_ended_on',
+      'welfare_note',
+    ]) {
+      await db.customStatement('ALTER TABLE members DROP COLUMN $c');
+    }
+    for (final c in ['minimum_amount', 'welfare_rule']) {
+      await db.customStatement('ALTER TABLE contribution_types DROP COLUMN $c');
+    }
+    await db.customStatement(
+      "DELETE FROM contribution_types WHERE id = 'welfare-contribution'",
+    );
+    if (version >= 12) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
+    // v12: WhatsApp names.
     await db.customStatement('ALTER TABLE members DROP COLUMN whatsapp_name');
     if (version >= 11) {
       await db.customStatement('PRAGMA user_version = $version');
@@ -192,7 +213,12 @@ void main() {
         .get();
     expect(
       memberColumns.map((c) => c.read<String>('name')),
-      containsAll(['self_edit', 'whatsapp_name']),
+      containsAll([
+        'self_edit',
+        'whatsapp_name',
+        'welfare_membership',
+        'welfare_since',
+      ]),
     );
     final memberTrigger = await db
         .customSelect(
@@ -200,7 +226,17 @@ void main() {
         )
         .getSingle();
     expect(memberTrigger.read<String>('sql'), contains('whatsapp_name'));
-    expect(await db.select(db.contributionTypes).get(), hasLength(7));
+    expect(memberTrigger.read<String>('sql'), contains('welfare_since'));
+    final types = await db.select(db.contributionTypes).get();
+    expect(types, hasLength(8));
+    expect(
+      types.singleWhere((t) => t.name == 'Welfare contribution').welfareRule,
+      WelfareRule.contribution,
+    );
+    expect(
+      types.singleWhere((t) => t.name == 'Monthly welfare dues').welfareRule,
+      WelfareRule.dues,
+    );
     expect(await db.select(db.welfareCaseTypes).get(), hasLength(7));
     final org = await db.select(db.orgSettings).getSingle();
     expect(org.receiptPrefix, 'RCP');
@@ -289,7 +325,7 @@ void main() {
     );
   }
 
-  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
+  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

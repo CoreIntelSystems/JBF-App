@@ -257,7 +257,7 @@ function needsZone() {
 const officeName = (o) => (o === 'welfare' ? 'Welfare Committee' : 'Treasury');
 
 function askLine(r) {
-  return [r.amount != null ? money(r.amount) : '', r.type, r.period ? monthName(r.period) : '',
+  return [r.amount != null ? money(r.amount) : r.minimum != null ? 'from ' + money(r.minimum) : '', r.type, r.period ? monthName(r.period) : '',
     r.due_on ? 'due ' + day(r.due_on) : ''].filter(Boolean).join(' · ');
 }
 
@@ -374,6 +374,7 @@ function viewCommunity() {
       e.description ? h('div', { class: 'sub' }, e.description) : null));
   }
   out.append(ev);
+  out.append(welfareStandingCard());
   const welfare = home.welfare || [];
   if (welfare.length) {
     const w = h('div', { class: 'card' }, h('h2', null, 'My welfare cases'));
@@ -390,6 +391,36 @@ function viewCommunity() {
   out.append(ex);
   out.append(directoryCard());
   return out;
+}
+
+// Welfare is by choice: join or leave here, or by paying welfare dues or a
+// welfare contribution. Three payments missed in a row end the benefits.
+function welfareStandingCard() {
+  const w = home.welfare_standing || { status: 'none' };
+  const card = h('div', { class: 'card' }, h('h2', null, 'Welfare membership'));
+  const err = h('p', { class: 'err', hidden: true });
+  let text;
+  if (w.status === 'member') {
+    text = 'You are a welfare member' + (w.since ? ' since ' + day(w.since) : '') + '. Missing 3 payments in a row ends your welfare benefits.';
+    if (w.dues_behind || w.rounds_missed) text += ` Months of dues missed: ${w.dues_behind}. Welfare contributions missed: ${w.rounds_missed}.`;
+  } else if (w.status === 'disqualified') {
+    text = (w.note || 'You missed 3 payments in a row.') + ' Welfare benefits have stopped. Speak to the Welfare Committee to be reinstated.';
+  } else {
+    text = 'You are not in welfare. Welfare is by choice: join here, or pay welfare dues or a welfare contribution to be covered.';
+  }
+  card.append(h('p', null, text), err);
+  if (w.status !== 'disqualified') {
+    const join = w.status !== 'member';
+    const btn = h('button', { class: join ? '' : 'secondary', onclick: async () => {
+      btn.disabled = true;
+      try {
+        await rpc(join ? 'welfare_join' : 'welfare_leave', { token: session.token });
+        await loadHome();
+      } catch (ex) { err.textContent = ex.message; err.hidden = false; btn.disabled = false; }
+    } }, join ? 'Join welfare' : 'Leave welfare');
+    card.append(btn);
+  }
+  return card;
 }
 
 // Members can find each other by name or WhatsApp name.

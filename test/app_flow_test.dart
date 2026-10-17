@@ -631,6 +631,11 @@ void main() {
     await tester.tap(find.text('Me'));
     await pumpUntil(tester, find.text('MEMBERSHIP CARD'));
     expect(find.text('Zone Secretary (Zone 1)'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Edit my details and zones'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Edit my details and zones'));
     await pumpUntil(tester, find.text('My details'));
     await tester.enterText(

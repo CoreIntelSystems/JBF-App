@@ -336,3 +336,26 @@ The eighth office. The **Founder** and the **General Secretary** lead it. Its me
 - **Executive meetings**: the Founder or General Secretary can tap **Add the meeting steps**: agree the agenda with the Founder, send papers a week before, review the finance report and committee reports, hold the meeting, record the decisions and follow them up.
 
 For another organisation, CoreIntel adds or renames committees in the cloud table `office_committees` (which roles are members, which roles lead, and the standard checklist); no app update is needed.
+
+## Welfare membership and the welfare contribution
+
+Welfare is by choice. Not every member is in welfare.
+
+- A member is **not in welfare**, a **welfare member**, or **disqualified**.
+  A member joins on their own page (Me tab, or the website), or an officer
+  with the welfare permission presses **Join** on the member's page.
+  Paying welfare dues or a **Welfare contribution** also makes them a welfare
+  member automatically.
+- **Monthly welfare dues** are owed only by welfare members, from the day
+  they joined. Members outside welfare owe nothing and are not in defaulters.
+- **Welfare contribution** is a type with no fixed amount. Set a **Minimum
+  amount** in More > Contribution types; payments below it are refused.
+  Ask for it through a payment request like any other type.
+- **Three payments missed in a row** (three finished months of welfare dues,
+  or three finished welfare contribution requests) disqualifies a member.
+  Welfare cases cannot be created for them. The check runs every night and
+  when a request is closed. A Welfare Chairman, Secretary or other holder of
+  the welfare approve permission presses **Reinstate** on the member's page;
+  dues then start again from that day.
+- Paying does not bring back a disqualified member, only reinstatement does.
+- Phones must update: an older build saving a member wipes these fields.

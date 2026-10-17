@@ -12,10 +12,16 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
-    // v11: members the founding list may correct for themselves.
+    // v12: WhatsApp names.
     for (final t in ['ins', 'upd', 'stamp']) {
       await db.customStatement('DROP TRIGGER IF EXISTS sync_members_$t');
     }
+    await db.customStatement('ALTER TABLE members DROP COLUMN whatsapp_name');
+    if (version >= 11) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
+    // v11: members the founding list may correct for themselves.
     await db.customStatement('ALTER TABLE members DROP COLUMN self_edit');
     if (version >= 10) {
       await db.customStatement('PRAGMA user_version = $version');
@@ -186,8 +192,14 @@ void main() {
         .get();
     expect(
       memberColumns.map((c) => c.read<String>('name')),
-      contains('self_edit'),
+      containsAll(['self_edit', 'whatsapp_name']),
     );
+    final memberTrigger = await db
+        .customSelect(
+          "SELECT sql FROM sqlite_master WHERE name = 'sync_members_upd'",
+        )
+        .getSingle();
+    expect(memberTrigger.read<String>('sql'), contains('whatsapp_name'));
     expect(await db.select(db.contributionTypes).get(), hasLength(7));
     expect(await db.select(db.welfareCaseTypes).get(), hasLength(7));
     final org = await db.select(db.orgSettings).getSingle();
@@ -277,7 +289,7 @@ void main() {
     );
   }
 
-  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

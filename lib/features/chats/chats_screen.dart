@@ -259,8 +259,17 @@ class _ChatScreenState extends State<ChatScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   if (!m.mine)
-                                    Text(
-                                      m.author,
+                                    Text.rich(
+                                      TextSpan(
+                                        text: m.author,
+                                        children: [
+                                          if (m.authorWhatsapp != null)
+                                            TextSpan(
+                                              text: '  ~${m.authorWhatsapp}',
+                                              style: theme.textTheme.bodySmall,
+                                            ),
+                                        ],
+                                      ),
                                       style: theme.textTheme.labelMedium,
                                     ),
                                   Text(m.body),

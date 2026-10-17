@@ -135,7 +135,7 @@ class _MembersScreenState extends State<MembersScreen> {
               onChanged: _onSearch,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'Search name, phone or member ID',
+                hintText: 'Search name, WhatsApp name, phone or ID',
               ),
             ),
           ),
@@ -228,7 +228,11 @@ class MemberTile extends StatelessWidget {
       leading: MemberAvatar(member: m),
       title: Text(m.fullName),
       subtitle: Text(
-        '${m.memberNo} · ${item.zoneLabel}',
+        [
+          m.memberNo,
+          if (m.whatsappName != null) 'WhatsApp: ${m.whatsappName}',
+          item.zoneLabel,
+        ].join(' · '),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),

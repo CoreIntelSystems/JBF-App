@@ -130,6 +130,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           .where(
                             (m) =>
                                 m.fullName.toLowerCase().contains(q) ||
+                                (m.whatsappName ?? '').toLowerCase().contains(
+                                  q,
+                                ) ||
                                 m.memberNo.toLowerCase().contains(q),
                           )
                           .toList();

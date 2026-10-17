@@ -92,6 +92,7 @@ class _SendIdsScreenState extends State<SendIdsScreen> {
             for (final mz in all)
               if (q.isEmpty ||
                   mz.member.fullName.toLowerCase().contains(q) ||
+                  (mz.member.whatsappName ?? '').toLowerCase().contains(q) ||
                   mz.member.memberNo.toLowerCase().contains(q))
                 mz,
           ];

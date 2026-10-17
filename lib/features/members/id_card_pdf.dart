@@ -84,6 +84,7 @@ Future<Uint8List> buildIdCardsPdf(
     final held = roles[m.id] ?? const <String>[];
     final shown = held.take(4).toList();
     final zones = mz.zones.map((z) => z.name).join(', ');
+    final whatsappName = _printable(m.whatsappName);
     return pw.Container(
       width: w,
       height: h,
@@ -203,6 +204,8 @@ Future<Uint8List> buildIdCardsPdf(
                               ),
                               pw.SizedBox(height: 2),
                               if (zones.isNotEmpty) detail('Zone', zones),
+                              if (whatsappName.isNotEmpty)
+                                detail('WhatsApp', whatsappName),
                               detail('Joined', formatDate(m.dateJoined)),
                             ],
                           ),
@@ -297,3 +300,9 @@ Future<Uint8List> buildIdCardsPdf(
   }
   return doc.save();
 }
+
+/// [text] without the characters the card's built-in font cannot draw,
+/// such as the emoji many people put in their WhatsApp names.
+String _printable(String? text) => String.fromCharCodes(
+  (text ?? '').runes.where((r) => r >= 0x20 && r <= 0xFF),
+).replaceAll(RegExp(r'\s+'), ' ').trim();

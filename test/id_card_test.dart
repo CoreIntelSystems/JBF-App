@@ -17,7 +17,8 @@ void main() {
       TestEnv.actor,
     );
     final b = await env.members.create(
-      env.draft('Kwame Mensah Boateng', [zones[1]!]),
+      env.draft('Kwame Mensah Boateng', [zones[1]!])
+        ..whatsappName = 'Kwame 🇬🇭 Boat',
       TestEnv.actor,
     );
     final list = (await env.members.watchMembers(MemberFilter()).first);

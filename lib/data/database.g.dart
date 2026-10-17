@@ -1758,6 +1758,17 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _whatsappNameMeta = const VerificationMeta(
+    'whatsappName',
+  );
+  @override
+  late final GeneratedColumn<String> whatsappName = GeneratedColumn<String>(
+    'whatsapp_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _emailMeta = const VerificationMeta('email');
   @override
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
@@ -1887,6 +1898,7 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
     location,
     phone,
     whatsapp,
+    whatsappName,
     email,
     address,
     gpsAddress,
@@ -2014,6 +2026,15 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
       context.handle(
         _whatsappMeta,
         whatsapp.isAcceptableOrUnknown(data['whatsapp']!, _whatsappMeta),
+      );
+    }
+    if (data.containsKey('whatsapp_name')) {
+      context.handle(
+        _whatsappNameMeta,
+        whatsappName.isAcceptableOrUnknown(
+          data['whatsapp_name']!,
+          _whatsappNameMeta,
+        ),
       );
     }
     if (data.containsKey('email')) {
@@ -2151,6 +2172,10 @@ class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
         DriftSqlType.string,
         data['${effectivePrefix}whatsapp'],
       ),
+      whatsappName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}whatsapp_name'],
+      ),
       email: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}email'],
@@ -2222,6 +2247,10 @@ class Member extends DataClass implements Insertable<Member> {
   final String? location;
   final String? phone;
   final String? whatsapp;
+
+  /// The name the member uses on WhatsApp, so others can tell who is who
+  /// in the group. Shown on their card and in chats, and searchable.
+  final String? whatsappName;
   final String? email;
   final String? address;
   final String? gpsAddress;
@@ -2254,6 +2283,7 @@ class Member extends DataClass implements Insertable<Member> {
     this.location,
     this.phone,
     this.whatsapp,
+    this.whatsappName,
     this.email,
     this.address,
     this.gpsAddress,
@@ -2305,6 +2335,9 @@ class Member extends DataClass implements Insertable<Member> {
     }
     if (!nullToAbsent || whatsapp != null) {
       map['whatsapp'] = Variable<String>(whatsapp);
+    }
+    if (!nullToAbsent || whatsappName != null) {
+      map['whatsapp_name'] = Variable<String>(whatsappName);
     }
     if (!nullToAbsent || email != null) {
       map['email'] = Variable<String>(email);
@@ -2377,6 +2410,9 @@ class Member extends DataClass implements Insertable<Member> {
       whatsapp: whatsapp == null && nullToAbsent
           ? const Value.absent()
           : Value(whatsapp),
+      whatsappName: whatsappName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(whatsappName),
       email: email == null && nullToAbsent
           ? const Value.absent()
           : Value(email),
@@ -2426,6 +2462,7 @@ class Member extends DataClass implements Insertable<Member> {
       location: serializer.fromJson<String?>(json['location']),
       phone: serializer.fromJson<String?>(json['phone']),
       whatsapp: serializer.fromJson<String?>(json['whatsapp']),
+      whatsappName: serializer.fromJson<String?>(json['whatsappName']),
       email: serializer.fromJson<String?>(json['email']),
       address: serializer.fromJson<String?>(json['address']),
       gpsAddress: serializer.fromJson<String?>(json['gpsAddress']),
@@ -2460,6 +2497,7 @@ class Member extends DataClass implements Insertable<Member> {
       'location': serializer.toJson<String?>(location),
       'phone': serializer.toJson<String?>(phone),
       'whatsapp': serializer.toJson<String?>(whatsapp),
+      'whatsappName': serializer.toJson<String?>(whatsappName),
       'email': serializer.toJson<String?>(email),
       'address': serializer.toJson<String?>(address),
       'gpsAddress': serializer.toJson<String?>(gpsAddress),
@@ -2492,6 +2530,7 @@ class Member extends DataClass implements Insertable<Member> {
     Value<String?> location = const Value.absent(),
     Value<String?> phone = const Value.absent(),
     Value<String?> whatsapp = const Value.absent(),
+    Value<String?> whatsappName = const Value.absent(),
     Value<String?> email = const Value.absent(),
     Value<String?> address = const Value.absent(),
     Value<String?> gpsAddress = const Value.absent(),
@@ -2521,6 +2560,7 @@ class Member extends DataClass implements Insertable<Member> {
     location: location.present ? location.value : this.location,
     phone: phone.present ? phone.value : this.phone,
     whatsapp: whatsapp.present ? whatsapp.value : this.whatsapp,
+    whatsappName: whatsappName.present ? whatsappName.value : this.whatsappName,
     email: email.present ? email.value : this.email,
     address: address.present ? address.value : this.address,
     gpsAddress: gpsAddress.present ? gpsAddress.value : this.gpsAddress,
@@ -2562,6 +2602,9 @@ class Member extends DataClass implements Insertable<Member> {
       location: data.location.present ? data.location.value : this.location,
       phone: data.phone.present ? data.phone.value : this.phone,
       whatsapp: data.whatsapp.present ? data.whatsapp.value : this.whatsapp,
+      whatsappName: data.whatsappName.present
+          ? data.whatsappName.value
+          : this.whatsappName,
       email: data.email.present ? data.email.value : this.email,
       address: data.address.present ? data.address.value : this.address,
       gpsAddress: data.gpsAddress.present
@@ -2604,6 +2647,7 @@ class Member extends DataClass implements Insertable<Member> {
           ..write('location: $location, ')
           ..write('phone: $phone, ')
           ..write('whatsapp: $whatsapp, ')
+          ..write('whatsappName: $whatsappName, ')
           ..write('email: $email, ')
           ..write('address: $address, ')
           ..write('gpsAddress: $gpsAddress, ')
@@ -2636,6 +2680,7 @@ class Member extends DataClass implements Insertable<Member> {
     location,
     phone,
     whatsapp,
+    whatsappName,
     email,
     address,
     gpsAddress,
@@ -2667,6 +2712,7 @@ class Member extends DataClass implements Insertable<Member> {
           other.location == this.location &&
           other.phone == this.phone &&
           other.whatsapp == this.whatsapp &&
+          other.whatsappName == this.whatsappName &&
           other.email == this.email &&
           other.address == this.address &&
           other.gpsAddress == this.gpsAddress &&
@@ -2696,6 +2742,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
   final Value<String?> location;
   final Value<String?> phone;
   final Value<String?> whatsapp;
+  final Value<String?> whatsappName;
   final Value<String?> email;
   final Value<String?> address;
   final Value<String?> gpsAddress;
@@ -2724,6 +2771,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
     this.location = const Value.absent(),
     this.phone = const Value.absent(),
     this.whatsapp = const Value.absent(),
+    this.whatsappName = const Value.absent(),
     this.email = const Value.absent(),
     this.address = const Value.absent(),
     this.gpsAddress = const Value.absent(),
@@ -2753,6 +2801,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
     this.location = const Value.absent(),
     this.phone = const Value.absent(),
     this.whatsapp = const Value.absent(),
+    this.whatsappName = const Value.absent(),
     this.email = const Value.absent(),
     this.address = const Value.absent(),
     this.gpsAddress = const Value.absent(),
@@ -2784,6 +2833,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
     Expression<String>? location,
     Expression<String>? phone,
     Expression<String>? whatsapp,
+    Expression<String>? whatsappName,
     Expression<String>? email,
     Expression<String>? address,
     Expression<String>? gpsAddress,
@@ -2813,6 +2863,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
       if (location != null) 'location': location,
       if (phone != null) 'phone': phone,
       if (whatsapp != null) 'whatsapp': whatsapp,
+      if (whatsappName != null) 'whatsapp_name': whatsappName,
       if (email != null) 'email': email,
       if (address != null) 'address': address,
       if (gpsAddress != null) 'gps_address': gpsAddress,
@@ -2844,6 +2895,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
     Value<String?>? location,
     Value<String?>? phone,
     Value<String?>? whatsapp,
+    Value<String?>? whatsappName,
     Value<String?>? email,
     Value<String?>? address,
     Value<String?>? gpsAddress,
@@ -2873,6 +2925,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
       location: location ?? this.location,
       phone: phone ?? this.phone,
       whatsapp: whatsapp ?? this.whatsapp,
+      whatsappName: whatsappName ?? this.whatsappName,
       email: email ?? this.email,
       address: address ?? this.address,
       gpsAddress: gpsAddress ?? this.gpsAddress,
@@ -2938,6 +2991,9 @@ class MembersCompanion extends UpdateCompanion<Member> {
     if (whatsapp.present) {
       map['whatsapp'] = Variable<String>(whatsapp.value);
     }
+    if (whatsappName.present) {
+      map['whatsapp_name'] = Variable<String>(whatsappName.value);
+    }
     if (email.present) {
       map['email'] = Variable<String>(email.value);
     }
@@ -2995,6 +3051,7 @@ class MembersCompanion extends UpdateCompanion<Member> {
           ..write('location: $location, ')
           ..write('phone: $phone, ')
           ..write('whatsapp: $whatsapp, ')
+          ..write('whatsappName: $whatsappName, ')
           ..write('email: $email, ')
           ..write('address: $address, ')
           ..write('gpsAddress: $gpsAddress, ')
@@ -18347,6 +18404,7 @@ typedef $$MembersTableCreateCompanionBuilder =
       Value<String?> location,
       Value<String?> phone,
       Value<String?> whatsapp,
+      Value<String?> whatsappName,
       Value<String?> email,
       Value<String?> address,
       Value<String?> gpsAddress,
@@ -18377,6 +18435,7 @@ typedef $$MembersTableUpdateCompanionBuilder =
       Value<String?> location,
       Value<String?> phone,
       Value<String?> whatsapp,
+      Value<String?> whatsappName,
       Value<String?> email,
       Value<String?> address,
       Value<String?> gpsAddress,
@@ -18614,6 +18673,11 @@ class $$MembersTableFilterComposer
 
   ColumnFilters<String> get whatsapp => $composableBuilder(
     column: $table.whatsapp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get whatsappName => $composableBuilder(
+    column: $table.whatsappName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18933,6 +18997,11 @@ class $$MembersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get whatsappName => $composableBuilder(
+    column: $table.whatsappName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get email => $composableBuilder(
     column: $table.email,
     builder: (column) => ColumnOrderings(column),
@@ -19048,6 +19117,11 @@ class $$MembersTableAnnotationComposer
 
   GeneratedColumn<String> get whatsapp =>
       $composableBuilder(column: $table.whatsapp, builder: (column) => column);
+
+  GeneratedColumn<String> get whatsappName => $composableBuilder(
+    column: $table.whatsappName,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get email =>
       $composableBuilder(column: $table.email, builder: (column) => column);
@@ -19318,6 +19392,7 @@ class $$MembersTableTableManager
                 Value<String?> location = const Value.absent(),
                 Value<String?> phone = const Value.absent(),
                 Value<String?> whatsapp = const Value.absent(),
+                Value<String?> whatsappName = const Value.absent(),
                 Value<String?> email = const Value.absent(),
                 Value<String?> address = const Value.absent(),
                 Value<String?> gpsAddress = const Value.absent(),
@@ -19346,6 +19421,7 @@ class $$MembersTableTableManager
                 location: location,
                 phone: phone,
                 whatsapp: whatsapp,
+                whatsappName: whatsappName,
                 email: email,
                 address: address,
                 gpsAddress: gpsAddress,
@@ -19376,6 +19452,7 @@ class $$MembersTableTableManager
                 Value<String?> location = const Value.absent(),
                 Value<String?> phone = const Value.absent(),
                 Value<String?> whatsapp = const Value.absent(),
+                Value<String?> whatsappName = const Value.absent(),
                 Value<String?> email = const Value.absent(),
                 Value<String?> address = const Value.absent(),
                 Value<String?> gpsAddress = const Value.absent(),
@@ -19404,6 +19481,7 @@ class $$MembersTableTableManager
                 location: location,
                 phone: phone,
                 whatsapp: whatsapp,
+                whatsappName: whatsappName,
                 email: email,
                 address: address,
                 gpsAddress: gpsAddress,

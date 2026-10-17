@@ -201,6 +201,7 @@ function idCard() {
     h('div', { class: 'body' },
       h('div', { style: 'font-weight:700;font-size:1.05rem' }, m.name),
       h('div', { class: 'no' }, m.member_no),
+      home.whatsapp_name ? h('div', { class: 'sub' }, 'WhatsApp: ' + home.whatsapp_name) : null,
       h('div', { class: 'sub' }, 'Zone: ' + (realZones(m).join(', ') || 'Not chosen yet')),
       h('div', { class: 'sub' }, 'Member since ' + day(m.joined)),
       chips(home.roles)));
@@ -387,7 +388,26 @@ function viewCommunity() {
     ex.append(h('div', { class: 'row' }, h('span', null, x.name), h('span', null, [x.position, x.zone].filter(Boolean).join(', '))));
   }
   out.append(ex);
+  out.append(directoryCard());
   return out;
+}
+
+// Members can find each other by name or WhatsApp name.
+function directoryCard() {
+  const people = home.directory || [];
+  const list = h('div');
+  const draw = (q) => {
+    q = q.trim().toLowerCase();
+    const shown = people.filter((p) => !q || (p.name || '').toLowerCase().includes(q) || (p.whatsapp_name || '').toLowerCase().includes(q));
+    list.replaceChildren(...shown.slice(0, 100).map((p) => h('div', { class: 'row' },
+      h('span', null, p.name, p.whatsapp_name ? h('div', { class: 'sub' }, 'WhatsApp: ' + p.whatsapp_name) : null),
+      h('span', { class: 'sub' }, realZones(p).join(', ')))),
+    shown.length > 100 ? h('p', { class: 'hint' }, `Showing 100 of ${shown.length}. Type more of the name to narrow it down.`) : null,
+    shown.length ? null : h('p', { class: 'hint' }, 'No member found.'));
+  };
+  draw('');
+  return h('div', { class: 'card' }, h('h2', null, `Members (${people.length})`),
+    h('input', { type: 'search', placeholder: 'Search by name or WhatsApp name', oninput: (e) => draw(e.target.value) }), list);
 }
 
 // ---------- chats ----------
@@ -414,7 +434,7 @@ function openChat(chan) {
       if (seen.has(m.id)) continue;
       seen.add(m.id);
       last = m.at;
-      list.append(h('div', { class: 'msg' + (m.mine ? ' mine' : '') }, m.mine ? null : h('b', null, m.author), m.body));
+      list.append(h('div', { class: 'msg' + (m.mine ? ' mine' : '') }, m.mine ? null : h('b', null, m.author, m.author_whatsapp ? ' ~' + m.author_whatsapp : ''), m.body));
     }
     if (msgs.length) window.scrollTo(0, document.body.scrollHeight);
   };
@@ -558,7 +578,7 @@ async function showResults(e, back) {
 
 // ---------- me ----------
 const FIELDS = [
-  ['full_name', 'Full name', 'text'], ['phone', 'Phone number', 'tel'], ['whatsapp', 'Second or WhatsApp number', 'tel'],
+  ['full_name', 'Full name', 'text'], ['whatsapp_name', 'WhatsApp name', 'text'], ['phone', 'Phone number', 'tel'], ['whatsapp', 'Second or WhatsApp number', 'tel'],
   ['email', 'Email', 'email'], ['occupation', 'Occupation', 'text'], ['location', 'Town or area', 'text'],
   ['address', 'Address', 'text'], ['gps_address', 'GPS address', 'text'],
   ['emergency_name', 'Emergency contact name', 'text'], ['emergency_phone', 'Emergency contact phone', 'tel'],
@@ -569,7 +589,8 @@ function viewMe() {
   out.append(h('div', { class: 'card' }, h('h2', null, home.member.name),
     h('div', { class: 'row' }, h('span', null, 'Member ID'), h('span', null, home.member.member_no)),
     chips(home.roles)));
-  out.append(home.self_edit ? profileForm() : h('p', { class: 'hint' }, 'To correct your details, speak to your Zone Secretary.'));
+  if (home.self_edit) out.append(profileForm());
+  else out.append(whatsappNameForm(), h('p', { class: 'hint' }, 'To correct your other details, speak to your Zone Secretary.'));
   out.append(passwordForm());
   out.append(h('button', { class: 'link', onclick: async () => {
     try { await rpc('member_sign_out', { token: session.token }); } catch (_) { /* leave locally anyway */ }
@@ -636,6 +657,26 @@ function profileForm() {
     }),
     h('label', null, 'Gender'), gender,
     zoneBox, err, btn);
+}
+
+// Every member may set the name they use on WhatsApp.
+function whatsappNameForm() {
+  const input = h('input', { type: 'text', value: home.whatsapp_name || '', maxlength: 200 });
+  const msg = h('p', { class: 'hint', hidden: true });
+  const btn = h('button', { type: 'submit' }, 'Save');
+  return h('form', { class: 'card', onsubmit: async (e) => {
+    e.preventDefault();
+    btn.disabled = true; msg.hidden = true; msg.className = 'hint';
+    try {
+      await rpc('member_update_profile', { token: session.token, patch: { whatsapp_name: input.value }, zone_ids: null });
+      await loadHome();
+      show('me');
+    } catch (ex) {
+      if (ex.expired) return signOutLocal();
+      msg.textContent = ex.message; msg.className = 'error'; msg.hidden = false;
+      btn.disabled = false;
+    }
+  } }, h('h2', null, 'My WhatsApp name'), h('p', { class: 'hint' }, 'The name others see for you on WhatsApp.'), input, msg, btn);
 }
 
 function passwordForm() {

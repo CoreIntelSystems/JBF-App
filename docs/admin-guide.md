@@ -239,6 +239,7 @@ removes it, but signing in again re-downloads everything.
 Only the Electoral Commission (Chairperson and Secretary) runs elections. Everyone else just votes.
 
 1. **Commission officer 1** opens More > Elections > New election, names the posts and sets the closing time, then adds each candidate (search the member, add a picture and a short message). Commission officers cannot stand.
+   Until voting opens, a Commission officer can tap **Change details** to change the name, notes, closing time, posts and seats (or take a post out), and tap a candidate to change their picture or message, swap them for another member, or **Take off the ballot**. **Cancel election** removes a draft from the list; it stays in the election record.
 2. **Commission officer 2** (a different person) opens the voting. At that moment the voters list is fixed to all active members, and candidates can no longer change.
 3. Each member signs in with their own member ID, opens Elections and chooses one candidate per post (or abstains). One vote each, final, and secret: the ballot box holds no names or times.
 4. Nobody, the Commission included, can see counts while voting is open, only how many have voted. Voting closes at the set time (or early, by an officer other than the one who opened it).

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jbf_app/data/sync/sync_api.dart';
 import 'package:jbf_app/features/elections/ballot_screen.dart';
+import 'package:jbf_app/features/elections/election_admin.dart';
 import 'package:jbf_app/features/elections/election_api.dart';
 import 'package:jbf_app/features/elections/results_screen.dart';
 
@@ -145,5 +146,87 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Elected'), findsOneWidget);
     expect(find.textContaining('tie for the last seat'), findsOneWidget);
+  });
+
+  testWidgets('a draft can be changed: seats, a post taken out', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final calls = <(String, Map<String, Object?>)>[];
+    final api = ElectionApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return {'ok': true};
+      }),
+      'tok',
+    );
+    final draft = {
+      ...election,
+      'status': 'draft',
+      'notes': 'Vote well',
+      'closes_at': DateTime.now()
+          .add(const Duration(days: 5))
+          .toUtc()
+          .toIso8601String(),
+    };
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CreateElectionScreen(api: api, existing: draft),
+      ),
+    );
+    expect(find.text('Change election'), findsOneWidget);
+    expect(find.text('2027 Elections'), findsOneWidget);
+    expect(find.text('Secretary'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Take this post out').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take it out'));
+    await tester.pumpAndSettle();
+    expect(find.text('Secretary'), findsNothing);
+
+    await tester.tap(find.text('Save changes'));
+    await tester.pumpAndSettle();
+    final (fn, args) = calls.single;
+    expect(fn, 'election_update');
+    expect(args['eid'], 'e1');
+    expect(args['posts'], [
+      {'id': 'p1', 'title': 'President', 'seats': 1},
+    ]);
+  });
+
+  testWidgets('a draft candidate can be taken off the ballot', (tester) async {
+    final calls = <(String, Map<String, Object?>)>[];
+    final api = ElectionApi(
+      SyncApi((fn, args) async {
+        calls.add((fn, args));
+        return {'ok': true};
+      }),
+      'tok',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CandidateEditor(
+          api: api,
+          postId: 'p1',
+          postTitle: 'President',
+          existing: const {
+            'id': 'c1',
+            'name': 'Ama Mensah',
+            'member_no': 'JBF-000001',
+            'member_key': 'm1',
+            'manifesto': 'Unity',
+          },
+        ),
+      ),
+    );
+    expect(find.text('Unity'), findsOneWidget);
+    await tester.tap(find.text('Take off the ballot'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take off'));
+    await tester.pumpAndSettle();
+    expect(calls.single.$1, 'election_remove_candidate');
+    expect(calls.single.$2['cid'], 'c1');
   });
 }

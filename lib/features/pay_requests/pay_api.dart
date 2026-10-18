@@ -20,6 +20,68 @@ class PayApi {
   Future<List<Map<String, dynamic>>> mine() async =>
       _list(await _api.rpc('pay_requests_mine', {'token': token}));
 
+  /// What a member can pay without being asked (`types`), and the Mobile
+  /// Money number to pay to (`pay_to`, may be null).
+  Future<Map<String, dynamic>> selfOptions() async => Map<String, dynamic>.from(
+    await _api.rpc('pay_self_options', {'token': token}) as Map,
+  );
+
+  /// The standing request a member reports their own payment on, for one
+  /// contribution type (and [period] `YYYY-MM` for monthly types).
+  Future<Map<String, dynamic>> selfRequest(
+    String typeId, {
+    String? period,
+  }) async => Map<String, dynamic>.from(
+    await _api.rpc('pay_self_request', {
+          'token': token,
+          'type_id': typeId,
+          'period': period,
+        })
+        as Map,
+  );
+
+  /// Whether paying by MTN MoMo inside the app is switched on in the cloud.
+  Future<bool> momoEnabled() async {
+    final r = await _api.rpc('fn:momo', {'action': 'enabled'});
+    return r is Map && r['enabled'] == true;
+  }
+
+  /// Asks MTN for the member's approval of a payment of [amount] pesewas
+  /// from [phone]. Returns the payment id to follow with [momoStatus].
+  Future<String> momoStart({
+    required String typeId,
+    String? period,
+    required int amount,
+    required String phone,
+  }) async {
+    final r = await _api.rpc('fn:momo', {
+      'action': 'start',
+      'token': token,
+      'type_id': typeId,
+      'period': period,
+      'amount': amount,
+      'phone': phone,
+    });
+    return (r as Map)['id'] as String;
+  }
+
+  /// `status` is `pending`, `successful` (with `receipt_no`) or `failed`
+  /// (with `reason`).
+  Future<Map<String, dynamic>> momoStatus(String id) async =>
+      Map<String, dynamic>.from(
+        await _api.rpc('fn:momo', {
+              'action': 'status',
+              'token': token,
+              'id': id,
+            })
+            as Map,
+      );
+
+  /// A treasurer sets where members pay (for example the Mobile Money
+  /// number); null or empty clears it.
+  Future<void> setPayTo(String? text) =>
+      _api.rpc('pay_to_set', {'token': token, 'pay_to': text});
+
   /// [method] is `momo`, `bank` or `cash`.
   Future<void> submit(
     String requestId, {

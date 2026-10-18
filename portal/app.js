@@ -349,8 +349,137 @@ function paidForm(r, reload) {
     err, btn);
 }
 
+// Pay without being asked: pick what for (and the month), then report the
+// payment on the standing request the cloud makes for it.
+function selfPay() {
+  const box = h('div', { class: 'card' });
+  const start = h('button', { onclick: async () => {
+    start.disabled = true;
+    try {
+      const [o, mo] = await Promise.all([
+        rpc('pay_self_options', { token: session.token }),
+        call('/functions/v1/momo', { action: 'enabled' }).catch(() => ({ enabled: false })),
+      ]);
+      start.replaceWith(selfPayForm(o, box, !!mo.enabled));
+    } catch (ex) {
+      if (ex.expired) return signOutLocal();
+      start.disabled = false;
+      box.append(h('p', { class: 'error' }, ex.message));
+    }
+  } }, 'Pay my dues');
+  box.append(h('h2', null, 'Pay my dues'),
+    h('p', { class: 'hint' }, 'Pay by Mobile Money, then tell the Treasurer here. They confirm it and you get a receipt.'), start);
+  return box;
+}
+
+function selfPayForm(o, box, momoOn) {
+  const types = o.types || [];
+  const type = h('select', null, ...types.map((t) => h('option', { value: t.id }, t.name)));
+  const monthly = types.find((t) => t.frequency === 'monthly');
+  if (monthly) type.value = monthly.id;
+  const now = new Date();
+  const monthOpts = [];
+  for (let i = -2; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    monthOpts.push(h('option', { value: key }, monthName(key)));
+  }
+  const month = h('select', null, ...monthOpts);
+  month.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const monthLabel = h('label', null, 'Month');
+  const sync = () => {
+    const t = types.find((x) => x.id === type.value);
+    const isMonthly = t && t.frequency === 'monthly';
+    month.hidden = !isMonthly; monthLabel.hidden = !isMonthly;
+  };
+  type.addEventListener('change', sync);
+  sync();
+  const err = h('p', { class: 'error', role: 'alert', hidden: true });
+  const amount = h('input', { type: 'text', inputmode: 'decimal' });
+  const phone = h('input', { type: 'tel', placeholder: '024 123 4567', autocomplete: 'tel' });
+  const fillAmount = () => {
+    const t = types.find((x) => x.id === type.value);
+    amount.value = t && t.amount != null ? (t.amount / 100).toFixed(2) : '';
+  };
+  type.addEventListener('change', fillAmount);
+  fillAmount();
+  const period = () => {
+    const t = types.find((x) => x.id === type.value);
+    return t && t.frequency === 'monthly' ? month.value : null;
+  };
+  const showErr = (m, btns) => { err.textContent = m; err.hidden = false; btns.forEach((b) => { b.disabled = false; }); };
+
+  // Pay by hand, then report it.
+  const report = h('button', { type: 'button', class: momoOn ? 'secondary' : '' }, momoOn ? 'Paid already' : 'I have paid');
+  report.addEventListener('click', async () => {
+    err.hidden = true; report.disabled = true; pay.disabled = true;
+    try {
+      const r = await rpc('pay_self_request', { token: session.token, type_id: type.value, period: period() });
+      const st = r.mine && r.mine.status;
+      if (st === 'pending' || st === 'confirmed') {
+        return showErr(st === 'pending' ? 'You already told the Treasurer about this one. It is waiting to be confirmed.' : 'This payment is already confirmed.', [report, pay]);
+      }
+      box.replaceWith(requestCard(r, () => show('pay')));
+    } catch (ex) {
+      if (ex.expired) return signOutLocal();
+      showErr(ex.message, [report, pay]);
+    }
+  });
+
+  // Pay by MTN MoMo right here: MTN asks for approval on the phone.
+  const pay = h('button', { type: 'button' }, 'Pay with MoMo');
+  pay.addEventListener('click', async () => {
+    err.hidden = true;
+    const m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(amount.value.trim().replace(/,/g, ''));
+    const pesewas = m ? Number(m[1]) * 100 + Number((m[2] || '').padEnd(2, '0')) : 0;
+    if (!pesewas) return showErr('Enter the amount you are paying.', [report, pay]);
+    pay.disabled = true; report.disabled = true;
+    try {
+      const r = await call('/functions/v1/momo', { action: 'start', token: session.token, type_id: type.value,
+        period: period(), amount: pesewas, phone: phone.value.trim() });
+      waitForMoMo(box, r.id);
+    } catch (ex) {
+      if (ex.expired) return signOutLocal();
+      showErr(ex.message, [report, pay]);
+    }
+  });
+
+  return h('form', { onsubmit: (e) => e.preventDefault() },
+    !momoOn && (o.pay_to ? h('div', { class: 'notice' }, h('b', null, 'Pay to: '), o.pay_to)
+      : h('p', { class: 'hint' }, 'The Treasurer has not yet said where to pay. Ask them for the Mobile Money number, pay, then come back to tell them.')),
+    h('label', null, 'What are you paying for?'), type, monthLabel, month,
+    momoOn ? h('div', null, h('label', null, 'Amount (GHS)'), amount,
+      h('label', null, 'Your MTN Mobile Money number'), phone) : null,
+    err, momoOn ? pay : null, report);
+}
+
+// After MTN was asked: wait for the approval, then show the receipt.
+function waitForMoMo(box, id) {
+  const card = h('div', { class: 'card' }, h('h2', null, 'Approve on your phone'),
+    h('p', null, 'MTN is asking for your approval. Check your phone and enter your Mobile Money PIN to pay.'));
+  box.replaceWith(card);
+  let polls = 0;
+  const finish = (title, text, ok) => {
+    clearInterval(timer);
+    card.replaceChildren(h('h2', null, title), h('p', { class: ok ? 'clear' : 'error' }, text),
+      h('button', { onclick: () => show('pay') }, 'Close'));
+    if (ok) rpc('member_home', { token: session.token }).then((x) => { home = x; }).catch(() => {});
+  };
+  const timer = setInterval(async () => {
+    try {
+      const r = await call('/functions/v1/momo', { action: 'status', token: session.token, id });
+      polls++;
+      if (r.status === 'successful') return finish('Payment received', 'Thank you. Your receipt is ' + r.receipt_no + '.', true);
+      if (r.status === 'failed') return finish('Not paid', r.reason || 'The payment did not go through.', false);
+      if (polls >= 45) finish('Not confirmed yet', 'We have not heard back from MTN yet. If you approved the payment, it will show on your Payments soon.', false);
+    } catch (ex) {
+      if (ex.expired) { clearInterval(timer); signOutLocal(); }
+    }
+  }, 4000);
+}
+
 function viewPay() {
-  const out = h('div', null, payRequests());
+  const out = h('div', null, selfPay(), payRequests());
   const card = h('div', { class: 'card' }, h('h2', null, 'Payments'));
   out.append(card);
   const pays = home.payments || [];

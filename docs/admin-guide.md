@@ -359,3 +359,15 @@ Welfare is by choice. Not every member is in welfare.
   dues then start again from that day.
 - Paying does not bring back a disqualified member, only reinstatement does.
 - Phones must update: an older build saving a member wipes these fields.
+
+## Members paying their own dues
+
+Members do not have to wait for a request. In the app (More, or the member site's Payments tab) they tap **Pay my dues**, choose what they are paying for (and the month for monthly dues), pay the Treasury's Mobile Money number, and enter the transaction ID from the payment message. The Treasurer confirms it in **Payment requests**, which writes the receipt like any other.
+
+The Treasurer sets the Mobile Money number members see: **Payment requests**, then the phone icon at the top (**Where members pay**). Until it is set, members are told to ask the Treasurer for the number.
+
+### Paying with MTN MoMo inside the app
+
+When MTN MoMo is switched on, **Pay my dues** shows an amount, the member's own MTN number and a **Pay with MoMo** button. MTN asks the member to approve on their phone; when MTN confirms, the receipt is written automatically with no Treasurer step. **Paid already** is still there for payments made by hand.
+
+It is switched on by adding these secrets in Supabase (Edge Functions, Secrets) for the `momo` function: `MOMO_SUBSCRIPTION_KEY` (the Primary key of the MTN Collection subscription), `MOMO_API_USER`, `MOMO_API_KEY`, and `MOMO_ENV` (`sandbox` while testing, `mtnghana` when live). Until all four are set, members only see the hand-payment option. Nothing is trusted from the phone: a receipt is written only when MTN itself says the payment succeeded for the same amount.

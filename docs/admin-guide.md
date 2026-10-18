@@ -371,3 +371,15 @@ The Treasurer sets the Mobile Money number members see: **Payment requests**, th
 When MTN MoMo is switched on, **Pay my dues** shows an amount, the member's own MTN number and a **Pay with MoMo** button. MTN asks the member to approve on their phone; when MTN confirms, the receipt is written automatically with no Treasurer step. **Paid already** is still there for payments made by hand.
 
 It is switched on by adding these secrets in Supabase (Edge Functions, Secrets) for the `momo` function: `MOMO_SUBSCRIPTION_KEY` (the Primary key of the MTN Collection subscription), `MOMO_API_USER`, `MOMO_API_KEY`, and `MOMO_ENV` (`sandbox` while testing, `mtnghana` when live). Until all four are set, members only see the hand-payment option. Nothing is trusted from the phone: a receipt is written only when MTN itself says the payment succeeded for the same amount.
+
+## Chats work like WhatsApp
+
+In the app (More > Chats) and on the member site (Chats):
+
+- **Reply to a message.** Press and hold a message and choose Reply (in the app you can also swipe it to the right). The message you answer shows above your reply, as in WhatsApp.
+- **Names, pictures and zones.** Each message shows the sender's round picture, their name, their WhatsApp name and their zones.
+- **My chat picture.** Tap the person icon at the top of a chat and choose a photo from your gallery. Everyone sees it in every chat. You can remove it any time.
+- **Pictures and documents.** Tap the paper-clip (app) or the picture and clip buttons (site). Pictures show in the chat; tap to enlarge. Documents (PDF, Word, Excel and so on) show with their name and size; tap to open or save. Each file can be up to 3 MB.
+- **Stickers.** Tap the smiley beside the message box and choose one.
+
+Only people allowed to post in a chat can send these; everyone in the chat can see and open them.

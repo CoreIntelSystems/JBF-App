@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -336,10 +337,29 @@ class SyncApi {
         ChatMessage(
           id: m['id'] as String,
           author: m['author'] as String? ?? '',
+          authorKey: m['author_key'] as String?,
           authorWhatsapp: m['author_whatsapp'] as String?,
+          zones: [for (final z in (m['zones'] as List? ?? [])) '$z'],
           body: m['body'] as String? ?? '',
           at: DateTime.parse(m['at'] as String).toLocal(),
           mine: m['mine'] == true,
+          kind: m['kind'] as String? ?? 'text',
+          file: m['file'] is Map
+              ? ChatFile(
+                  id: (m['file'] as Map)['id'] as String,
+                  name: (m['file'] as Map)['name'] as String? ?? 'file',
+                  mime: (m['file'] as Map)['mime'] as String? ?? '',
+                  size: ((m['file'] as Map)['size'] as num?)?.toInt() ?? 0,
+                )
+              : null,
+          reply: m['reply'] is Map
+              ? ChatQuote(
+                  id: (m['reply'] as Map)['id'] as String,
+                  author: (m['reply'] as Map)['author'] as String? ?? '',
+                  body: (m['reply'] as Map)['body'] as String? ?? '',
+                  kind: (m['reply'] as Map)['kind'] as String? ?? 'text',
+                )
+              : null,
         ),
     ];
   }
@@ -355,6 +375,70 @@ class SyncApi {
     'body': body,
     'as_name': asName,
   });
+
+  /// Sends a message, optionally answering [replyTo], or a sticker, a
+  /// picture or a document ([kind] 'sticker', 'image' or 'file'; the file
+  /// goes as base64 in [fileData]).
+  Future<void> chatPost(
+    String token,
+    String channel,
+    String body, {
+    String? replyTo,
+    String kind = 'text',
+    String? fileName,
+    String? fileMime,
+    String? fileData,
+    String? asName,
+  }) => _call('chat_post', {
+    'token': token,
+    'channel': channel,
+    'body': body,
+    'reply_to': replyTo,
+    'kind': kind,
+    'file_name': fileName,
+    'file_mime': fileMime,
+    'file_data': fileData,
+    'as_name': asName,
+  });
+
+  /// The bytes of a picture or document in a chat.
+  Future<Uint8List> chatFile(
+    String token,
+    String channel,
+    String fileId, {
+    String? asName,
+  }) async {
+    final r =
+        (await _call('chat_file', {
+              'token': token,
+              'channel': channel,
+              'file_id': fileId,
+              'as_name': asName,
+            }))!
+            as Map;
+    return base64Decode(r['data'] as String);
+  }
+
+  /// Profile pictures (data URLs) of the people writing in a chat, by
+  /// member key.
+  Future<Map<String, String>> chatAvatars(
+    String token,
+    String channel, {
+    String? asName,
+  }) async {
+    final r =
+        (await _call('chat_avatars', {
+              'token': token,
+              'channel': channel,
+              'as_name': asName,
+            }))!
+            as Map;
+    return {for (final e in r.entries) '${e.key}': '${e.value}'};
+  }
+
+  /// Sets my chat picture (a data URL), or clears it with null.
+  Future<void> avatarSet(String token, String? photo, {String? asName}) =>
+      _call('avatar_set', {'token': token, 'photo': photo, 'as_name': asName});
 
   /// Sends a complaint about a member to the Disciplinary Committee.
   Future<void> disciplineFile(
@@ -463,16 +547,59 @@ class ChatMessage {
     required this.body,
     required this.at,
     required this.mine,
+    this.authorKey,
     this.authorWhatsapp,
+    this.zones = const [],
+    this.kind = 'text',
+    this.file,
+    this.reply,
   });
   final String id;
   final String author;
+  final String? authorKey;
 
   /// The sender's WhatsApp name, so people recognise them from the group.
   final String? authorWhatsapp;
+
+  /// The sender's zones.
+  final List<String> zones;
   final String body;
   final DateTime at;
   final bool mine;
+
+  /// 'text', 'image', 'file' or 'sticker'.
+  final String kind;
+  final ChatFile? file;
+
+  /// The message this one answers.
+  final ChatQuote? reply;
+}
+
+class ChatFile {
+  const ChatFile({
+    required this.id,
+    required this.name,
+    required this.mime,
+    required this.size,
+  });
+  final String id;
+  final String name;
+  final String mime;
+  final int size;
+}
+
+/// The message a reply quotes.
+class ChatQuote {
+  const ChatQuote({
+    required this.id,
+    required this.author,
+    required this.body,
+    this.kind = 'text',
+  });
+  final String id;
+  final String author;
+  final String body;
+  final String kind;
 }
 
 /// A complaint or warning about a member (Disciplinary Committee).

@@ -1,0 +1,139 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:jbf_app/data/sync/sync_api.dart';
+import 'package:jbf_app/features/chats/chats_screen.dart';
+
+void main() {
+  late List<(String, Map<String, Object?>)> calls;
+
+  final messages = [
+    {
+      'id': 'm1',
+      'author': 'Ama Mensah',
+      'author_key': 'k1',
+      'author_whatsapp': 'Ama JBF',
+      'zones': ['Zone 2', 'Zone 4'],
+      'body': 'Good evening everyone',
+      'at': '2026-10-18T10:00:00Z',
+      'mine': false,
+      'kind': 'text',
+    },
+    {
+      'id': 'm2',
+      'author': 'Kofi Boateng',
+      'author_key': 'k2',
+      'zones': [],
+      'body': 'Welcome',
+      'at': '2026-10-18T10:01:00Z',
+      'mine': true,
+      'kind': 'text',
+      'reply': {
+        'id': 'm1',
+        'author': 'Ama Mensah',
+        'body': 'Good evening everyone',
+        'kind': 'text',
+      },
+    },
+    {
+      'id': 'm3',
+      'author': 'Ama Mensah',
+      'author_key': 'k1',
+      'zones': ['Zone 2', 'Zone 4'],
+      'body': '🙏',
+      'at': '2026-10-18T10:02:00Z',
+      'mine': false,
+      'kind': 'sticker',
+    },
+    {
+      'id': 'm4',
+      'author': 'Ama Mensah',
+      'author_key': 'k1',
+      'zones': ['Zone 2', 'Zone 4'],
+      'body': '',
+      'at': '2026-10-18T10:03:00Z',
+      'mine': false,
+      'kind': 'file',
+      'file': {
+        'id': 'f1',
+        'name': 'minutes.pdf',
+        'mime': 'application/pdf',
+        'size': 52000,
+      },
+    },
+  ];
+
+  SyncApi api() {
+    calls = [];
+    return SyncApi((fn, args) async {
+      calls.add((fn, args));
+      return switch (fn) {
+        'chat_messages' => messages,
+        'chat_avatars' => <String, Object?>{},
+        _ => {'ok': true},
+      };
+    });
+  }
+
+  Future<void> open(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ChatScreen(
+          api: api(),
+          access: const ChatAccess('tok'),
+          channel: const ChatChannel(id: 'c', name: 'General', canPost: true),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('shows names, WhatsApp name, zones, quotes, stickers and files', (
+    tester,
+  ) async {
+    await open(tester);
+    expect(find.text('Ama Mensah'), findsWidgets);
+    expect(find.textContaining('~Ama JBF'), findsOneWidget);
+    expect(find.textContaining('Zone 2, Zone 4'), findsWidgets);
+    expect(
+      find.text('Good evening everyone'),
+      findsNWidgets(2),
+    ); // message + quote
+    expect(find.text('🙏'), findsOneWidget);
+    expect(find.text('minutes.pdf'), findsOneWidget);
+    expect(find.byKey(const Key('avatar-m1')), findsOneWidget);
+  });
+
+  testWidgets('long press, reply, and the answer carries the quoted message', (
+    tester,
+  ) async {
+    await open(tester);
+    await tester.longPress(find.byKey(const Key('msg-m1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('menuReply')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('replyBar')), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('chatText')), 'Thank you');
+    await tester.tap(find.byTooltip('Send'));
+    await tester.pumpAndSettle();
+    final post = calls.firstWhere((c) => c.$1 == 'chat_post');
+    expect(post.$2['reply_to'], 'm1');
+    expect(post.$2['body'], 'Thank you');
+    expect(post.$2['kind'], 'text');
+    expect(find.byKey(const Key('replyBar')), findsNothing);
+  });
+
+  testWidgets('a sticker is sent as a sticker', (tester) async {
+    await open(tester);
+    await tester.tap(find.byKey(const Key('stickerButton')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('sticker❤️')));
+    await tester.pumpAndSettle();
+    final post = calls.firstWhere((c) => c.$1 == 'chat_post');
+    expect(post.$2['kind'], 'sticker');
+    expect(post.$2['body'], '❤️');
+  });
+}

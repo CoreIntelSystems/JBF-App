@@ -562,7 +562,9 @@ void main() {
                   'mine': true,
                 },
           ];
-        case 'chat_send':
+        case 'chat_avatars':
+          return <String, Object?>{};
+        case 'chat_post':
           sent.add(args['body']! as String);
           return {'ok': true};
       }
@@ -621,10 +623,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.enterText(find.byKey(const Key('chatText')), 'Hello all');
     await tester.tap(find.byTooltip('Send'));
-    await pumpUntil(
-      tester,
-      find.descendant(of: find.byType(Card), matching: find.text('Hello all')),
-    );
+    await pumpUntil(tester, find.text('Hello all'));
     expect(sent, ['Hello all']);
     await tester.pageBack();
     await pumpUntil(tester, find.text('Me'));

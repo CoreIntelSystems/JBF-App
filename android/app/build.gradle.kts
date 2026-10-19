@@ -39,6 +39,16 @@ android {
             keyAlias = "jbftest"
             keyPassword = "jbftest123"
         }
+        // Upload key for Google Play. The file and passwords come from the
+        // build environment (GitHub secrets), never from the repository.
+        System.getenv("PLAY_KEYSTORE_PATH")?.let { path ->
+            create("playUpload") {
+                storeFile = file(path)
+                storePassword = System.getenv("PLAY_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("PLAY_KEY_ALIAS")
+                keyPassword = System.getenv("PLAY_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -46,7 +56,8 @@ android {
             signingConfig = signingConfigs.getByName("testBuilds")
         }
         release {
-            signingConfig = signingConfigs.getByName("testBuilds")
+            signingConfig = signingConfigs.findByName("playUpload")
+                ?: signingConfigs.getByName("testBuilds")
         }
     }
 }

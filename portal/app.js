@@ -209,54 +209,86 @@ function chips(roles) {
     list.length > 4 ? h('span', { class: 'chip' }, '+' + (list.length - 4) + ' more') : null);
 }
 
+const initialsOf = (name) => String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+
 function idCard() {
   const m = home.member;
+  const photo = h('div', { class: 'ph' }, initialsOf(m.name));
+  rpc('avatar_get', { token: session.token, as_name: null }).then((r) => {
+    if (r && r.photo) photo.replaceChildren(h('img', { src: r.photo, alt: '' }));
+  }).catch(() => {});
   return h('div', { class: 'idcard card', style: 'padding:0' },
     h('div', { class: 'top' }, h('img', { src: 'logo.png', alt: '' }),
-      h('div', null, h('b', null, session.org_name || 'June Borns Family'), h('small', null, 'MEMBERSHIP CARD'))),
+      h('div', null, h('b', null, session.org_name || 'June Borns Family'), h('small', null, 'MEMBERSHIP CARD')),
+      h('span', { class: 'st' }, 'Active')),
     h('div', { class: 'body' },
-      h('div', { style: 'font-weight:700;font-size:1.05rem' }, m.name),
-      home.whatsapp_name ? h('div', { class: 'sub' }, '(' + home.whatsapp_name + ')') : null,
-      h('div', { class: 'no' }, m.member_no),
-      h('div', { class: 'sub' }, 'Zone: ' + (realZones(m).join(', ') || 'Not chosen yet')),
-      h('div', { class: 'sub' }, 'Member since ' + day(m.joined)),
-      chips(home.roles)));
+      h('div', { class: 'who' },
+        h('div', { class: 'nm' }, m.name),
+        home.whatsapp_name ? h('div', { class: 'sub' }, '(' + home.whatsapp_name + ')') : null,
+        h('div', { class: 'no' }, m.member_no),
+        h('div', { class: 'sub' }, 'Zone: ' + (realZones(m).join(', ') || 'Not chosen yet'))),
+      photo,
+      chips(home.roles)),
+    h('div', { class: 'ft' }, h('span', null, 'Member since ' + day(m.joined)), h('span', null, 'Official ID')));
+}
+
+const ACT_ICON = {
+  pay: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></svg>',
+  chat: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.7 7L4 20l1.1-4.6A8 8 0 1121 12z"/></svg>',
+  vote: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V6l4-3 4 3v5M10 15h4"/></svg>',
+  people: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.6 3-5.2 6-5.2s5.4 1.6 6 5.2"/><circle cx="17" cy="9" r="2.4"/><path d="M17 14.2c2.2.2 3.6 1.6 4 4.3"/></svg>',
+};
+
+// The icons are the fixed SVG strings above, never user text.
+function actButton(icon, label, fn) {
+  const b = h('button', { class: 'act', onclick: fn });
+  b.innerHTML = ACT_ICON[icon];
+  b.append(label);
+  return b;
+}
+
+function duesCard(d) {
+  const card = h('div', { class: 'card dues' });
+  const owes = d.outstanding > 0;
+  card.append(h('div', { class: 'row2' }, h('span', { class: 'cap' }, d.name),
+    h('span', { class: 'pill' + (owes ? ' w' : '') }, owes ? `${d.months_behind} month${d.months_behind === 1 ? '' : 's'} behind` : 'Up to date')));
+  card.append(h('div', { class: 'big ' + (owes ? 'owed' : 'clear') }, owes ? money(d.outstanding) : 'All clear'));
+  if (owes) card.append(h('div', { class: 'sub' }, 'Owed since ' + monthName(d.next_unpaid)));
+  const pct = d.expected > 0 ? Math.max(0, Math.min(100, Math.round((d.paid / d.expected) * 100))) : 100;
+  card.append(h('div', { class: 'bar' }, h('i', { style: 'width:' + pct + '%' })),
+    h('div', { class: 'two' }, h('span', null, 'Paid ', h('b', null, money(d.paid))), h('span', null, 'Expected ', h('b', null, money(d.expected)))));
+  return card;
 }
 
 function viewHome() {
   const out = h('div');
-  const notes = home.announcements || [];
-  for (const a of notes) out.append(h('div', { class: 'notice' }, a));
-  for (const w of home.warnings || []) {
-    out.append(h('div', { class: 'notice' }, h('b', null, 'Notice from the Disciplinary Committee'), h('br'), w.details,
-      h('div', { class: 'sub' }, day(w.at))));
-  }
+  out.append(idCard());
+  for (const d of home.dues || []) out.append(duesCard(d));
+  out.append(h('div', { class: 'acts' },
+    actButton('pay', 'Pay', () => show('pay')),
+    actButton('chat', 'Chats', () => show('chat')),
+    actButton('people', 'Community', () => show('community')),
+    actButton('vote', 'Elections', openElections)));
   if (needsZone()) {
     out.append(h('div', { class: 'notice' }, h('b', null, 'Choose your zone'), h('br'),
       'This can be done once, under Me.',
       h('div', null, h('button', { class: 'small', onclick: () => show('me') }, 'Choose my zone'))));
   }
-  if (home.officer || (home.roles || []).length) {
-    out.append(h('div', { class: 'notice' }, h('b', null, 'Executive tools'), h('br'),
-      'Payments and records are managed in the ',
-      h('a', { href: 'https://jbf-app.onrender.com', target: '_blank' }, 'full app'), '.'));
-  }
   if (!offline) out.append(payReminder());
-  out.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('b', null, 'Elections'),
-    h('button', { class: 'small', onclick: openElections }, 'Open'))));
-  out.append(idCard());
-  for (const d of home.dues || []) {
-    const card = h('div', { class: 'card' }, h('h2', null, d.name));
-    if (d.outstanding > 0) {
-      card.append(h('div', { class: 'big owed' }, money(d.outstanding)),
-        h('p', { class: 'hint' }, `${d.months_behind} month${d.months_behind === 1 ? '' : 's'} behind, from ${monthName(d.next_unpaid)}`));
-    } else {
-      card.append(h('div', { class: 'big clear' }, 'Up to date'));
+  for (const w of home.warnings || []) {
+    out.append(h('div', { class: 'notice' }, h('b', null, 'Notice from the Disciplinary Committee'), h('br'), w.details,
+      h('div', { class: 'sub' }, day(w.at))));
+  }
+  const notes = home.announcements || [];
+  const officer = home.officer || (home.roles || []).length;
+  if (notes.length || officer) {
+    const box = h('div', { class: 'card notes' }, h('div', { class: 'cap' }, 'Notices'));
+    for (const a of notes) box.append(h('div', { class: 'note' }, h('span', { class: 'dot' }), h('div', null, a)));
+    if (officer) {
+      box.append(h('div', { class: 'note' }, h('span', { class: 'dot' }),
+        h('div', null, 'Executive tools are in the ', h('a', { href: 'https://jbf-app.onrender.com', target: '_blank' }, 'full app'), '.')));
     }
-    for (const [l, v] of [['Monthly amount', money(d.monthly)], ['Expected', money(d.expected)], ['Paid', money(d.paid)]]) {
-      card.append(h('div', { class: 'row' }, h('span', null, l), h('span', null, v)));
-    }
-    out.append(card);
+    out.append(box);
   }
   if (home.updated) out.append(h('p', { class: 'hint' }, 'Updated ' + new Date(home.updated).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })));
   return out;

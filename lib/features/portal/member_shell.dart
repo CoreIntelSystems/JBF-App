@@ -662,23 +662,37 @@ class _MemberCard extends StatelessWidget {
     final green = Color(OrgDefaults.primaryColor);
     final gold = Color(OrgDefaults.accentColor);
     final roles = home.roles.isEmpty ? const ['Member'] : home.roles;
+    final initials = s.name
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .take(2)
+        .map((w) => w[0].toUpperCase())
+        .join();
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 3,
-      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 4,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            color: green,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [green, Color.lerp(green, Colors.black, 0.35)!],
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Image.asset(OrgDefaults.logoAsset, height: 36),
                 ),
@@ -688,22 +702,42 @@ class _MemberCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        orgName.toUpperCase(),
+                        orgName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                          fontSize: 16,
                         ),
                       ),
                       Text(
                         'MEMBERSHIP CARD',
                         style: TextStyle(
                           color: gold,
-                          fontSize: 11,
-                          letterSpacing: 1.5,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.6,
                         ),
                       ),
                     ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0x73BFF0D3)),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    s.status.toUpperCase(),
+                    style: const TextStyle(
+                      color: Color(0xFFBFF0D3),
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
               ],
@@ -711,30 +745,70 @@ class _MemberCard extends StatelessWidget {
           ),
           Container(height: 3, color: gold),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  s.name,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.name,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          if (home.whatsappName != null &&
+                              home.whatsappName!.isNotEmpty)
+                            Text(
+                              '(${home.whatsappName})',
+                              style: TextStyle(color: muted),
+                            ),
+                          const SizedBox(height: 4),
+                          Text(
+                            s.memberNo,
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: green,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Zone: ${s.zones.isEmpty ? 'None' : s.zones.join(', ')}',
+                            style: TextStyle(color: muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 64,
+                      height: 76,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: gold, width: 2),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [gold, green],
+                        ),
+                      ),
+                      child: Text(
+                        initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                if (home.whatsappName != null && home.whatsappName!.isNotEmpty)
-                  Text('(${home.whatsappName})'),
-                Text(
-                  s.memberNo,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: green,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text('Zone: ${s.zones.isEmpty ? 'None' : s.zones.join(', ')}'),
-                Text('Member since ${formatDate(s.joined)}'),
-                Text('Status: ${capitalize(s.status)}'),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 6,
@@ -757,6 +831,35 @@ class _MemberCard extends StatelessWidget {
                         visualDensity: VisualDensity.compact,
                       ),
                   ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            color: green.withValues(alpha: 0.08),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    'MEMBER SINCE ${formatDate(s.joined).toUpperCase()}',
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
+                Text(
+                  'OFFICIAL ID',
+                  style: TextStyle(
+                    color: muted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.6,
+                  ),
                 ),
               ],
             ),

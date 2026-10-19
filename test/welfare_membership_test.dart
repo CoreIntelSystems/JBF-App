@@ -80,7 +80,16 @@ void main() {
       const ContributionTypesCompanion(minimumAmount: Value(2000)),
       TestEnv.actor,
     );
-    await expectLater(pay(t, 1000), throwsA(isA<PaymentException>()));
+    await expectLater(
+      pay(t, 1000),
+      throwsA(
+        isA<PaymentException>().having(
+          (e) => e.toString(),
+          'message',
+          contains('GHS 20.00'),
+        ),
+      ),
+    );
     await pay(t, 2000);
   });
 

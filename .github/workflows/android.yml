@@ -41,6 +41,8 @@ jobs:
       # It is signed with the shared test key, so it installs over earlier
       # test builds.
       - name: Build test APK
+        env:
+          JBF_TEST_BUILD: 'true'
         run: flutter build apk --release
 
       - name: Name the APK

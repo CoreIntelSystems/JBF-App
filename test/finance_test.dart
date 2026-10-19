@@ -189,12 +189,12 @@ void main() {
         backup.createBackup('123'),
         throwsA(isA<BackupException>()),
       );
-      final Uint8List bytes = await backup.createBackup('s3cret!');
+      final Uint8List bytes = await backup.createBackup('s3cret-backup!');
       await expectLater(
         backup.inspect(bytes, 'wrong-pass'),
         throwsA(isA<BackupException>()),
       );
-      final info = await backup.inspect(bytes, 's3cret!');
+      final info = await backup.inspect(bytes, 's3cret-backup!');
       expect(info.orgName, 'Backup Test Org');
       await expectLater(
         backup.inspect(Uint8List.fromList(List.filled(2000, 7)), 'x'),
@@ -214,7 +214,7 @@ void main() {
         databaseFile: file2,
         workDir: dir2,
       );
-      final prepared = await other.prepareRestore(bytes, 's3cret!');
+      final prepared = await other.prepareRestore(bytes, 's3cret-backup!');
       await db2.close();
       await other.replaceDatabase(prepared);
       final reopened = openDatabaseFile(file2, hexKey: key2);

@@ -56,8 +56,15 @@ android {
             signingConfig = signingConfigs.getByName("testBuilds")
         }
         release {
+            // The shared test key is used only when a test build asks for it
+            // (JBF_TEST_BUILD=true, set in android.yml). A store build with
+            // no upload key stays unsigned and fails loudly instead.
             signingConfig = signingConfigs.findByName("playUpload")
-                ?: signingConfigs.getByName("testBuilds")
+                ?: if (System.getenv("JBF_TEST_BUILD") == "true") {
+                    signingConfigs.getByName("testBuilds")
+                } else {
+                    null
+                }
         }
     }
 }

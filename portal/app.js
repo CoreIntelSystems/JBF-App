@@ -584,39 +584,172 @@ function viewChannels() {
   return box;
 }
 
+const STICKERS = ['👍', '🙏', '❤️', '😂', '😍', '😊', '🎉', '👏', '🙌', '💪', '🤝', '😢', '😮', '😎', '🥳', '🔥', '✅', '🙂', '🤗', '😇', '🌹', '🎂', '🕊️', '🇬🇭'];
+const MAX_FILE = 3000000;
+const NAME_COLORS = ['#1f7a5a', '#b5651d', '#6a4c93', '#c0392b', '#2471a3', '#8e6b00', '#117a65', '#ad1457'];
+const nameColor = (n) => NAME_COLORS[[...String(n)].reduce((a, c) => a + c.charCodeAt(0), 0) % NAME_COLORS.length];
+const quoteText = (kind, body) => kind === 'image' ? '📷 ' + (body || 'Photo') : kind === 'file' ? '📄 ' + (body || 'Document') : body;
+const sizeText = (n) => n >= 1000000 ? (n / 1000000).toFixed(1) + ' MB' : Math.ceil(n / 1000) + ' KB';
+
+// A picture shrunk to [max] pixels, as a data URL.
+function shrink(file, max, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => reject(new Error('That is not a picture.'));
+    img.src = url;
+  });
+}
+const readDataUrl = (file) => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve(r.result);
+  r.onerror = () => reject(new Error('Could not read that file.'));
+  r.readAsDataURL(file);
+});
+const base64Of = (dataUrl) => dataUrl.slice(dataUrl.indexOf(',') + 1);
+
 function openChat(chan) {
   stopPolling();
-  const list = h('div', { class: 'msgs' });
+  const list = h('div', { class: 'msgs wa' });
   let last = null;
+  let replyTo = null;
+  let prev = null;
+  let avatars = {};
   const seen = new Set();
+  const files = new Map();
+  const fetchFile = (f) => {
+    if (!files.has(f.id)) {
+      files.set(f.id, rpc('chat_file', { token: session.token, channel: chan.id, file_id: f.id, as_name: null })
+        .then((r) => 'data:' + (r.mime || 'application/octet-stream') + ';base64,' + r.data)
+        .catch((ex) => { files.delete(f.id); throw ex; }));
+    }
+    return files.get(f.id);
+  };
+  const avatar = (m) => {
+    const src = avatars[m.author_key];
+    if (src) return h('img', { class: 'wa-av', src, alt: '' });
+    const letters = String(m.author || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+    return h('div', { class: 'wa-av init', style: 'color:' + nameColor(m.author) }, letters);
+  };
+  const bar = h('div', { class: 'replybar', hidden: true });
+  const setReply = (m) => {
+    replyTo = m;
+    bar.hidden = !m;
+    bar.replaceChildren();
+    if (!m) return;
+    bar.append(quoteBlock({ author: m.mine ? 'You' : m.author, kind: m.kind, body: m.body }),
+      h('button', { type: 'button', class: 'link', onclick: () => setReply(null) }, '✕'));
+    input.focus();
+  };
+  const quoteBlock = (q) => h('div', { class: 'quote', style: 'border-left-color:' + nameColor(q.author) },
+    h('b', { style: 'color:' + nameColor(q.author) }, q.author), h('span', null, quoteText(q.kind, q.body)));
+  const content = (m) => {
+    const f = m.file;
+    if (m.kind === 'sticker') return h('div', { class: 'sticker' }, m.body);
+    if (m.kind === 'image' && f) {
+      const img = h('img', { class: 'wa-img', alt: f.name });
+      fetchFile(f).then((u) => { img.src = u; img.onclick = () => { const w = window.open(); if (w) w.document.write('<img src="' + u + '" style="max-width:100%">'); }; }).catch(() => img.replaceWith(h('i', null, 'Picture not available')));
+      return h('div', null, img, m.body ? h('div', null, m.body) : null);
+    }
+    if (m.kind === 'file' && f) {
+      return h('div', null, h('button', { type: 'button', class: 'wa-file', onclick: async () => {
+        try {
+          const u = await fetchFile(f);
+          const a = h('a', { href: u, download: f.name }); document.body.append(a); a.click(); a.remove();
+        } catch (ex) { alert(ex.message); }
+      } }, '📄 ', h('span', null, f.name, h('small', null, sizeText(f.size)))), m.body ? h('div', null, m.body) : null);
+    }
+    return h('div', null, m.body);
+  };
   const add = (msgs) => {
     for (const m of msgs) {
       if (seen.has(m.id)) continue;
       seen.add(m.id);
       last = m.at;
-      list.append(h('div', { class: 'msg' + (m.mine ? ' mine' : '') }, m.mine ? null : h('b', null, m.author, m.author_whatsapp ? ' ~' + m.author_whatsapp : ''), m.body));
+      const first = !prev || prev.author_key !== m.author_key || prev.author !== m.author;
+      prev = m;
+      const sub = [m.author_whatsapp ? '~' + m.author_whatsapp : null, (m.zones || []).join(', ') || null].filter(Boolean).join(' · ');
+      const bubble = h('div', { class: 'msg' + (m.mine ? ' mine' : '') + (m.kind === 'sticker' ? ' sticker-msg' : '') },
+        m.mine || !first ? null : h('b', { style: 'color:' + nameColor(m.author) }, m.author),
+        m.mine || !first || !sub ? null : h('small', null, sub),
+        m.reply ? quoteBlock(m.reply) : null,
+        content(m),
+        h('small', { class: 'time' }, new Date(m.at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })));
+      if (chan.post) {
+        bubble.addEventListener('dblclick', () => setReply(m));
+        let x0 = null;
+        bubble.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+        bubble.addEventListener('touchend', (e) => { if (x0 != null && e.changedTouches[0].clientX - x0 > 70) setReply(m); x0 = null; });
+        bubble.append(h('button', { type: 'button', class: 'rep', title: 'Reply', onclick: () => setReply(m) }, '↩'));
+      }
+      list.append(h('div', { class: 'wa-row' + (m.mine ? ' mine' : '') + (first ? ' first' : '') },
+        m.mine ? null : (first ? avatar(m) : h('div', { class: 'wa-av gap' })), bubble));
     }
     if (msgs.length) window.scrollTo(0, document.body.scrollHeight);
+  };
+  const loadAvatars = async () => {
+    try { avatars = await rpc('chat_avatars', { token: session.token, channel: chan.id, as_name: null }); } catch (_) { /* initials show */ }
   };
   const load = async () => {
     try { add(await rpc('chat_messages', { token: session.token, channel: chan.id, after: last, as_name: null })); }
     catch (ex) { if (ex.expired) signOutLocal(); }
   };
   const input = h('input', { placeholder: 'Write a message', maxlength: 1000 });
-  const send = async (e) => {
-    e.preventDefault();
-    const body = input.value.trim();
-    if (!body) return;
-    input.value = '';
-    try { await rpc('chat_send', { token: session.token, channel: chan.id, body, as_name: null }); await load(); }
-    catch (ex) { input.value = body; alert(ex.message); }
+  const post = async (extra) => {
+    const body = (extra.body !== undefined ? extra.body : input.value.trim());
+    if (!body && !extra.file_data) return;
+    try {
+      await rpc('chat_post', { token: session.token, channel: chan.id, body, reply_to: replyTo ? replyTo.id : null, kind: extra.kind || 'text', file_name: extra.file_name || null, file_mime: extra.file_mime || null, file_data: extra.file_data || null, as_name: null });
+      input.value = ''; setReply(null); await load();
+    } catch (ex) { alert(ex.message); }
   };
+  const send = (e) => { e.preventDefault(); post({}); };
+  const picker = (accept, onFile) => h('input', { type: 'file', accept, hidden: true, onchange: async (e) => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try { await onFile(f); } catch (ex) { alert(ex.message); }
+  } });
+  const photoIn = picker('image/*', async (f) => {
+    const u = await shrink(f, 1280, 0.75);
+    if (u.length > 4000000) throw new Error('That picture is too big.');
+    await post({ kind: 'image', file_name: f.name.replace(/\.\w+$/, '') + '.jpg', file_mime: 'image/jpeg', file_data: base64Of(u), body: input.value.trim() });
+  });
+  const docIn = picker('', async (f) => {
+    if (f.size > MAX_FILE) throw new Error('That file is too big. The most you can send is 3 MB.');
+    const u = await readDataUrl(f);
+    const mime = f.type || 'application/octet-stream';
+    await post({ kind: mime.startsWith('image/') ? 'image' : 'file', file_name: f.name, file_mime: mime, file_data: base64Of(u), body: input.value.trim() });
+  });
+  const avIn = picker('image/*', async (f) => {
+    const u = await shrink(f, 200, 0.7);
+    await rpc('avatar_set', { token: session.token, photo: u, as_name: null });
+    await loadAvatars(); alert('Done. Your picture will show in the chats.');
+  });
+  const stickers = h('div', { class: 'stickers', hidden: true }, STICKERS.map((s) =>
+    h('button', { type: 'button', onclick: () => { stickers.hidden = true; post({ kind: 'sticker', body: s }); } }, s)));
   app.replaceChildren(
     h('button', { class: 'link', onclick: () => show('chat') }, '‹ All chats'),
-    h('h2', null, chan.name), list,
-    chan.post ? h('form', { class: 'send', onsubmit: send }, input, h('button', { type: 'submit' }, 'Send'))
+    h('h2', null, chan.name),
+    h('div', null, h('button', { type: 'button', class: 'link', onclick: () => avIn.click() }, '📷 My chat picture'),
+      h('button', { type: 'button', class: 'link', onclick: async () => { try { await rpc('avatar_set', { token: session.token, photo: null, as_name: null }); await loadAvatars(); } catch (ex) { alert(ex.message); } } }, 'Remove')),
+    list, avIn,
+    chan.post ? h('div', null, bar, stickers, photoIn, docIn,
+      h('form', { class: 'send', onsubmit: send },
+        h('button', { type: 'button', class: 'icon', title: 'Stickers', onclick: () => { stickers.hidden = !stickers.hidden; } }, '😊'),
+        input,
+        h('button', { type: 'button', class: 'icon', title: 'Photo', onclick: () => photoIn.click() }, '🖼'),
+        h('button', { type: 'button', class: 'icon', title: 'Document', onclick: () => docIn.click() }, '📎'),
+        h('button', { type: 'submit' }, 'Send')))
       : h('p', { class: 'hint' }, 'Only officers can post here.'));
-  load();
+  loadAvatars().then(load);
   pollTimer = setInterval(load, 8000);
 }
 

@@ -109,6 +109,33 @@
   .msg.mine { align-self: flex-end; background: var(--green); color: #fff; border-color: var(--green); border-radius: 16px 16px 4px 16px; }
   .msg.mine b { color: rgba(255,255,255,.8); }
   .msg b { display: block; font-size: .74rem; color: var(--muted); }
+  .msgs.wa { background: #ece5dd; padding: 10px; border-radius: 14px; gap: 2px; }
+  .wa-row { display: flex; align-items: flex-end; gap: 6px; }
+  .wa-row.mine { justify-content: flex-end; }
+  .wa-row.first { margin-top: 8px; }
+  .wa-av { width: 34px; height: 34px; border-radius: 50%; flex: none; object-fit: cover; }
+  .wa-av.init { display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.08); font-weight: 600; font-size: .8rem; }
+  .wa-av.gap { background: none; }
+  .msgs.wa .msg { position: relative; max-width: 78%; color: #111; background: #fff; border: 0; border-radius: 12px 12px 12px 3px; box-shadow: 0 1px 1px rgba(0,0,0,.15); padding: 6px 10px 4px; overflow-wrap: anywhere; }
+  .msgs.wa .msg.mine { background: #dcf8c6; color: #111; border-radius: 12px 12px 3px 12px; }
+  .msgs.wa .msg b { font-size: .8rem; font-weight: 600; }
+  .msgs.wa .msg small { display: block; font-size: .68rem; color: #667; }
+  .msgs.wa .msg .time { text-align: right; font-size: .62rem; }
+  .msgs.wa .msg.sticker-msg { background: none; box-shadow: none; }
+  .stickers[hidden], .replybar[hidden] { display: none; }
+  .sticker { font-size: 3.6rem; line-height: 1.1; }
+  .quote { border-left: 4px solid var(--green); background: rgba(0,0,0,.06); border-radius: 6px; padding: 3px 8px; margin: 3px 0 5px; font-size: .82rem; }
+  .quote b { display: block; font-size: .74rem !important; }
+  .quote span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60vw; }
+  .wa-img { display: block; max-width: 240px; width: 100%; border-radius: 8px; min-height: 60px; }
+  .wa-file { display: flex; align-items: center; gap: 8px; width: auto; margin: 2px 0; background: rgba(0,0,0,.06); color: #111; text-align: left; }
+  .wa-file small { display: block; }
+  .rep { position: absolute; top: 2px; right: 4px; width: auto; margin: 0; padding: 0 6px; background: none; color: #667; font-size: .9rem; opacity: .55; }
+  .replybar { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; margin: 8px 0; }
+  .replybar .quote { flex: 1; margin: 0; }
+  .stickers { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin: 8px 0; }
+  .stickers button { background: none; font-size: 1.6rem; margin: 0; padding: 2px; }
+  .send .icon { background: none; font-size: 1.3rem; padding: 0 4px; color: var(--text); }
   .chan { display: block; width: 100%; text-align: left; background: var(--card); color: var(--text); border: 1px solid var(--line); margin: 0 0 10px; border-radius: 14px; }
   .send { display: flex; gap: 8px; }
   .send input { flex: 1; } .send button { width: auto; margin: 0; }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app_services.dart';
 import '../../core/format.dart';
@@ -423,6 +424,76 @@ class _MeTab extends StatelessWidget {
     }
   }
 
+  /// Play requires an in-app way to delete the account. The password is
+  /// re-checked by the server, which erases the sign-in and personal details.
+  Future<void> _deleteAccount(BuildContext context) async {
+    final password = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete my account'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'This erases your sign-in, profile photo and personal details '
+              'and makes your chat messages anonymous. Payment records stay, '
+              'without your details. It cannot be undone.',
+            ),
+            TextField(
+              key: const Key('deleteAccountPassword'),
+              controller: password,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final auth = context.read<AuthCubit>();
+    try {
+      await context.read<AppServices>().sync.api.memberAuth(
+        action: 'delete_account',
+        org: OrgDefaults.shortName,
+        memberNo: session.memberNo,
+        password: password.text,
+      );
+      await auth.memberSignOut();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Your account has been deleted.')),
+      );
+    } on SyncException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            e.offline
+                ? 'Connect to the internet to delete your account.'
+                : e.message.startsWith('Wrong')
+                ? 'Password is wrong.'
+                : e.message,
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openPage(String page) => launchUrl(
+    Uri.parse('https://jbf-members.onrender.com/$page'),
+    mode: LaunchMode.externalApplication,
+  );
+
   /// Every member may set the username other members see in chats.
   Future<void> _editWhatsappName(BuildContext context) async {
     final name = TextEditingController(text: home.whatsappName);
@@ -643,6 +714,18 @@ class _MeTab extends StatelessWidget {
           leading: const Icon(Icons.logout),
           title: const Text('Sign out'),
           onTap: () => context.read<AuthCubit>().memberSignOut(),
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.privacy_tip_outlined),
+          title: const Text('Privacy policy'),
+          onTap: () => _openPage('privacy.html'),
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.delete_forever_outlined),
+          title: const Text('Delete my account'),
+          onTap: () => _deleteAccount(context),
         ),
       ],
     );

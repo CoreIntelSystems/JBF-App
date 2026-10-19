@@ -141,7 +141,9 @@ Deno.serve(async (req) => {
     }
     ok = m.found && m.phone_ok;
     if (ok) newHash = await hash(newPassword);
-  } else if (action === "sign_in" || action === "change_password") {
+  } else if (
+    action === "sign_in" || action === "change_password" || action === "delete_account"
+  ) {
     if (m.found && !m.activated) {
       return refuse(
         "Activate your account first with your member ID and phone number.",
@@ -164,9 +166,14 @@ Deno.serve(async (req) => {
     ok,
     new_hash: newHash,
     device_name: deviceName || null,
-    check_only: checkOnly || action === "change_password",
+    check_only: checkOnly || action === "change_password" || action === "delete_account",
   });
   if (done.error) return refuse(done.error.message);
   if (!ok) return refuse(message);
+  if (action === "delete_account") {
+    const gone = await db.rpc("member_erase", { org: m.org_id, member_no: memberNo });
+    if (gone.error) return refuse(gone.error.message);
+    return reply({ kind: "deleted" });
+  }
   return reply(done.data);
 });

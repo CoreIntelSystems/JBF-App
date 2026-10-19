@@ -17,10 +17,14 @@ class SecureStore {
   static const _lastUsername = 'last_username';
   static const _themeMode = 'theme_mode';
 
-  /// The 256-bit database key, created on first launch.
-  Future<String> databaseKey() async {
+  /// The 256-bit database key, created on first launch. If the key is gone
+  /// but a database file already exists ([databaseExists]), a new key would
+  /// only produce a file that cannot be opened, so this throws
+  /// [DatabaseKeyLost] and the app offers recovery instead.
+  Future<String> databaseKey({bool databaseExists = false}) async {
     final existing = await _storage.read(key: _dbKey);
     if (existing != null) return existing;
+    if (databaseExists) throw const DatabaseKeyLost();
     final r = Random.secure();
     final key = List<int>.generate(
       32,
@@ -29,6 +33,9 @@ class SecureStore {
     await _storage.write(key: _dbKey, value: key);
     return key;
   }
+
+  /// Forgets the database key, so the next start creates a fresh database.
+  Future<void> forgetDatabaseKey() => _storage.delete(key: _dbKey);
 
   Future<String> deviceId() async {
     final existing = await _storage.read(key: _deviceId);
@@ -51,4 +58,13 @@ class SecureStore {
   Future<String?> themeMode() => _storage.read(key: _themeMode);
   Future<void> setThemeMode(String mode) =>
       _storage.write(key: _themeMode, value: mode);
+}
+
+/// The records on this phone exist but the key that opens them is gone.
+class DatabaseKeyLost implements Exception {
+  const DatabaseKeyLost();
+
+  @override
+  String toString() =>
+      'The database key is missing from this phone\u2019s secure storage.';
 }

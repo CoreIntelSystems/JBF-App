@@ -682,13 +682,14 @@ function openChat(chan) {
         m.mine || !first || !sub ? null : h('small', null, sub),
         m.reply ? quoteBlock(m.reply) : null,
         content(m),
-        h('small', { class: 'time' }, new Date(m.at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })));
+        h('div', { class: 'meta' },
+          chan.post ? h('button', { type: 'button', class: 'rep', title: 'Reply', onclick: () => setReply(m) }, '↩ Reply') : null,
+          h('small', { class: 'time' }, new Date(m.at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }))));
       if (chan.post) {
         bubble.addEventListener('dblclick', () => setReply(m));
         let x0 = null;
         bubble.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
         bubble.addEventListener('touchend', (e) => { if (x0 != null && e.changedTouches[0].clientX - x0 > 70) setReply(m); x0 = null; });
-        bubble.append(h('button', { type: 'button', class: 'rep', title: 'Reply', onclick: () => setReply(m) }, '↩'));
       }
       list.append(h('div', { class: 'wa-row' + (m.mine ? ' mine' : '') + (first ? ' first' : '') },
         m.mine ? null : (first ? avatar(m) : h('div', { class: 'wa-av gap' })), bubble));
@@ -738,7 +739,7 @@ function openChat(chan) {
   app.replaceChildren(
     h('button', { class: 'link', onclick: () => show('chat') }, '‹ All chats'),
     h('h2', null, chan.name),
-    h('div', null, h('button', { type: 'button', class: 'link', onclick: () => avIn.click() }, '📷 My chat picture'),
+    h('div', { class: 'chatbar' }, h('button', { type: 'button', class: 'link', onclick: () => avIn.click() }, '📷 My chat picture'),
       h('button', { type: 'button', class: 'link', onclick: async () => { try { await rpc('avatar_set', { token: session.token, photo: null, as_name: null }); await loadAvatars(); } catch (ex) { alert(ex.message); } } }, 'Remove')),
     list, avIn,
     chan.post ? h('div', null, bar, stickers, photoIn, docIn,
@@ -883,6 +884,7 @@ function viewMe() {
   out.append(h('div', { class: 'card' }, h('h2', null, home.member.name),
     h('div', { class: 'row' }, h('span', null, 'Member ID'), h('span', null, home.member.member_no)),
     chips(home.roles)));
+  out.append(pictureForm());
   if (home.self_edit) out.append(profileForm());
   else out.append(whatsappNameForm(), h('p', { class: 'hint' }, 'To correct your other details, speak to your Zone Secretary.'));
   out.append(passwordForm());
@@ -892,6 +894,28 @@ function viewMe() {
   } }, 'Sign out'));
   out.append(installHint());
   return out;
+}
+
+function pictureForm() {
+  const img = h('img', { class: 'wa-av', alt: '', width: 56, height: 56, hidden: true });
+  const initials = h('div', { class: 'wa-av init', style: 'width:56px;height:56px' }, String(home.member.name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join(''));
+  const show = (photo) => { img.hidden = !photo; initials.hidden = !!photo; if (photo) img.src = photo; };
+  rpc('avatar_get', { token: session.token, as_name: null }).then((r) => show(r.photo)).catch(() => {});
+  const file = h('input', { type: 'file', accept: 'image/*', hidden: true, onchange: async (e) => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try {
+      const u = await shrink(f, 200, 0.7);
+      await rpc('avatar_set', { token: session.token, photo: u, as_name: null });
+      show(u);
+    } catch (ex) { alert(ex.message); }
+  } });
+  return h('div', { class: 'card' }, h('h2', null, 'My picture'),
+    h('div', { class: 'row' }, img, initials, h('span', null, 'Shows next to your messages in the chats')),
+    file, h('button', { type: 'button', onclick: () => file.click() }, 'Choose a picture'),
+    h('button', { type: 'button', class: 'link', onclick: async () => {
+      try { await rpc('avatar_set', { token: session.token, photo: null, as_name: null }); show(null); } catch (ex) { alert(ex.message); }
+    } }, 'Remove my picture'));
 }
 
 function profileForm() {

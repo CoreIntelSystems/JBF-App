@@ -136,4 +136,32 @@ void main() {
     expect(post.$2['kind'], 'sticker');
     expect(post.$2['body'], '❤️');
   });
+
+  testWidgets('My picture shows the saved picture and can remove it', (
+    tester,
+  ) async {
+    final seen = <String>[];
+    final a = SyncApi((fn, args) async {
+      seen.add(fn);
+      return switch (fn) {
+        'avatar_get' => {'photo': null},
+        _ => {'ok': true},
+      };
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MyPictureTile(token: 'tok', api: a),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('My picture'), findsOneWidget);
+    expect(seen, ['avatar_get']);
+    await tester.tap(find.byTooltip('Change my picture'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove my picture'));
+    await tester.pumpAndSettle();
+    expect(seen, ['avatar_get', 'avatar_set', 'avatar_get']);
+  });
 }

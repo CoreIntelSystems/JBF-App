@@ -378,7 +378,7 @@ In the app (More > Chats) and on the member site (Chats):
 
 - **Reply to a message.** Press and hold a message and choose Reply (in the app you can also swipe it to the right). The message you answer shows above your reply, as in WhatsApp.
 - **Names, pictures and zones.** Each message shows the sender's round picture, their name, their WhatsApp name and their zones.
-- **My chat picture.** Tap the person icon at the top of a chat and choose a photo from your gallery. Everyone sees it in every chat. You can remove it any time.
+- **My chat picture.** On the Me page choose "My picture", or tap the person icon at the top of a chat, and pick a photo from your gallery. Everyone sees it in every chat. You can remove it any time.
 - **Pictures and documents.** Tap the paper-clip (app) or the picture and clip buttons (site). Pictures show in the chat; tap to enlarge. Documents (PDF, Word, Excel and so on) show with their name and size; tap to open or save. Each file can be up to 3 MB.
 - **Stickers.** Tap the smiley beside the message box and choose one.
 

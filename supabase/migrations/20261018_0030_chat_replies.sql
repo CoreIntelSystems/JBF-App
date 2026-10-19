@@ -360,3 +360,20 @@ end;
 $$;
 grant execute on function public.chat_messages(text, text, timestamptz, text)
   to anon, authenticated;
+
+-- My own chat picture, for the Me page.
+create or replace function public.avatar_get(token text, as_name text default null)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me jsonb := public.chat_identity(token, as_name);
+begin
+  return jsonb_build_object('photo', (
+    select a.photo from public.member_avatars a
+    where a.org_id = (me ->> 'org')::uuid and a.member_key = me ->> 'member'));
+end;
+$$;
+grant execute on function public.avatar_get(text, text) to anon, authenticated;

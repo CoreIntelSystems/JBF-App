@@ -436,6 +436,14 @@ class SyncApi {
     return {for (final e in r.entries) '${e.key}': '${e.value}'};
   }
 
+  /// My own chat picture as a data URL, or null when none is set.
+  Future<String?> avatarGet(String token, {String? asName}) async {
+    final r =
+        (await _call('avatar_get', {'token': token, 'as_name': asName}))!
+            as Map;
+    return r['photo'] as String?;
+  }
+
   /// Sets my chat picture (a data URL), or clears it with null.
   Future<void> avatarSet(String token, String? photo, {String? asName}) =>
       _call('avatar_set', {'token': token, 'photo': photo, 'as_name': asName});

@@ -206,6 +206,100 @@ String _quoteText(String kind, String body) => switch (kind) {
   _ => body,
 };
 
+/// "My picture": shows the picture other people see next to my messages
+/// and lets me choose a new one or remove it.
+class MyPictureTile extends StatefulWidget {
+  const MyPictureTile({super.key, required this.token, this.asName, this.api});
+
+  final String token;
+  final String? asName;
+
+  /// Only for tests.
+  final SyncApi? api;
+
+  @override
+  State<MyPictureTile> createState() => _MyPictureTileState();
+}
+
+class _MyPictureTileState extends State<MyPictureTile> {
+  late final _api = widget.api ?? context.read<AppServices>().sync.api;
+  Uint8List? _photo;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final url = await _api.avatarGet(widget.token, asName: widget.asName);
+      if (!mounted) return;
+      setState(
+        () => _photo = url != null && url.contains(',')
+            ? base64Decode(url.split(',').last)
+            : null,
+      );
+    } on SyncException catch (_) {}
+  }
+
+  Future<void> _change(String choice) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      if (choice == 'remove') {
+        await _api.avatarSet(widget.token, null, asName: widget.asName);
+      } else {
+        final picked = await ImagePicker().pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 200,
+          maxHeight: 200,
+          imageQuality: 70,
+        );
+        if (picked == null) return;
+        final bytes = await picked.readAsBytes();
+        final type = picked.name.toLowerCase().endsWith('.png')
+            ? 'png'
+            : 'jpeg';
+        await _api.avatarSet(
+          widget.token,
+          'data:image/$type;base64,${base64Encode(bytes)}',
+          asName: widget.asName,
+        );
+      }
+      await _load();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Done. Your picture shows in the chats.')),
+      );
+    } on SyncException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.offline ? 'No internet.' : e.message)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      key: const Key('myPictureTile'),
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        backgroundImage: _photo == null ? null : MemoryImage(_photo!),
+        child: _photo == null ? const Icon(Icons.person_outline) : null,
+      ),
+      title: const Text('My picture'),
+      subtitle: const Text('Shows next to your messages in the chats'),
+      trailing: PopupMenuButton<String>(
+        tooltip: 'Change my picture',
+        onSelected: _change,
+        itemBuilder: (context) => const [
+          PopupMenuItem(value: 'choose', child: Text('Choose a picture')),
+          PopupMenuItem(value: 'remove', child: Text('Remove my picture')),
+        ],
+      ),
+    );
+  }
+}
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,

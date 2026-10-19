@@ -562,6 +562,8 @@ void main() {
                   'mine': true,
                 },
           ];
+        case 'avatar_get':
+          return {'photo': null};
         case 'chat_avatars':
           return <String, Object?>{};
         case 'chat_post':
@@ -655,7 +657,9 @@ void main() {
     await tester.tap(find.text('Zone 1'));
     await tester.pump();
     await tester.tap(find.text('Save').first);
-    await pumpUntil(tester, find.text('MEMBERSHIP CARD'));
+    await pumpUntil(tester, find.text('Details saved.'));
+    await tester.pumpAndSettle();
+    expect(find.byType(MemberProfileScreen), findsNothing);
     expect(saved.single['zone_ids'], ['z2']);
     expect((saved.single['patch']! as Map)['full_name'], 'Kofi A. Mensah');
     await tester.pump(const Duration(seconds: 1));

@@ -130,15 +130,20 @@
   .wa-img { display: block; max-width: 240px; width: 100%; border-radius: 8px; min-height: 60px; }
   .wa-file { display: flex; align-items: center; gap: 8px; width: auto; margin: 2px 0; background: rgba(0,0,0,.06); color: #111; text-align: left; }
   .wa-file small { display: block; }
-  .rep { position: absolute; top: 2px; right: 4px; width: auto; margin: 0; padding: 0 6px; background: none; color: #667; font-size: .9rem; opacity: .55; }
+  .meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .msgs.wa .msg .meta .time { margin-left: auto; }
+  button.rep { width: auto; margin: 0; padding: 2px 0; background: none; color: #667; font-size: .72rem; }
+  .chatbar { display: flex; gap: 18px; align-items: center; margin-bottom: 8px; }
+  .chatbar button.link { margin: 0; padding: 4px 0; }
   .replybar { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; margin: 8px 0; }
   .replybar .quote { flex: 1; margin: 0; }
   .stickers { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin: 8px 0; }
   .stickers button { background: none; font-size: 1.6rem; margin: 0; padding: 2px; }
-  .send .icon { background: none; font-size: 1.3rem; padding: 0 4px; color: var(--text); }
+  .send .icon { background: none; font-size: 1.25rem; padding: 4px; color: var(--text); }
   .chan { display: block; width: 100%; text-align: left; background: var(--card); color: var(--text); border: 1px solid var(--line); margin: 0 0 10px; border-radius: 14px; }
-  .send { display: flex; gap: 8px; }
-  .send input { flex: 1; } .send button { width: auto; margin: 0; }
+  .send { display: flex; gap: 4px; align-items: center; }
+  .send input { flex: 1; min-width: 0; } .send button { width: auto; margin: 0; }
+  .send button[type=submit] { padding: 10px 14px; }
   .zone { display: flex; gap: 10px; align-items: center; padding: 10px 0; font-weight: 400; margin: 0; }
   .zone input { width: auto; }
   [hidden] { display: none !important; }

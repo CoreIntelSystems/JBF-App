@@ -148,8 +148,9 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                           m.fullName,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        if (m.whatsappName != null)
-                          Text('WhatsApp: ${m.whatsappName}'),
+                        if (m.whatsappName != null &&
+                            m.whatsappName!.isNotEmpty)
+                          Text('(${m.whatsappName})'),
                         const SizedBox(height: 4),
                         StatusChip(status: m.status),
                       ],
@@ -189,7 +190,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   _Row('Status since', formatDate(m.statusDate)),
               ]),
               _Section('Personal', [
-                _Row('WhatsApp name', m.whatsappName),
+                _Row('Username', m.whatsappName),
                 _Row('Gender', m.gender),
                 _Row('Date of birth', formatDate(m.dateOfBirth)),
                 _Row('Nationality', m.nationality),

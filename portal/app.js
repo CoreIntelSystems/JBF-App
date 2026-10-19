@@ -25,6 +25,15 @@ let pollTimer = null;
 let offline = false;
 
 // ---------- helpers ----------
+// The browser's append, prepend and replaceChildren turn a null argument into
+// the text "null". Pages pass null for parts that are not shown, so drop those.
+for (const method of ['append', 'prepend', 'replaceChildren']) {
+  const native = Element.prototype[method];
+  Element.prototype[method] = function (...nodes) {
+    return native.apply(this, nodes.filter((n) => n != null && n !== false));
+  };
+}
+
 function h(tag, attrs, ...kids) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
@@ -207,8 +216,8 @@ function idCard() {
       h('div', null, h('b', null, session.org_name || 'June Borns Family'), h('small', null, 'MEMBERSHIP CARD'))),
     h('div', { class: 'body' },
       h('div', { style: 'font-weight:700;font-size:1.05rem' }, m.name),
+      home.whatsapp_name ? h('div', { class: 'sub' }, '(' + home.whatsapp_name + ')') : null,
       h('div', { class: 'no' }, m.member_no),
-      home.whatsapp_name ? h('div', { class: 'sub' }, 'WhatsApp: ' + home.whatsapp_name) : null,
       h('div', { class: 'sub' }, 'Zone: ' + (realZones(m).join(', ') || 'Not chosen yet')),
       h('div', { class: 'sub' }, 'Member since ' + day(m.joined)),
       chips(home.roles)));
@@ -299,7 +308,7 @@ function requestCard(r, reload) {
     r.details ? h('p', null, r.details) : null,
     r.pay_to ? h('div', { class: 'notice' }, h('b', null, 'How to pay: '), r.pay_to) : null);
   if (mine && mine.status === 'pending') {
-    card.append(h('p', { class: 'hint' }, `Reported ${money(mine.amount)} by ${methods[mine.method] || mine.method}. Awaiting confirmation.`));
+    card.append(h('p', { class: 'hint' }, `Reported ${money(mine.amount)}${methods[mine.method] || mine.method ? ' by ' + (methods[mine.method] || mine.method) : ''}. Awaiting confirmation.`));
     return card;
   }
   if (mine && mine.status === 'confirmed') {
@@ -559,7 +568,7 @@ function welfareStandingCard() {
   return card;
 }
 
-// Members can find each other by name or WhatsApp name.
+// Members can find the people in their own zones by name or username.
 function directoryCard() {
   const people = home.directory || [];
   const list = h('div');
@@ -567,14 +576,14 @@ function directoryCard() {
     q = q.trim().toLowerCase();
     const shown = people.filter((p) => !q || (p.name || '').toLowerCase().includes(q) || (p.whatsapp_name || '').toLowerCase().includes(q));
     list.replaceChildren(...shown.slice(0, 100).map((p) => h('div', { class: 'row' },
-      h('span', null, p.name, p.whatsapp_name ? h('div', { class: 'sub' }, 'WhatsApp: ' + p.whatsapp_name) : null),
+      h('span', null, p.name, p.whatsapp_name ? h('div', { class: 'sub' }, '(' + p.whatsapp_name + ')') : null),
       h('span', { class: 'sub' }, realZones(p).join(', ')))),
     shown.length > 100 ? h('p', { class: 'hint' }, `Showing 100 of ${shown.length}. Type more of the name to narrow it down.`) : null,
-    shown.length ? null : h('p', { class: 'hint' }, 'No member found.'));
+    shown.length ? null : h('p', { class: 'hint' }, people.length ? 'No member found.' : 'Choose your zone to see its members.'));
   };
   draw('');
-  return h('div', { class: 'card' }, h('h2', null, `Members (${people.length})`),
-    h('input', { type: 'search', placeholder: 'Search by name or WhatsApp name', oninput: (e) => draw(e.target.value) }), list);
+  return h('div', { class: 'card' }, h('h2', null, `Members in my zones (${people.length})`),
+    h('input', { type: 'search', placeholder: 'Search by name or username', oninput: (e) => draw(e.target.value) }), list);
 }
 
 // ---------- chats ----------
@@ -582,7 +591,7 @@ function viewChannels() {
   const box = h('div', null, h('p', { class: 'hint' }, 'Loading...'));
   rpc('chat_channels', { token: session.token, as_name: null }).then((chans) => {
     box.replaceChildren(h('h2', null, 'Chats'), ...chans.map((c) =>
-      h('button', { class: 'chan', onclick: () => openChat(c) }, h('b', null, c.name), h('div', { class: 'sub' }, c.last || 'No messages yet'))),
+      h('button', { class: 'chan', onclick: () => openChat(c) }, h('b', null, c.name || 'Chat'), h('div', { class: 'sub' }, c.last || 'No messages yet'))),
       chans.length ? null : h('p', { class: 'hint' }, 'No chats yet.'));
   }).catch((ex) => {
     if (ex.expired) return signOutLocal();
@@ -717,7 +726,6 @@ function openChat(chan) {
       const foot = h('div', { class: 'c-foot' }, rep, new Date(m.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
       if (m.mine) foot.append(raw(ICON.tick));
       const who = !m.mine && first ? h('div', { class: 'c-who' }, h('b', null, m.author),
-        m.author_whatsapp ? h('i', null, '~' + m.author_whatsapp) : null,
         ...(m.zones || []).map((z) => h('span', { class: 'c-zone' }, z))) : null;
       const bubble = sticker
         ? h('div', null, content(m), h('div', { class: 'c-foot' }, new Date(m.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })))
@@ -814,7 +822,7 @@ async function openElections() {
       rpc('office_notices', { token: session.token, committee: 'ec' }).catch(() => [])]);
     box.lastChild.remove();
     for (const n of notices) {
-      box.append(h('div', { class: 'notice' }, h('b', null, '📣 ' + n.title), h('div', null, n.body),
+      box.append(h('div', { class: 'notice' }, h('b', null, '📣 ' + (n.title || 'Notice')), h('div', null, n.body),
         h('div', { class: 'sub' }, `From the ${n.from || 'Electoral Commission'} · ` + new Date(n.at).toLocaleDateString('en-GB', { dateStyle: 'medium' }))));
     }
     if (!r.elections.length) box.append(h('p', { class: 'hint' }, 'No elections.'));
@@ -911,7 +919,7 @@ async function showResults(e, back) {
 
 // ---------- me ----------
 const FIELDS = [
-  ['full_name', 'Full name', 'text'], ['whatsapp_name', 'WhatsApp name', 'text'], ['phone', 'Phone number', 'tel'], ['whatsapp', 'Second or WhatsApp number', 'tel'],
+  ['full_name', 'Full name', 'text'], ['whatsapp_name', 'Username', 'text'], ['phone', 'Phone number', 'tel'], ['whatsapp', 'Second or WhatsApp number', 'tel'],
   ['email', 'Email', 'email'], ['occupation', 'Occupation', 'text'], ['location', 'Town or area', 'text'],
   ['address', 'Address', 'text'], ['gps_address', 'GPS address', 'text'],
   ['emergency_name', 'Emergency contact name', 'text'], ['emergency_phone', 'Emergency contact phone', 'tel'],
@@ -1015,7 +1023,7 @@ function profileForm() {
     zoneBox, err, btn);
 }
 
-// Every member may set the name they use on WhatsApp.
+// Every member may set the username other members see in chats.
 function whatsappNameForm() {
   const input = h('input', { type: 'text', value: home.whatsapp_name || '', maxlength: 200 });
   const msg = h('p', { class: 'hint', hidden: true });
@@ -1032,7 +1040,7 @@ function whatsappNameForm() {
       msg.textContent = ex.message; msg.className = 'error'; msg.hidden = false;
       btn.disabled = false;
     }
-  } }, h('h2', null, 'My WhatsApp name'), h('p', { class: 'hint' }, 'Shown to others in chats.'), input, msg, btn);
+  } }, h('h2', null, 'My username'), h('p', { class: 'hint' }, 'Other members see this in chats instead of your full name.'), input, msg, btn);
 }
 
 function passwordForm() {

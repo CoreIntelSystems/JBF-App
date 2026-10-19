@@ -315,7 +315,7 @@ class _PeopleTabState extends State<_PeopleTab> {
         TextField(
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.search),
-            hintText: 'Search by name or WhatsApp name',
+            hintText: 'Search by name or username',
           ),
           onChanged: (v) => setState(() => _query = v.trim()),
         ),
@@ -327,7 +327,8 @@ class _PeopleTabState extends State<_PeopleTab> {
                 ? null
                 : Text(
                     [
-                      if (p.whatsappName != null) 'WhatsApp: ${p.whatsappName}',
+                      if (p.whatsappName != null && p.whatsappName!.isNotEmpty)
+                        '(${p.whatsappName})',
                       if (p.zones.isNotEmpty) p.zones.join(', '),
                     ].join(' · '),
                   ),
@@ -422,20 +423,21 @@ class _MeTab extends StatelessWidget {
     }
   }
 
-  /// Every member may set the name they use on WhatsApp.
+  /// Every member may set the username other members see in chats.
   Future<void> _editWhatsappName(BuildContext context) async {
     final name = TextEditingController(text: home.whatsappName);
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('My WhatsApp name'),
+        title: const Text('My username'),
         content: TextField(
           key: const Key('whatsappNameField'),
           controller: name,
           autofocus: true,
           maxLength: 200,
           decoration: const InputDecoration(
-            helperText: 'The name others see for you on WhatsApp',
+            helperText:
+                'Other members see this in chats instead of your full name',
           ),
         ),
         actions: [
@@ -457,16 +459,14 @@ class _MeTab extends StatelessWidget {
         session.token,
         {'whatsapp_name': name.text},
       );
-      messenger.showSnackBar(
-        const SnackBar(content: Text('WhatsApp name saved.')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('Username saved.')));
       await onChanged();
     } on SyncException catch (e) {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
             e.offline
-                ? 'Connect to the internet to save your WhatsApp name.'
+                ? 'Connect to the internet to save your username.'
                 : e.message,
           ),
         ),
@@ -623,7 +623,7 @@ class _MeTab extends StatelessWidget {
             key: const Key('myWhatsappName'),
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.chat_outlined),
-            title: const Text('My WhatsApp name'),
+            title: const Text('My username'),
             subtitle: Text(home.whatsappName ?? 'Not set yet'),
             onTap: () => _editWhatsappName(context),
           ),
@@ -721,6 +721,8 @@ class _MemberCard extends StatelessWidget {
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
+                if (home.whatsappName != null && home.whatsappName!.isNotEmpty)
+                  Text('(${home.whatsappName})'),
                 Text(
                   s.memberNo,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -730,8 +732,6 @@ class _MemberCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                if (home.whatsappName != null)
-                  Text('WhatsApp: ${home.whatsappName}'),
                 Text('Zone: ${s.zones.isEmpty ? 'None' : s.zones.join(', ')}'),
                 Text('Member since ${formatDate(s.joined)}'),
                 Text('Status: ${capitalize(s.status)}'),

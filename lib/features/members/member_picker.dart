@@ -23,7 +23,7 @@ class MemberPickerState extends State<MemberPicker> {
         title: TextField(
           autofocus: true,
           decoration: const InputDecoration(
-            hintText: 'Search name, WhatsApp name, phone or ID',
+            hintText: 'Search name, username, phone or ID',
             border: InputBorder.none,
             filled: false,
           ),

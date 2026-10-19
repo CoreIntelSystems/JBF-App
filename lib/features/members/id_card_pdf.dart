@@ -192,6 +192,15 @@ Future<Uint8List> buildIdCardsPdf(
                                   fontWeight: pw.FontWeight.bold,
                                 ),
                               ),
+                              if (whatsappName.isNotEmpty)
+                                pw.Text(
+                                  '($whatsappName)',
+                                  maxLines: 1,
+                                  style: pw.TextStyle(
+                                    fontSize: 7.5,
+                                    color: ink,
+                                  ),
+                                ),
                               pw.SizedBox(height: 2),
                               pw.Text(
                                 m.memberNo,
@@ -204,8 +213,6 @@ Future<Uint8List> buildIdCardsPdf(
                               ),
                               pw.SizedBox(height: 2),
                               if (zones.isNotEmpty) detail('Zone', zones),
-                              if (whatsappName.isNotEmpty)
-                                detail('WhatsApp', whatsappName),
                               detail('Joined', formatDate(m.dateJoined)),
                             ],
                           ),

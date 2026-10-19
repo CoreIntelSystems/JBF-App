@@ -217,7 +217,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
               validator: (v) =>
                   (v ?? '').trim().isEmpty ? 'Enter the full name.' : null,
             ),
-            _field('whatsappName', 'WhatsApp name'),
+            _field('whatsappName', 'Username'),
             _choice('Gender', genders, _draft.gender, (v) => _draft.gender = v),
             _dateTile(
               'Date of birth',

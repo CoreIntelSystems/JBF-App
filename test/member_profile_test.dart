@@ -83,7 +83,7 @@ void main() {
         ),
       ),
     );
-    expect(find.text('WhatsApp name'), findsOneWidget);
+    expect(find.text('Username'), findsOneWidget);
     expect(find.text('Kofi B'), findsOneWidget);
   });
 }

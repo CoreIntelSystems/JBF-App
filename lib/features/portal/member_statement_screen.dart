@@ -94,8 +94,7 @@ class _MemberStatementScreenState extends State<MemberStatementScreen> {
         const BrandHeader(subtitle: 'Check your dues and receipts'),
         const SizedBox(height: 16),
         Text(
-          'Enter your member ID (on your ID card or receipts) and the phone '
-          'number the association has for you. You need internet for this.',
+          'Enter your member ID and registered phone number.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 16),
@@ -276,7 +275,7 @@ class StatementView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'Records last updated ${formatDateTime(s.updated!)}.',
+              'Updated ${formatDateTime(s.updated!)}',
               style: text.bodySmall,
             ),
           ),

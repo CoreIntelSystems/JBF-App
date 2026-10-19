@@ -111,10 +111,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Please check that your name, phone number and zone are right '
-            'and correct anything that is not.',
-          ),
+          const Text('Check your details and correct anything that is wrong.'),
           const SizedBox(height: 12),
           for (final (key, label, type) in _fields) ...[
             TextField(
@@ -146,13 +143,11 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
               style: theme.textTheme.bodyLarge,
             ),
             const Text(
-              'You have already chosen your zone. To change it, speak to '
-              'your Zone Secretary.',
+              'Zone chosen. To change it, contact your Zone Secretary.',
             ),
           ] else ...[
             const Text(
-              'Choose one zone, or two at most. You can only do this once, '
-              'so choose carefully.',
+              'Choose one zone, or two at most. This cannot be changed later.',
             ),
             for (final (id, name) in widget.home.zoneOptions)
               CheckboxListTile(

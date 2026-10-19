@@ -77,11 +77,7 @@ class _MyPaymentRequestsState extends State<MyPaymentRequests> {
     );
     if (done == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Thank you. The Treasurer will check and confirm your payment.',
-          ),
-        ),
+        const SnackBar(content: Text('Reported. Awaiting confirmation.')),
       );
       _load();
     }
@@ -131,9 +127,7 @@ class _MyPaymentRequestsState extends State<MyPaymentRequests> {
               'Pay my dues',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
-            subtitle: const Text(
-              'Pay by Mobile Money, then tell the Treasurer here',
-            ),
+            subtitle: const Text('Pay by Mobile Money, then report it'),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: _payOwn,
           ),

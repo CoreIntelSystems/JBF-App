@@ -89,6 +89,16 @@ async function call(path, body) {
 const rpc = (name, args) => call('/rest/v1/rpc/' + name, args);
 const auth = (body) => call('/functions/v1/member-auth', { org: ORG, web: true, ...body });
 
+// Shows a picture full-screen. The src is set as a property, never as markup.
+function lightbox(src) {
+  const box = h('div', { style: 'position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:12px', onclick: () => box.remove() });
+  const img = document.createElement('img');
+  img.src = src; img.alt = '';
+  img.style.cssText = 'max-width:100%;max-height:100%';
+  box.append(img);
+  document.body.append(box);
+}
+
 function stopPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
 
 function signOutLocal() {
@@ -286,7 +296,7 @@ function viewHome() {
     for (const a of notes) box.append(h('div', { class: 'note' }, h('span', { class: 'dot' }), h('div', null, a)));
     if (officer) {
       box.append(h('div', { class: 'note' }, h('span', { class: 'dot' }),
-        h('div', null, 'Executive tools are in the ', h('a', { href: 'https://jbf-app.onrender.com', target: '_blank' }, 'full app'), '.')));
+        h('div', null, 'Executive tools are in the ', h('a', { href: 'https://jbf-app.onrender.com', target: '_blank', rel: 'noopener' }, 'full app'), '.')));
     }
     out.append(box);
   }
@@ -698,7 +708,10 @@ function openChat(chan) {
   const fetchFile = (f) => {
     if (!files.has(f.id)) {
       files.set(f.id, rpc('chat_file', { token: session.token, channel: chan.id, file_id: f.id, as_name: null })
-        .then((r) => 'data:' + (r.mime || 'application/octet-stream') + ';base64,' + r.data)
+        .then((r) => {
+          if (!/^[A-Za-z0-9+/=\s]*$/.test(r.data || '')) throw new Error('That file is not available.');
+          return 'data:' + (r.mime || 'application/octet-stream') + ';base64,' + r.data;
+        })
         .catch((ex) => { files.delete(f.id); throw ex; }));
     }
     return files.get(f.id);
@@ -727,7 +740,7 @@ function openChat(chan) {
     if (m.kind === 'sticker') return h('div', { class: 'c-stk' }, m.body);
     if (m.kind === 'image' && f) {
       const img = h('img', { class: 'c-img', alt: f.name });
-      fetchFile(f).then((u) => { img.src = u; img.style.cursor = 'zoom-in'; img.onclick = () => { const w = window.open(); if (w) w.document.write('<img src="' + u + '" style="max-width:100%">'); }; }).catch(() => img.replaceWith(h('i', null, 'Picture not available')));
+      fetchFile(f).then((u) => { img.src = u; img.style.cursor = 'zoom-in'; img.onclick = () => lightbox(u); }).catch(() => img.replaceWith(h('i', null, 'Picture not available')));
       return h('div', null, img, m.body ? h('div', null, m.body) : null);
     }
     if (m.kind === 'file' && f) {

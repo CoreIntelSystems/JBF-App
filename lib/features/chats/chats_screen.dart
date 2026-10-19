@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../../app_services.dart';
 import '../../core/format.dart';
@@ -300,6 +301,78 @@ class _MyPictureTileState extends State<MyPictureTile> {
   }
 }
 
+/// The chat's own colours, for light and dark.
+class _Pal {
+  const _Pal({
+    required this.dark,
+    required this.wall,
+    required this.incoming,
+    required this.outgoing,
+    required this.text,
+    required this.soft,
+    required this.chip,
+    required this.chipText,
+    required this.tick,
+    required this.field,
+    required this.bar,
+  });
+
+  final bool dark;
+  final Color wall;
+  final Color incoming;
+  final Color outgoing;
+  final Color text;
+  final Color soft;
+  final Color chip;
+  final Color chipText;
+  final Color tick;
+  final Color field;
+  final Color bar;
+
+  static _Pal of(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return dark
+        ? const _Pal(
+            dark: true,
+            wall: Color(0xFF121A15),
+            incoming: Color(0xFF212B25),
+            outgoing: Color(0xFF1D5A39),
+            text: Color(0xFFEEF2EE),
+            soft: Color(0xFFA3B0A7),
+            chip: Color(0xFF2D2A14),
+            chipText: Color(0xFFE3C76A),
+            tick: Color(0xFF7FD3A1),
+            field: Color(0xFF151D18),
+            bar: Color(0xFF0C120E),
+          )
+        : const _Pal(
+            dark: false,
+            wall: Color(0xFFEFE9E1),
+            incoming: Colors.white,
+            outgoing: Color(0xFFD9F3C4),
+            text: Color(0xFF17201B),
+            soft: Color(0xFF6B776F),
+            chip: Color(0xFFF1EAD0),
+            chipText: Color(0xFF6A5410),
+            tick: Color(0xFF2A9D5C),
+            field: Colors.white,
+            bar: Color(0xFFF3F5F2),
+          );
+  }
+}
+
+String _clock(DateTime t) => DateFormat('h:mm a').format(t);
+
+String _dayLabel(DateTime t) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(t.year, t.month, t.day);
+  final diff = today.difference(day).inDays;
+  if (diff == 0) return 'Today';
+  if (diff == 1) return 'Yesterday';
+  return DateFormat('d MMM yyyy').format(t);
+}
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
@@ -320,8 +393,6 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   static const _every = Duration(seconds: 8);
-  static const _wallpaper = Color(0xFFECE5DD);
-  static const _mineBubble = Color(0xFFDCF8C6);
 
   late final _api = widget.api ?? context.read<AppServices>().sync.api;
   final _text = TextEditingController();
@@ -671,7 +742,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// The same colour for the same person every time, as in WhatsApp.
-  Color _nameColor(String name) {
+  Color _nameColor(String name, [bool lift = false]) {
     const colors = [
       Color(0xFF1F7A5A),
       Color(0xFFB5651D),
@@ -682,10 +753,13 @@ class _ChatScreenState extends State<ChatScreen> {
       Color(0xFF117A65),
       Color(0xFFAD1457),
     ];
-    return colors[name.codeUnits.fold<int>(0, (a, b) => a + b) % colors.length];
+    final c =
+        colors[name.codeUnits.fold<int>(0, (a, b) => a + b) % colors.length];
+    return lift ? Color.lerp(c, Colors.white, 0.55)! : c;
   }
 
   Widget _avatar(ChatMessage m) {
+    final pal = _Pal.of(context);
     final bytes = m.authorKey == null ? null : _avatars[m.authorKey];
     final letters = m.author
         .split(RegExp(r'\s+'))
@@ -693,28 +767,37 @@ class _ChatScreenState extends State<ChatScreen> {
         .take(2)
         .map((w) => w[0].toUpperCase())
         .join();
+    final colour = _nameColor(m.author, pal.dark);
     return CircleAvatar(
       key: Key('avatar-${m.id}'),
-      radius: 18,
-      backgroundColor: _nameColor(m.author).withValues(alpha: 0.25),
+      radius: 16,
+      backgroundColor: colour.withValues(alpha: 0.22),
       backgroundImage: bytes != null && bytes.isNotEmpty
           ? MemoryImage(bytes)
           : null,
       child: bytes != null && bytes.isNotEmpty
           ? null
-          : Text(letters, style: TextStyle(color: _nameColor(m.author))),
+          : Text(
+              letters,
+              style: TextStyle(
+                color: colour,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
     );
   }
 
   Widget _quote(ChatQuote q, {required bool inBubble}) {
-    final color = _nameColor(q.author);
+    final pal = _Pal.of(context);
+    final color = _nameColor(q.author, pal.dark);
     return Container(
-      margin: inBubble ? const EdgeInsets.only(bottom: 6) : null,
+      margin: inBubble ? const EdgeInsets.only(top: 2, bottom: 5) : null,
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.06),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
-        border: Border(left: BorderSide(color: color, width: 4)),
+        border: Border(left: BorderSide(color: color, width: 3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -731,7 +814,7 @@ class _ChatScreenState extends State<ChatScreen> {
             _quoteText(q.kind, q.body),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13),
+            style: TextStyle(fontSize: 13, color: pal.soft),
           ),
         ],
       ),
@@ -739,10 +822,17 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _content(ChatMessage m) {
+    final pal = _Pal.of(context);
     final f = m.file;
+    final caption = m.body.isEmpty
+        ? null
+        : Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(m.body, style: TextStyle(color: pal.text)),
+          );
     switch (m.kind) {
       case 'sticker':
-        return Text(m.body, style: const TextStyle(fontSize: 64));
+        return Text(m.body, style: const TextStyle(fontSize: 56));
       case 'image' when f != null:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -772,31 +862,47 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ),
-            if (m.body.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(m.body),
-              ),
+            ?caption,
           ],
         );
       case 'file' when f != null:
+        final ext = f.name.contains('.')
+            ? f.name.split('.').last.toUpperCase()
+            : 'FILE';
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             InkWell(
               key: Key('file-${m.id}'),
+              borderRadius: BorderRadius.circular(9),
               onTap: () => _openFile(f),
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(8),
+                  color: pal.soft.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(9),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.insert_drive_file, size: 32),
-                    const SizedBox(width: 8),
+                    Container(
+                      width: 38,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD64545),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        ext.length <= 4 ? ext : 'FILE',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Flexible(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,86 +911,139 @@ class _ChatScreenState extends State<ChatScreen> {
                             f.name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: pal.text,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5,
+                            ),
                           ),
                           Text(
                             _sizeText(f.size),
-                            style: const TextStyle(fontSize: 12),
+                            style: TextStyle(fontSize: 11.5, color: pal.soft),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.download_outlined),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: pal.soft, width: 1.5),
+                      ),
+                      child: Icon(
+                        Icons.download_outlined,
+                        size: 16,
+                        color: pal.soft,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-            if (m.body.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(m.body),
-              ),
+            ?caption,
           ],
         );
       default:
-        return Text(m.body);
+        return Text(m.body, style: TextStyle(color: pal.text));
     }
   }
 
   Widget _bubble(ChatMessage m, {required bool showName}) {
-    final theme = Theme.of(context);
+    final pal = _Pal.of(context);
     final sticker = m.kind == 'sticker';
-    final who = StringBuffer(m.author);
-    final sub = [
-      if (m.authorWhatsapp != null && m.authorWhatsapp!.isNotEmpty)
-        '~${m.authorWhatsapp}',
-      if (m.zones.isNotEmpty) m.zones.join(', '),
-    ].join(' · ');
+    final nameColour = _nameColor(m.author, pal.dark);
+    final small = TextStyle(fontSize: 10.5, color: pal.soft);
+    final foot = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(_clock(m.at), style: small),
+        if (m.mine) ...[
+          const SizedBox(width: 4),
+          Icon(Icons.done_all, size: 15, color: pal.tick),
+        ],
+      ],
+    );
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!m.mine && showName) ...[
-          Text(
-            who.toString(),
-            style: TextStyle(
-              color: _nameColor(m.author),
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
+        if (!m.mine && showName)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 2,
+              children: [
+                Text(
+                  m.author,
+                  style: TextStyle(
+                    color: nameColour,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                if (m.authorWhatsapp != null && m.authorWhatsapp!.isNotEmpty)
+                  Text(
+                    '~${m.authorWhatsapp}',
+                    style: small.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                for (final z in m.zones)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: pal.chip,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      z,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: pal.chipText,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          if (sub.isNotEmpty)
-            Text(sub, style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)),
-          const SizedBox(height: 2),
-        ],
         if (m.reply != null) _quote(m.reply!, inBubble: true),
         _content(m),
-        Align(
-          alignment: Alignment.bottomRight,
-          child: Text(
-            formatDateTime(m.at),
-            style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-          ),
-        ),
+        const SizedBox(height: 1),
+        Align(alignment: Alignment.bottomRight, child: foot),
       ],
     );
+    final r = Radius.circular(12);
+    final tail = Radius.circular(showName ? 3 : 12);
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxWidth: MediaQuery.sizeOf(context).width * 0.72,
+        maxWidth: MediaQuery.sizeOf(context).width * 0.78,
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: sticker
               ? Colors.transparent
-              : (m.mine ? _mineBubble : Colors.white),
+              : (m.mine ? pal.outgoing : pal.incoming),
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(12),
-            topRight: const Radius.circular(12),
-            bottomLeft: Radius.circular(m.mine ? 12 : 2),
-            bottomRight: Radius.circular(m.mine ? 2 : 12),
+            topLeft: m.mine ? r : tail,
+            topRight: m.mine ? tail : r,
+            bottomLeft: r,
+            bottomRight: r,
           ),
-          boxShadow: sticker
+          boxShadow: sticker || pal.dark
               ? null
-              : const [BoxShadow(color: Colors.black12, blurRadius: 1)],
+              : const [
+                  BoxShadow(
+                    color: Color(0x29131C17),
+                    blurRadius: 1.5,
+                    offset: Offset(0, 1),
+                  ),
+                ],
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(10, 6, 10, 4),
@@ -894,14 +1053,39 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _dayChip(DateTime t) {
+    final pal = _Pal.of(context);
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.only(top: 8, bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: pal.incoming,
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: Text(
+          _dayLabel(t),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: pal.soft,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _row(List<ChatMessage> reversed, int i) {
     final m = reversed[i];
     // reversed[i + 1] is the message just before this one.
     final before = i + 1 < reversed.length ? reversed[i + 1] : null;
-    final first =
+    final newDay =
         before == null ||
-        before.authorKey != m.authorKey ||
-        before.author != m.author;
+        before.at.year != m.at.year ||
+        before.at.month != m.at.month ||
+        before.at.day != m.at.day;
+    final first =
+        newDay || before.authorKey != m.authorKey || before.author != m.author;
     final bubble = GestureDetector(
       key: Key('msg-${m.id}'),
       onLongPress: () => _messageMenu(m),
@@ -912,7 +1096,7 @@ class _ChatScreenState extends State<ChatScreen> {
       },
       child: _bubble(m, showName: first),
     );
-    return Padding(
+    final row = Padding(
       padding: EdgeInsets.only(top: first ? 8 : 2),
       child: Row(
         mainAxisAlignment: m.mine
@@ -920,20 +1104,72 @@ class _ChatScreenState extends State<ChatScreen> {
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (!m.mine) SizedBox(width: 40, child: first ? _avatar(m) : null),
+          if (!m.mine) SizedBox(width: 39, child: first ? _avatar(m) : null),
           Flexible(child: bubble),
         ],
       ),
     );
+    if (!newDay) return row;
+    return Column(children: [_dayChip(m.at), row]);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final pal = _Pal.of(context);
     final reversed = _messages.reversed.toList();
+    final name = widget.channel.name;
+    final initials = name
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .take(2)
+        .map((w) => w[0].toUpperCase())
+        .join();
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.channel.name),
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: const Color(0xFFC9A227),
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: Color(0xFF3A2F06),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    widget.channel.canPost
+                        ? 'Swipe a message to reply'
+                        : 'Read only',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           PopupMenuButton<String>(
             key: const Key('myPicture'),
@@ -947,7 +1183,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      backgroundColor: _wallpaper,
+      backgroundColor: pal.wall,
       body: Column(
         children: [
           if (_error != null)
@@ -959,108 +1195,148 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           Expanded(
             child: reversed.isEmpty
-                ? const Center(child: Text('No messages yet.'))
+                ? Center(
+                    child: Text(
+                      'No messages yet.',
+                      style: TextStyle(color: pal.soft),
+                    ),
+                  )
                 : ListView.builder(
                     reverse: true,
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
                     itemCount: reversed.length,
                     itemBuilder: (context, i) => _row(reversed, i),
                   ),
           ),
-          SafeArea(
-            top: false,
-            child: widget.channel.canPost
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_replyTo != null)
-                        Container(
-                          key: const Key('replyBar'),
-                          color: theme.colorScheme.surface,
-                          padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
+          Container(
+            decoration: BoxDecoration(
+              color: pal.bar,
+              border: Border(top: BorderSide(color: theme.dividerColor)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: widget.channel.canPost
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_replyTo != null)
+                          Container(
+                            key: const Key('replyBar'),
+                            margin: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                            padding: const EdgeInsets.fromLTRB(8, 6, 2, 6),
+                            decoration: BoxDecoration(
+                              color: pal.field,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: theme.dividerColor),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _quote(
+                                    ChatQuote(
+                                      id: _replyTo!.id,
+                                      author: _replyTo!.mine
+                                          ? 'You'
+                                          : _replyTo!.author,
+                                      body: _replyTo!.body,
+                                      kind: _replyTo!.kind,
+                                    ),
+                                    inBubble: false,
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Cancel reply',
+                                  icon: const Icon(Icons.close, size: 20),
+                                  onPressed: () =>
+                                      setState(() => _replyTo = null),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Expanded(
-                                child: _quote(
-                                  ChatQuote(
-                                    id: _replyTo!.id,
-                                    author: _replyTo!.mine
-                                        ? 'You'
-                                        : _replyTo!.author,
-                                    body: _replyTo!.body,
-                                    kind: _replyTo!.kind,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: pal.field,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: theme.dividerColor,
+                                    ),
                                   ),
-                                  inBubble: false,
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      IconButton(
+                                        key: const Key('stickerButton'),
+                                        tooltip: 'Stickers',
+                                        color: pal.soft,
+                                        onPressed: _sending
+                                            ? null
+                                            : _sendSticker,
+                                        icon: const Icon(
+                                          Icons.emoji_emotions_outlined,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: TextField(
+                                          key: const Key('chatText'),
+                                          controller: _text,
+                                          minLines: 1,
+                                          maxLines: 4,
+                                          textCapitalization:
+                                              TextCapitalization.sentences,
+                                          decoration: const InputDecoration(
+                                            hintText: 'Write a message',
+                                            border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            filled: false,
+                                            isDense: true,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  vertical: 12,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        key: const Key('attachButton'),
+                                        tooltip: 'Attach',
+                                        color: pal.soft,
+                                        onPressed: _sending ? null : _attach,
+                                        icon: const Icon(Icons.attach_file),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              IconButton(
-                                tooltip: 'Cancel reply',
-                                icon: const Icon(Icons.close),
-                                onPressed: () =>
-                                    setState(() => _replyTo = null),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 46,
+                                height: 46,
+                                child: IconButton.filled(
+                                  tooltip: 'Send',
+                                  onPressed: _sending ? null : _send,
+                                  icon: const Icon(Icons.send, size: 20),
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(6, 4, 4, 6),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              key: const Key('stickerButton'),
-                              tooltip: 'Stickers',
-                              onPressed: _sending ? null : _sendSticker,
-                              icon: const Icon(Icons.emoji_emotions_outlined),
-                            ),
-                            Expanded(
-                              child: TextField(
-                                key: const Key('chatText'),
-                                controller: _text,
-                                minLines: 1,
-                                maxLines: 4,
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                decoration: InputDecoration(
-                                  hintText: 'Write a message',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              key: const Key('attachButton'),
-                              tooltip: 'Attach',
-                              onPressed: _sending ? null : _attach,
-                              icon: const Icon(Icons.attach_file),
-                            ),
-                            CircleAvatar(
-                              backgroundColor: theme.colorScheme.primary,
-                              child: IconButton(
-                                tooltip: 'Send',
-                                color: theme.colorScheme.onPrimary,
-                                onPressed: _sending ? null : _send,
-                                icon: const Icon(Icons.send),
-                              ),
-                            ),
-                          ],
-                        ),
+                      ],
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Text(
+                        'Only the Founder and General Secretary post here.',
+                        style: TextStyle(color: pal.soft),
                       ),
-                    ],
-                  )
-                : const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Text(
-                      'Only the Founder and General Secretary post here.',
                     ),
-                  ),
+            ),
           ),
         ],
       ),

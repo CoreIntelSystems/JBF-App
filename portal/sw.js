@@ -1,6 +1,6 @@
 // Keeps the app shell available offline. Member data is never cached here:
 // it is fetched fresh, and the page keeps its own copy of the last statement.
-const SHELL = 'jbf-shell-v19';
+const SHELL = 'jbf-shell-v20';
 const FILES = ['./', 'index.html', 'app.js', 'manifest.webmanifest', 'logo.png',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'Inter-Regular.woff2', 'Inter-SemiBold.woff2'];
 
@@ -23,8 +23,10 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(req, { cache: 'no-cache' })
       .then((res) => {
-        const copy = res.clone();
-        caches.open(SHELL).then((c) => c.put(req, copy));
+        if (res.ok && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(SHELL).then((c) => c.put(req, copy));
+        }
         return res;
       })
       .catch(() => caches.match(req, { ignoreSearch: true }).then((hit) => hit || caches.match('./'))),

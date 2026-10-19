@@ -616,12 +616,34 @@ const readDataUrl = (file) => new Promise((resolve, reject) => {
 });
 const base64Of = (dataUrl) => dataUrl.slice(dataUrl.indexOf(',') + 1);
 
+const ICON = {
+  back: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  me: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  reply: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 016 6v3"/></svg>',
+  tick: '<svg class="tick" width="16" height="12" viewBox="0 0 20 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6.5l3.5 3.5L11 2"/><path d="M8 8.5l1.5 1.5L16 2"/></svg>',
+  smile: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.6"/></svg>',
+  clip: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-8.6 8.6a5 5 0 01-7.1-7.1l9-9a3.4 3.4 0 014.8 4.8l-9 9a1.8 1.8 0 01-2.5-2.5l8.2-8.2"/></svg>',
+  photo: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>',
+  send: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4l17.5-7.5a1 1 0 000-1.8L3.4 3.6a.8.8 0 00-1.1.9L3.5 10l9 2-9 2-1.2 5.5a.8.8 0 001.1.9z"/></svg>',
+  down: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>',
+  x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+const raw = (html) => { const t = document.createElement('template'); t.innerHTML = html; return t.content.firstChild; };
+const fileKind = (name) => { const e = String(name).split('.').pop().toUpperCase(); return e.length <= 4 ? e : 'FILE'; };
+const dayLabel = (iso) => {
+  const d = new Date(iso); const t = new Date();
+  const same = (a, b) => a.toDateString() === b.toDateString();
+  const y = new Date(t); y.setDate(t.getDate() - 1);
+  return same(d, t) ? 'Today' : same(d, y) ? 'Yesterday' : d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 function openChat(chan) {
   stopPolling();
-  const list = h('div', { class: 'msgs wa' });
+  const list = h('div', { class: 'c-msgs' });
   let last = null;
   let replyTo = null;
   let prev = null;
+  let prevDay = null;
   let avatars = {};
   const seen = new Set();
   const files = new Map();
@@ -635,37 +657,40 @@ function openChat(chan) {
   };
   const avatar = (m) => {
     const src = avatars[m.author_key];
-    if (src) return h('img', { class: 'wa-av', src, alt: '' });
+    if (src) return h('img', { class: 'c-av', src, alt: '' });
     const letters = String(m.author || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
-    return h('div', { class: 'wa-av init', style: 'color:' + nameColor(m.author) }, letters);
+    return h('div', { class: 'c-av', style: '--c:' + nameColor(m.author) }, letters);
   };
-  const bar = h('div', { class: 'replybar', hidden: true });
+  const quoteBlock = (q) => h('div', { class: 'c-q', style: '--c:' + nameColor(q.author) },
+    h('b', null, q.author), h('span', null, quoteText(q.kind, q.body)));
+  const bar = h('div', { class: 'c-replybar', hidden: true });
   const setReply = (m) => {
     replyTo = m;
     bar.hidden = !m;
     bar.replaceChildren();
     if (!m) return;
-    bar.append(quoteBlock({ author: m.mine ? 'You' : m.author, kind: m.kind, body: m.body }),
-      h('button', { type: 'button', class: 'link', onclick: () => setReply(null) }, '✕'));
+    const x = h('button', { type: 'button', class: 'x', 'aria-label': 'Cancel reply', onclick: () => setReply(null) });
+    x.append(raw(ICON.x));
+    bar.append(quoteBlock({ author: m.mine ? 'You' : m.author, kind: m.kind, body: m.body }), x);
     input.focus();
   };
-  const quoteBlock = (q) => h('div', { class: 'quote', style: 'border-left-color:' + nameColor(q.author) },
-    h('b', { style: 'color:' + nameColor(q.author) }, q.author), h('span', null, quoteText(q.kind, q.body)));
   const content = (m) => {
     const f = m.file;
-    if (m.kind === 'sticker') return h('div', { class: 'sticker' }, m.body);
+    if (m.kind === 'sticker') return h('div', { class: 'c-stk' }, m.body);
     if (m.kind === 'image' && f) {
-      const img = h('img', { class: 'wa-img', alt: f.name });
-      fetchFile(f).then((u) => { img.src = u; img.onclick = () => { const w = window.open(); if (w) w.document.write('<img src="' + u + '" style="max-width:100%">'); }; }).catch(() => img.replaceWith(h('i', null, 'Picture not available')));
+      const img = h('img', { class: 'c-img', alt: f.name });
+      fetchFile(f).then((u) => { img.src = u; img.style.cursor = 'zoom-in'; img.onclick = () => { const w = window.open(); if (w) w.document.write('<img src="' + u + '" style="max-width:100%">'); }; }).catch(() => img.replaceWith(h('i', null, 'Picture not available')));
       return h('div', null, img, m.body ? h('div', null, m.body) : null);
     }
     if (m.kind === 'file' && f) {
-      return h('div', null, h('button', { type: 'button', class: 'wa-file', onclick: async () => {
+      const dl = h('div', { class: 'dl' }); dl.append(raw(ICON.down));
+      return h('div', null, h('button', { type: 'button', class: 'c-file', onclick: async () => {
         try {
           const u = await fetchFile(f);
           const a = h('a', { href: u, download: f.name }); document.body.append(a); a.click(); a.remove();
         } catch (ex) { alert(ex.message); }
-      } }, '📄 ', h('span', null, f.name, h('small', null, sizeText(f.size)))), m.body ? h('div', null, m.body) : null);
+      } }, h('div', { class: 'ic' }, fileKind(f.name)), h('div', { class: 'nm' }, h('b', null, f.name), h('span', null, sizeText(f.size))), dl),
+      m.body ? h('div', null, m.body) : null);
     }
     return h('div', null, m.body);
   };
@@ -674,25 +699,30 @@ function openChat(chan) {
       if (seen.has(m.id)) continue;
       seen.add(m.id);
       last = m.at;
+      const day = dayLabel(m.at);
+      if (day !== prevDay) { list.append(h('div', { class: 'c-day' }, day)); prevDay = day; prev = null; }
       const first = !prev || prev.author_key !== m.author_key || prev.author !== m.author;
       prev = m;
-      const sub = [m.author_whatsapp ? '~' + m.author_whatsapp : null, (m.zones || []).join(', ') || null].filter(Boolean).join(' · ');
-      const bubble = h('div', { class: 'msg' + (m.mine ? ' mine' : '') + (m.kind === 'sticker' ? ' sticker-msg' : '') },
-        m.mine || !first ? null : h('b', { style: 'color:' + nameColor(m.author) }, m.author),
-        m.mine || !first || !sub ? null : h('small', null, sub),
-        m.reply ? quoteBlock(m.reply) : null,
-        content(m),
-        h('div', { class: 'meta' },
-          chan.post ? h('button', { type: 'button', class: 'rep', title: 'Reply', onclick: () => setReply(m) }, '↩ Reply') : null,
-          h('small', { class: 'time' }, new Date(m.at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }))));
+      const col = '--c:' + nameColor(m.author);
+      const sticker = m.kind === 'sticker';
+      const rep = chan.post ? h('button', { type: 'button', class: 'rep', onclick: () => setReply(m) }) : null;
+      if (rep) rep.innerHTML = ICON.reply + 'Reply';
+      const foot = h('div', { class: 'c-foot' }, rep, new Date(m.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
+      if (m.mine) foot.append(raw(ICON.tick));
+      const who = !m.mine && first ? h('div', { class: 'c-who' }, h('b', null, m.author),
+        m.author_whatsapp ? h('i', null, '~' + m.author_whatsapp) : null,
+        ...(m.zones || []).map((z) => h('span', { class: 'c-zone' }, z))) : null;
+      const bubble = sticker
+        ? h('div', null, content(m), h('div', { class: 'c-foot' }, new Date(m.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })))
+        : h('div', { class: 'c-b' }, who, m.reply ? quoteBlock(m.reply) : null, content(m), foot);
       if (chan.post) {
-        bubble.addEventListener('dblclick', () => setReply(m));
         let x0 = null;
+        bubble.addEventListener('dblclick', () => setReply(m));
         bubble.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
         bubble.addEventListener('touchend', (e) => { if (x0 != null && e.changedTouches[0].clientX - x0 > 70) setReply(m); x0 = null; });
       }
-      list.append(h('div', { class: 'wa-row' + (m.mine ? ' mine' : '') + (first ? ' first' : '') },
-        m.mine ? null : (first ? avatar(m) : h('div', { class: 'wa-av gap' })), bubble));
+      list.append(h('div', { class: 'c-r' + (m.mine ? ' mine' : '') + (first ? ' first' : '') + (sticker ? ' c-stkrow' : ''), style: col },
+        m.mine ? null : (first ? avatar(m) : h('div', { class: 'c-av gap' })), bubble));
     }
     if (msgs.length) window.scrollTo(0, document.body.scrollHeight);
   };
@@ -703,7 +733,7 @@ function openChat(chan) {
     try { add(await rpc('chat_messages', { token: session.token, channel: chan.id, after: last, as_name: null })); }
     catch (ex) { if (ex.expired) signOutLocal(); }
   };
-  const input = h('input', { placeholder: 'Write a message', maxlength: 1000 });
+  const input = h('input', { placeholder: 'Write a message', maxlength: 1000, autocomplete: 'off' });
   const post = async (extra) => {
     const body = (extra.body !== undefined ? extra.body : input.value.trim());
     if (!body && !extra.file_data) return;
@@ -734,22 +764,23 @@ function openChat(chan) {
     await rpc('avatar_set', { token: session.token, photo: u, as_name: null });
     await loadAvatars(); alert('Done. Your picture will show in the chats.');
   });
-  const stickers = h('div', { class: 'stickers', hidden: true }, STICKERS.map((s) =>
-    h('button', { type: 'button', onclick: () => { stickers.hidden = true; post({ kind: 'sticker', body: s }); } }, s)));
+  const grid = h('div', { class: 'g' }, STICKERS.map((s) =>
+    h('button', { type: 'button', onclick: () => { tray.hidden = true; post({ kind: 'sticker', body: s }); } }, s)));
+  const tray = h('div', { class: 'c-tray', hidden: true }, h('h3', null, 'Stickers'), grid);
+  const ib = (label, icon, onclick) => { const b = h('button', { type: 'button', class: 'c-ib', 'aria-label': label, onclick }); b.innerHTML = icon; return b; };
+  const goBtn = h('button', { type: 'submit', class: 'c-go', 'aria-label': 'Send' }); goBtn.innerHTML = ICON.send;
+  const back = h('button', { type: 'button', class: 'back', 'aria-label': 'Back to all chats', onclick: () => show('chat') }); back.innerHTML = ICON.back;
+  const meBtn = h('button', { type: 'button', class: 'me', 'aria-label': 'My chat picture', onclick: () => avIn.click() }); meBtn.innerHTML = ICON.me;
+  const initials = String(chan.name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
   app.replaceChildren(
-    h('button', { class: 'link', onclick: () => show('chat') }, '‹ All chats'),
-    h('h2', null, chan.name),
-    h('div', { class: 'chatbar' }, h('button', { type: 'button', class: 'link', onclick: () => avIn.click() }, '📷 My chat picture'),
-      h('button', { type: 'button', class: 'link', onclick: async () => { try { await rpc('avatar_set', { token: session.token, photo: null, as_name: null }); await loadAvatars(); } catch (ex) { alert(ex.message); } } }, 'Remove')),
-    list, avIn,
-    chan.post ? h('div', null, bar, stickers, photoIn, docIn,
-      h('form', { class: 'send', onsubmit: send },
-        h('button', { type: 'button', class: 'icon', title: 'Stickers', onclick: () => { stickers.hidden = !stickers.hidden; } }, '😊'),
-        input,
-        h('button', { type: 'button', class: 'icon', title: 'Photo', onclick: () => photoIn.click() }, '🖼'),
-        h('button', { type: 'button', class: 'icon', title: 'Document', onclick: () => docIn.click() }, '📎'),
-        h('button', { type: 'submit' }, 'Send')))
-      : h('p', { class: 'hint' }, 'Only officers can post here.'));
+    h('div', { class: 'c-head' }, back, h('div', { class: 'c-crest' }, initials),
+      h('div', { class: 't' }, h('b', null, chan.name), h('span', null, chan.post ? 'Tap and hold to reply' : 'Read only')), meBtn),
+    list,
+    h('div', { class: 'c-composer' }, chan.post ? [bar, tray, photoIn, docIn, avIn,
+      h('form', { class: 'c-bar', onsubmit: send },
+        h('div', { class: 'c-field' }, ib('Stickers', ICON.smile, () => { tray.hidden = !tray.hidden; }), input,
+          ib('Attach a document', ICON.clip, () => docIn.click()), ib('Send a photo', ICON.photo, () => photoIn.click())), goBtn)]
+      : [avIn, h('p', { class: 'hint', style: 'margin:6px 4px' }, 'Only officers can post here.')]));
   loadAvatars().then(load);
   pollTimer = setInterval(load, 8000);
 }
@@ -897,8 +928,8 @@ function viewMe() {
 }
 
 function pictureForm() {
-  const img = h('img', { class: 'wa-av', alt: '', width: 56, height: 56, hidden: true });
-  const initials = h('div', { class: 'wa-av init', style: 'width:56px;height:56px' }, String(home.member.name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join(''));
+  const img = h('img', { class: 'c-av big', alt: '', hidden: true });
+  const initials = h('div', { class: 'c-av big' }, String(home.member.name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join(''));
   const show = (photo) => { img.hidden = !photo; initials.hidden = !!photo; if (photo) img.src = photo; };
   rpc('avatar_get', { token: session.token, as_name: null }).then((r) => show(r.photo)).catch(() => {});
   const file = h('input', { type: 'file', accept: 'image/*', hidden: true, onchange: async (e) => {
@@ -911,7 +942,7 @@ function pictureForm() {
     } catch (ex) { alert(ex.message); }
   } });
   return h('div', { class: 'card' }, h('h2', null, 'My picture'),
-    h('div', { class: 'row' }, img, initials, h('span', null, 'Shows next to your messages in the chats')),
+    h('div', { class: 'c-pic' }, img, initials, h('span', null, 'Shows next to your messages in the chats')),
     file, h('button', { type: 'button', onclick: () => file.click() }, 'Choose a picture'),
     h('button', { type: 'button', class: 'link', onclick: async () => {
       try { await rpc('avatar_set', { token: session.token, photo: null, as_name: null }); show(null); } catch (ex) { alert(ex.message); }

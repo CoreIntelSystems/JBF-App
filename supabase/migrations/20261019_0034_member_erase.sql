@@ -33,8 +33,11 @@ begin
   end if;
   update public.member_sessions set revoked_at = now()
   where org_id = org and member_key = m.key and revoked_at is null;
-  delete from public.member_accounts where org_id = org and member_key = m.key;
-  delete from public.member_avatars where org_id = org and member_key = m.key;
+  update public.member_accounts
+    set password_hash = null, activated_at = null, reset_at = null, reset_by = null
+  where org_id = org and member_key = m.key;
+  update public.member_avatars set photo = '', updated_at = now()
+  where org_id = org and member_key = m.key;
   update public.chat_messages
     set author_key = null, author_name = 'Former member'
   where org_id = org and author_key = m.key;

@@ -94,8 +94,8 @@ class BackupService {
   /// A password-protected copy of everything, for moving to a new phone or
   /// keeping off the phone.
   Future<Uint8List> createBackup(String password) async {
-    if (password.length < 6) {
-      throw BackupException('Use a backup password of at least 6 characters.');
+    if (password.length < 10) {
+      throw BackupException('Use a backup password of at least 10 characters.');
     }
     final tmp = _temp('backup.db');
     try {

@@ -83,8 +83,8 @@ class _BackupScreenState extends State<BackupScreen> {
             ),
             FilledButton(
               onPressed: () {
-                if (confirm && a.text.length < 6) {
-                  setState(() => error = 'Use at least 6 characters.');
+                if (confirm && a.text.length < 10) {
+                  setState(() => error = 'Use at least 10 characters.');
                 } else if (confirm && a.text != b.text) {
                   setState(() => error = 'The passwords do not match.');
                 } else {

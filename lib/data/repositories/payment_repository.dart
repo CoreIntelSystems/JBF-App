@@ -4,6 +4,7 @@ import '../../domain/dues.dart';
 import '../../domain/welfare_membership.dart';
 import '../access_scope.dart';
 import '../../core/ids.dart';
+import '../../core/money.dart';
 import '../database.dart';
 import 'actor.dart';
 import 'audit_repository.dart';
@@ -271,7 +272,7 @@ class PaymentRepository {
     }
     if (type.minimumAmount != null && d.amount < type.minimumAmount!) {
       throw PaymentException(
-        '${type.name} starts at GHS ${type.minimumAmount}. Enter that or more.',
+        '${type.name} starts at ${formatMoney(type.minimumAmount!)}. Enter that or more.',
       );
     }
     if (type.welfareRule != WelfareRule.none && d.memberId == null) {

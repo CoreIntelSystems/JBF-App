@@ -11,11 +11,43 @@ import 'data/backup_service.dart';
 import 'data/connection.dart';
 import 'core/theme.dart';
 import 'data/secure_store.dart';
+import 'features/recovery/recovery_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store = SecureStore();
-  final key = await store.databaseKey();
+  try {
+    await _start(store);
+  } catch (error) {
+    // A blank screen gives the treasurer no way forward. Offer recovery.
+    runApp(
+      RecoveryApp(
+        error: error,
+        onReset: () async {
+          await _eraseLocalData(store);
+          await _start(store);
+        },
+      ),
+    );
+  }
+}
+
+/// Removes this phone's database file and key so the app can start clean.
+Future<void> _eraseLocalData(SecureStore store) async {
+  if (!kIsWeb) {
+    final file = await appDatabaseFile();
+    for (final suffix in const ['', '-wal', '-shm', '-journal']) {
+      final f = File('${file.path}$suffix');
+      if (await f.exists()) await f.delete();
+    }
+  }
+  await store.forgetDatabaseKey();
+}
+
+Future<void> _start(SecureStore store) async {
+  final key = await store.databaseKey(
+    databaseExists: !kIsWeb && await (await appDatabaseFile()).exists(),
+  );
   final deviceId = await store.deviceId();
   final db = await openAppDatabase(hexKey: key);
   final themeMode = await store.themeMode();

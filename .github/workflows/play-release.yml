@@ -2,9 +2,17 @@ name: Play release bundle
 
 # Builds the signed .aab to upload in Google Play Console. Run it by hand from
 # the Actions tab. Needs these repository secrets: PLAY_KEYSTORE_BASE64,
-# PLAY_KEYSTORE_PASSWORD, PLAY_KEY_ALIAS, PLAY_KEY_PASSWORD.
+# PLAY_KEYSTORE_PASSWORD, PLAY_KEY_ALIAS, PLAY_KEY_PASSWORD. With
+# PLAY_SERVICE_ACCOUNT_JSON also set, the bundle is uploaded to Play as a
+# draft release that you review and roll out by hand in Play Console.
 on:
   workflow_dispatch:
+    inputs:
+      track:
+        description: Play track for the draft release
+        default: internal
+        type: choice
+        options: [internal, alpha, beta, production]
 
 permissions:
   contents: read
@@ -13,6 +21,8 @@ jobs:
   bundle:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      HAS_PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -50,3 +60,13 @@ jobs:
           name: jbf-play-bundle
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 14
+
+      - name: Upload to Google Play as a draft
+        if: ${{ env.HAS_PLAY_KEY == 'true' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.coreintel.jbf_app
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.track }}
+          status: draft

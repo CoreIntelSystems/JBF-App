@@ -682,13 +682,14 @@ function openChat(chan) {
         m.mine || !first || !sub ? null : h('small', null, sub),
         m.reply ? quoteBlock(m.reply) : null,
         content(m),
-        h('small', { class: 'time' }, new Date(m.at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })));
+        h('div', { class: 'meta' },
+          chan.post ? h('button', { type: 'button', class: 'rep', title: 'Reply', onclick: () => setReply(m) }, '↩ Reply') : null,
+          h('small', { class: 'time' }, new Date(m.at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }))));
       if (chan.post) {
         bubble.addEventListener('dblclick', () => setReply(m));
         let x0 = null;
         bubble.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
         bubble.addEventListener('touchend', (e) => { if (x0 != null && e.changedTouches[0].clientX - x0 > 70) setReply(m); x0 = null; });
-        bubble.append(h('button', { type: 'button', class: 'rep', title: 'Reply', onclick: () => setReply(m) }, '↩'));
       }
       list.append(h('div', { class: 'wa-row' + (m.mine ? ' mine' : '') + (first ? ' first' : '') },
         m.mine ? null : (first ? avatar(m) : h('div', { class: 'wa-av gap' })), bubble));
@@ -738,7 +739,7 @@ function openChat(chan) {
   app.replaceChildren(
     h('button', { class: 'link', onclick: () => show('chat') }, '‹ All chats'),
     h('h2', null, chan.name),
-    h('div', null, h('button', { type: 'button', class: 'link', onclick: () => avIn.click() }, '📷 My chat picture'),
+    h('div', { class: 'chatbar' }, h('button', { type: 'button', class: 'link', onclick: () => avIn.click() }, '📷 My chat picture'),
       h('button', { type: 'button', class: 'link', onclick: async () => { try { await rpc('avatar_set', { token: session.token, photo: null, as_name: null }); await loadAvatars(); } catch (ex) { alert(ex.message); } } }, 'Remove')),
     list, avIn,
     chan.post ? h('div', null, bar, stickers, photoIn, docIn,

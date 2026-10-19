@@ -603,6 +603,7 @@ class _MeTab extends StatelessWidget {
             trailing: Text(formatMoney(w.amount)),
           ),
         const Divider(height: 32),
+        MyPictureTile(token: session.token),
         if (home.selfEdit)
           ListTile(
             contentPadding: EdgeInsets.zero,

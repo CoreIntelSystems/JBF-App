@@ -89,6 +89,12 @@ async function call(path, body) {
 const rpc = (name, args) => call('/rest/v1/rpc/' + name, args);
 const auth = (body) => call('/functions/v1/member-auth', { org: ORG, web: true, ...body });
 
+function notify(text) {
+  const t = h('div', { role: 'status', style: 'position:fixed;left:12px;right:12px;bottom:84px;z-index:60;background:#14301f;color:#fff;padding:12px 14px;border-radius:12px;font-size:.9rem' }, text);
+  document.body.append(t);
+  setTimeout(() => t.remove(), 4500);
+}
+
 // Shows a picture full-screen. The src is set as a property, never as markup.
 function lightbox(src) {
   const box = h('div', { style: 'position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:12px', onclick: () => box.remove() });
@@ -703,6 +709,7 @@ function openChat(chan) {
   let prev = null;
   let prevDay = null;
   let avatars = {};
+  let blocked = new Set();
   const seen = new Set();
   const files = new Map();
   const fetchFile = (f) => {
@@ -760,6 +767,7 @@ function openChat(chan) {
       if (seen.has(m.id)) continue;
       seen.add(m.id);
       last = m.at;
+      if (!m.mine && blocked.has(m.author_key)) continue;
       const day = dayLabel(m.at);
       if (day !== prevDay) { list.append(h('div', { class: 'c-day' }, day)); prevDay = day; prev = null; }
       const first = !prev || prev.author_key !== m.author_key || prev.author !== m.author;
@@ -768,7 +776,8 @@ function openChat(chan) {
       const sticker = m.kind === 'sticker';
       const rep = chan.post ? h('button', { type: 'button', class: 'rep', onclick: () => setReply(m) }) : null;
       if (rep) rep.innerHTML = ICON.reply + 'Reply';
-      const foot = h('div', { class: 'c-foot' }, rep, new Date(m.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
+      const flag = m.mine ? null : h('button', { type: 'button', class: 'rep', onclick: () => moderate(m) }, 'Report or block');
+      const foot = h('div', { class: 'c-foot' }, rep, flag, new Date(m.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
       if (m.mine) foot.append(raw(ICON.tick));
       const who = !m.mine && first ? h('div', { class: 'c-who' }, h('b', null, m.author),
         ...(m.zones || []).map((z) => h('span', { class: 'c-zone' }, z))) : null;
@@ -785,6 +794,22 @@ function openChat(chan) {
         m.mine ? null : (first ? avatar(m) : h('div', { class: 'c-av gap' })), bubble));
     }
     if (msgs.length) window.scrollTo(0, document.body.scrollHeight);
+  };
+  const moderate = async (m) => {
+    const what = prompt('Report this message from ' + m.author + '?\nType the reason and press OK to report it.\nTo block this member instead, type BLOCK.');
+    if (what === null) return;
+    try {
+      if (what.trim().toUpperCase() === 'BLOCK') {
+        await rpc('chat_block', { token: session.token, target: m.author_key, blocked: true, as_name: null });
+        blocked.add(m.author_key);
+        list.replaceChildren(); seen.clear(); prev = null; prevDay = null; last = null;
+        await load();
+        notify('Blocked. You will not see their messages. You can undo this in Me.');
+      } else {
+        await rpc('chat_report', { token: session.token, msg: m.id, reason: what.trim() || 'No reason given', as_name: null });
+        notify('Thank you. The Founder and discipline officers will review it.');
+      }
+    } catch (ex) { notify(ex.message); }
   };
   const loadAvatars = async () => {
     try { avatars = await rpc('chat_avatars', { token: session.token, channel: chan.id, as_name: null }); } catch (_) { /* initials show */ }
@@ -835,13 +860,14 @@ function openChat(chan) {
   app.replaceChildren(
     h('div', { class: 'c-head' }, back, h('div', { class: 'c-crest' }, initials),
       h('div', { class: 't' }, h('b', null, chan.name), h('span', null, chan.post ? 'Tap and hold to reply' : 'Read only')), meBtn),
+    h('p', { class: 'hint', style: 'margin:4px 12px' }, 'Be respectful. Abusive messages can be reported and removed, and members can be blocked.'),
     list,
     h('div', { class: 'c-composer' }, chan.post ? [bar, tray, photoIn, docIn, avIn,
       h('form', { class: 'c-bar', onsubmit: send },
         h('div', { class: 'c-field' }, ib('Stickers', ICON.smile, () => { tray.hidden = !tray.hidden; }), input,
           ib('Attach a document', ICON.clip, () => docIn.click()), ib('Send a photo', ICON.photo, () => photoIn.click())), goBtn)]
       : [avIn, h('p', { class: 'hint', style: 'margin:6px 4px' }, 'Only officers can post here.')]));
-  loadAvatars().then(load);
+  rpc('chat_blocks_list', { token: session.token, as_name: null }).then((r) => { blocked = new Set((r || []).map((b) => b.key)); }).catch(() => {}).then(loadAvatars).then(load);
   pollTimer = setInterval(load, 8000);
 }
 
@@ -983,10 +1009,52 @@ function viewMe() {
     try { await rpc('member_sign_out', { token: session.token }); } catch (_) { /* leave locally anyway */ }
     signOutLocal();
   } }, 'Sign out'));
+  out.append(blockedCard(), reportsCard());
   out.append(deleteForm());
   out.append(h('p', { class: 'hint' }, h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy policy'), ' · ', h('a', { href: 'delete-account.html', target: '_blank', rel: 'noopener' }, 'How deletion works')));
   out.append(installHint());
   return out;
+}
+
+// Members I have blocked, with an undo.
+function blockedCard() {
+  const body = h('div', { class: 'inner' });
+  const card = h('details', { class: 'card fold', hidden: true }, h('summary', null, 'Blocked members'), body);
+  const draw = (rows) => {
+    card.hidden = !rows.length;
+    body.replaceChildren(...rows.map((b) => h('div', { style: 'display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0' },
+      h('span', null, b.name),
+      h('button', { type: 'button', class: 'small', onclick: async () => {
+        try {
+          await rpc('chat_block', { token: session.token, target: b.key, blocked: false, as_name: null });
+          draw(rows.filter((x) => x.key !== b.key));
+        } catch (ex) { notify(ex.message); }
+      } }, 'Unblock'))));
+  };
+  rpc('chat_blocks_list', { token: session.token, as_name: null }).then(draw).catch(() => {});
+  return card;
+}
+
+// For the Founder and discipline officers: messages members have reported.
+function reportsCard() {
+  const body = h('div', { class: 'inner' });
+  const card = h('details', { class: 'card fold', hidden: true }, h('summary', null, 'Reported messages'), body);
+  const draw = (rows) => {
+    card.hidden = false;
+    if (!rows.length) { body.replaceChildren(h('p', { class: 'hint' }, 'Nothing reported.')); return; }
+    body.replaceChildren(...rows.map((r) => h('div', { style: 'padding:8px 0;border-top:1px solid var(--line,#e3e8e4)' },
+      h('div', null, h('b', null, r.author), ' wrote: ', r.body || '(' + r.kind + ')'),
+      h('p', { class: 'hint' }, 'Reason: ' + (r.reason || 'none')),
+      h('div', { style: 'display:flex;gap:8px' },
+        h('button', { type: 'button', class: 'small', onclick: () => resolve(r, true) }, 'Remove message'),
+        h('button', { type: 'button', class: 'small', onclick: () => resolve(r, false) }, 'Keep it')))));
+    function resolve(r, remove) {
+      rpc('chat_report_resolve', { token: session.token, report: r.id, remove, as_name: null })
+        .then(() => draw(rows.filter((x) => x.id !== r.id))).catch((ex) => notify(ex.message));
+    }
+  };
+  rpc('chat_reports_list', { token: session.token, as_name: null }).then(draw).catch(() => {});
+  return card;
 }
 
 function deleteForm() {

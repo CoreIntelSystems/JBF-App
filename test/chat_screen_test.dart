@@ -137,6 +137,33 @@ void main() {
     expect(find.byKey(const Key('replyBar')), findsNothing);
   });
 
+  testWidgets('a member can report another member\'s message', (tester) async {
+    await open(tester);
+    await tester.longPress(find.byKey(const Key('msg-m1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('menuReport')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('reportReason')), 'Rude');
+    await tester.tap(find.text('Report'));
+    await tester.pumpAndSettle();
+    final report = calls.firstWhere((c) => c.$1 == 'chat_report');
+    expect(report.$2['msg'], 'm1');
+    expect(report.$2['reason'], 'Rude');
+  });
+
+  testWidgets('blocking hides that member\'s messages', (tester) async {
+    await open(tester);
+    await tester.longPress(find.byKey(const Key('msg-m1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('menuBlock')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Block'));
+    await tester.pumpAndSettle();
+    final block = calls.firstWhere((c) => c.$1 == 'chat_block');
+    expect(block.$2['blocked'], true);
+    expect(find.byKey(const Key('msg-m1')), findsNothing);
+  });
+
   testWidgets('a sticker is sent as a sticker', (tester) async {
     await open(tester);
     await tester.tap(find.byKey(const Key('stickerButton')));

@@ -983,8 +983,30 @@ function viewMe() {
     try { await rpc('member_sign_out', { token: session.token }); } catch (_) { /* leave locally anyway */ }
     signOutLocal();
   } }, 'Sign out'));
+  out.append(deleteForm());
+  out.append(h('p', { class: 'hint' }, h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy policy'), ' · ', h('a', { href: 'delete-account.html', target: '_blank', rel: 'noopener' }, 'How deletion works')));
   out.append(installHint());
   return out;
+}
+
+function deleteForm() {
+  const pw = h('input', { type: 'password', autocomplete: 'current-password', required: true });
+  const msg = h('p', { class: 'hint', hidden: true });
+  const btn = h('button', { type: 'submit' }, 'Delete my account');
+  const form = h('form', { class: 'inner fld', onsubmit: async (e) => {
+    e.preventDefault();
+    if (!confirm('Delete your account for good? Your sign-in, photo and personal details will be erased. This cannot be undone.')) return;
+    btn.disabled = true; msg.hidden = true; msg.className = 'hint';
+    try {
+      await auth({ action: 'delete_account', member_no: home.member.member_no, password: pw.value });
+      signOutLocal();
+      alert('Your account has been deleted.');
+      return;
+    } catch (ex) { msg.textContent = ex.message; msg.className = 'error'; }
+    msg.hidden = false; btn.disabled = false;
+  } }, h('p', { class: 'hint' }, 'This erases your sign-in, profile photo and personal details, and makes your chat messages anonymous. Payment records stay, without your details. Enter your password to confirm.'),
+  h('label', null, 'Password'), pw, msg, btn);
+  return h('details', { class: 'card fold' }, h('summary', null, 'Delete my account'), form);
 }
 
 function pictureForm() {

@@ -36,7 +36,7 @@ void main() {
       ),
     );
     await tester.scrollUntilVisible(
-      find.textContaining('already chosen'),
+      find.textContaining('Zone chosen'),
       200,
       scrollable: find.byType(Scrollable).first,
     );

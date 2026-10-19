@@ -48,9 +48,9 @@ recent registrations. Zone officers see figures for their own zone(s) only.
 - **Add member:** tap **Add member**, fill in the form and choose 1 or 2
   zones (one is the main zone). The member ID (for example `JBF-000123`) is
   given automatically.
-- **Find a member:** search by name, WhatsApp name, phone or member ID;
+- **Find a member:** search by name, username, phone or member ID;
   filter by zone or status.
-- **WhatsApp name:** the name a member uses on WhatsApp, under Personal
+- **Username:** the name other members see in chats, under Personal
   information. It shows on their ID card, under their name in lists and
   next to their name in chats, so people can tell who is who from the group.
 - **Member page:** contact details, zones, dues balance and payment
@@ -198,9 +198,11 @@ and correct anything that is not, then save. You can choose your zone only
 once, so choose carefully; after that your Zone Secretary changes it. Members
 registered later are updated by their Zone Secretary.
 
-Every member can set their **WhatsApp name** on the Me page, whoever keeps
-their other details. It shows on your membership card and next to your name
-in chats, and members can search for each other by it.
+Every member can set their **username** on the Me page, whoever keeps
+their other details. It shows in brackets under your name on your membership
+card. In chats other members see only your username (or your first name until
+you set one), never your full name. The member list on the Community page
+shows only people in your own zones.
 
 
 ## Welfare

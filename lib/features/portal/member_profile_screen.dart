@@ -24,7 +24,7 @@ class MemberProfileScreen extends StatefulWidget {
 class _MemberProfileScreenState extends State<MemberProfileScreen> {
   static const _fields = <(String, String, TextInputType)>[
     ('full_name', 'Full name', TextInputType.name),
-    ('whatsapp_name', 'WhatsApp name', TextInputType.text),
+    ('whatsapp_name', 'Username', TextInputType.text),
     ('phone', 'Phone number', TextInputType.phone),
     ('whatsapp', 'Second or WhatsApp number', TextInputType.phone),
     ('email', 'Email', TextInputType.emailAddress),

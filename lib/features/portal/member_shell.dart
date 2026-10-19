@@ -108,8 +108,7 @@ class _MemberShellState extends State<MemberShell> {
       if (home?.officer ?? false)
         MaterialBanner(
           content: const Text(
-            'You have been given an executive role. Sign out and sign in '
-            'again to get the tools for your role.',
+            'Executive role assigned. Sign out and back in to use it.',
           ),
           actions: [
             TextButton(
@@ -138,7 +137,7 @@ class _MemberShellState extends State<MemberShell> {
           : Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                'Updated ${formatDateTime(_loadedAt!)}. Pull down to refresh.',
+                'Updated ${formatDateTime(_loadedAt!)}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             );
@@ -520,8 +519,7 @@ class _MeTab extends StatelessWidget {
       ),
       _ => (
         'You are not in welfare',
-        'Welfare is by choice. Join, or pay welfare dues or a welfare '
-            'contribution, to be covered.',
+        'Join, or pay welfare dues or a contribution, to be covered.',
       ),
     };
     return Card(
@@ -631,9 +629,7 @@ class _MeTab extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
-            child: Text(
-              'To correct your other details, speak to your Zone Secretary.',
-            ),
+            child: Text('For other details, contact your Zone Secretary.'),
           ),
         ],
         ListTile(

@@ -85,8 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Padding(
                     padding: EdgeInsets.all(16),
                     child: Text(
-                      'Your dues, receipts and welfare cases are on the '
-                      'My dues tab.',
+                      'Dues, receipts and welfare are under My dues.',
                     ),
                   ),
                 ),

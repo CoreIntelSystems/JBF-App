@@ -122,8 +122,8 @@ function renderAuth(mode, message) {
   } },
     h('h2', null, activating ? 'Activate your account' : 'Sign in'),
     h('p', { class: 'hint' }, activating
-      ? 'First time here? Enter your member ID and the phone number the association has for you, then choose a password.'
-      : 'Sign in with your member ID and password.'),
+      ? 'Enter your member ID and registered phone number, then choose a password.'
+      : null),
     h('label', { for: 'memberNo' }, 'Member ID'), idInput,
     activating ? [h('label', { for: 'phone' }, 'Phone number'), phone] : null,
     h('label', { for: 'pass' }, activating ? 'Choose a password (6 or more characters)' : 'Password'), pass,
@@ -138,10 +138,10 @@ function installHint() {
   if (standalone) return h('span');
   if (isIos) {
     return h('div', { class: 'notice' },
-      h('b', null, 'Add this app to your iPhone'), h('br'),
-      'In Safari, tap the Share button, then "Add to Home Screen". It will open like an app.');
+      h('b', null, 'Add to Home Screen'), h('br'),
+      'In Safari, tap Share, then Add to Home Screen.');
   }
-  return h('div', { class: 'notice' }, 'You can add this app to your home screen from your browser menu.');
+  return h('div', { class: 'notice' }, 'Add to home screen from your browser menu.');
 }
 
 // ---------- data ----------
@@ -165,17 +165,24 @@ const realZones = (m) => (m.zones || []).filter((z) => z !== 'Unassigned');
 
 // ---------- tabs ----------
 const TABS = [
-  ['home', '🏠', 'Home'],
-  ['pay', '🧾', 'Payments'],
-  ['community', '👥', 'Community'],
-  ['chat', '💬', 'Chats'],
-  ['me', '👤', 'Me'],
+  ['home', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>', 'Home'],
+  ['pay', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></svg>', 'Payments'],
+  ['community', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.6 3-5.2 6-5.2s5.4 1.6 6 5.2"/><circle cx="17" cy="9" r="2.4"/><path d="M17 14.2c2.2.2 3.6 1.6 4 4.3"/></svg>', 'Community'],
+  ['chat', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.7 7L4 20l1.1-4.6A8 8 0 1121 12z"/></svg>', 'Chats'],
+  ['me', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>', 'Me'],
 ];
+
+// The icons are the fixed SVG strings in TABS above, never user text.
+function tabIcon(svg) {
+  const b = h('b');
+  b.innerHTML = svg;
+  return b;
+}
 
 function renderTabs() {
   tabsEl.hidden = false;
   tabsEl.replaceChildren(...TABS.map(([id, icon, label]) =>
-    h('button', { class: id === tab ? 'on' : '', onclick: () => show(id) }, h('b', null, icon), label)));
+    h('button', { class: id === tab ? 'on' : '', onclick: () => show(id) }, tabIcon(icon), label)));
 }
 
 function show(id) {
@@ -183,7 +190,7 @@ function show(id) {
   tab = id;
   renderTabs();
   const view = { home: viewHome, pay: viewPay, community: viewCommunity, chat: viewChannels, me: viewMe }[id]();
-  app.replaceChildren(...(offline ? [h('div', { class: 'notice' }, 'You are offline. Showing what was saved last time.')] : []), view);
+  app.replaceChildren(...(offline ? [h('div', { class: 'notice' }, 'Offline. Showing saved records.')] : []), view);
   window.scrollTo(0, 0);
 }
 
@@ -216,33 +223,33 @@ function viewHome() {
       h('div', { class: 'sub' }, day(w.at))));
   }
   if (needsZone()) {
-    out.append(h('div', { class: 'notice' }, h('b', null, 'Please choose your zone'), h('br'),
-      'You can only choose once. Go to Me > My details.',
+    out.append(h('div', { class: 'notice' }, h('b', null, 'Choose your zone'), h('br'),
+      'This can be done once, under Me.',
       h('div', null, h('button', { class: 'small', onclick: () => show('me') }, 'Choose my zone'))));
   }
   if (home.officer || (home.roles || []).length) {
-    out.append(h('div', { class: 'notice' }, h('b', null, 'Executive'), h('br'),
-      'Your roles show on your card and in your chats. To record payments, confirm what members paid and manage records, open the full app: ',
-      h('a', { href: 'https://jbf-app.onrender.com', target: '_blank' }, 'jbf-app.onrender.com'), '.'));
+    out.append(h('div', { class: 'notice' }, h('b', null, 'Executive tools'), h('br'),
+      'Payments and records are managed in the ',
+      h('a', { href: 'https://jbf-app.onrender.com', target: '_blank' }, 'full app'), '.'));
   }
   if (!offline) out.append(payReminder());
-  out.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('span', null, '🗳 Elections'),
+  out.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('b', null, 'Elections'),
     h('button', { class: 'small', onclick: openElections }, 'Open'))));
   out.append(idCard());
   for (const d of home.dues || []) {
     const card = h('div', { class: 'card' }, h('h2', null, d.name));
     if (d.outstanding > 0) {
       card.append(h('div', { class: 'big owed' }, money(d.outstanding)),
-        h('p', { class: 'hint' }, `Owed: ${d.months_behind} month${d.months_behind === 1 ? '' : 's'} behind, from ${monthName(d.next_unpaid)}.`));
+        h('p', { class: 'hint' }, `${d.months_behind} month${d.months_behind === 1 ? '' : 's'} behind, from ${monthName(d.next_unpaid)}`));
     } else {
-      card.append(h('div', { class: 'big clear' }, 'Up to date'), h('p', { class: 'hint' }, 'Thank you for keeping your dues paid.'));
+      card.append(h('div', { class: 'big clear' }, 'Up to date'));
     }
-    for (const [l, v] of [['Monthly amount', money(d.monthly)], ['Months due so far', String(d.months)], ['Expected', money(d.expected)], ['Paid', money(d.paid)]]) {
+    for (const [l, v] of [['Monthly amount', money(d.monthly)], ['Expected', money(d.expected)], ['Paid', money(d.paid)]]) {
       card.append(h('div', { class: 'row' }, h('span', null, l), h('span', null, v)));
     }
     out.append(card);
   }
-  if (home.updated) out.append(h('p', { class: 'hint' }, 'Records last updated ' + new Date(home.updated).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) + '.'));
+  if (home.updated) out.append(h('p', { class: 'hint' }, 'Updated ' + new Date(home.updated).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })));
   return out;
 }
 
@@ -268,7 +275,7 @@ function payReminder() {
     const open = list.filter((r) => !r.closed && (!r.mine || r.mine.status === 'rejected'));
     if (!open.length) return;
     box.append(h('div', { class: 'notice' }, h('b', null, open.length === 1 ? open[0].title : open.length + ' payments asked of you'), h('br'),
-      'Pay, then tell the Treasurer how you paid.',
+      'Pay, then report it.',
       h('div', null, h('button', { class: 'small', onclick: () => show('pay') }, 'Open'))));
   }).catch(() => {});
   return box;
@@ -292,17 +299,17 @@ function requestCard(r, reload) {
     r.details ? h('p', null, r.details) : null,
     r.pay_to ? h('div', { class: 'notice' }, h('b', null, 'How to pay: '), r.pay_to) : null);
   if (mine && mine.status === 'pending') {
-    card.append(h('p', { class: 'hint' }, `⏳ You reported ${money(mine.amount)} by ${methods[mine.method] || mine.method}. Waiting for the Treasurer to confirm.`));
+    card.append(h('p', { class: 'hint' }, `Reported ${money(mine.amount)} by ${methods[mine.method] || mine.method}. Awaiting confirmation.`));
     return card;
   }
   if (mine && mine.status === 'confirmed') {
-    card.append(h('p', { class: 'clear' }, '✅ Confirmed. Receipt ' + mine.receipt_no + '.'));
+    card.append(h('p', { class: 'clear' }, 'Confirmed. Receipt ' + mine.receipt_no));
     return card;
   }
   if (mine && mine.status === 'rejected') {
-    card.append(h('p', { class: 'error' }, 'Your report was not accepted: ' + (mine.decision_note || '')));
+    card.append(h('p', { class: 'error' }, 'Not accepted: ' + (mine.decision_note || '')));
   }
-  if (r.closed) { card.append(h('p', { class: 'hint' }, 'This request is closed.')); return card; }
+  if (r.closed) { card.append(h('p', { class: 'hint' }, 'Closed.')); return card; }
   const open = h('button', { onclick: () => { open.replaceWith(paidForm(r, reload)); } }, mine ? 'Report again' : 'I have paid');
   card.append(open);
   return card;
@@ -345,7 +352,7 @@ function paidForm(r, reload) {
     h('label', null, 'How you paid'), method,
     refLabel, ref,
     h('label', null, 'Date paid'), paidOn,
-    h('label', null, 'Note for the Treasurer (optional)'), note,
+    h('label', null, 'Note (optional)'), note,
     err, btn);
 }
 
@@ -368,7 +375,7 @@ function selfPay() {
     }
   } }, 'Pay my dues');
   box.append(h('h2', null, 'Pay my dues'),
-    h('p', { class: 'hint' }, 'Pay by Mobile Money, then tell the Treasurer here. They confirm it and you get a receipt.'), start);
+    h('p', { class: 'hint' }, 'Pay by Mobile Money, then report it for confirmation and a receipt.'), start);
   return box;
 }
 
@@ -483,7 +490,7 @@ function viewPay() {
   const card = h('div', { class: 'card' }, h('h2', null, 'Payments'));
   out.append(card);
   const pays = home.payments || [];
-  if (!pays.length) card.append(h('p', { class: 'hint' }, 'No payments recorded yet.'));
+  if (!pays.length) card.append(h('p', { class: 'hint' }, 'No payments yet.'));
   for (const p of pays) {
     card.append(h('div', { class: 'pay' },
       h('div', { class: 'top' }, h('span', null, p.type || 'Payment'), h('span', null, money(p.amount))),
@@ -496,7 +503,7 @@ function viewCommunity() {
   const out = h('div');
   const events = home.events || [];
   const ev = h('div', { class: 'card' }, h('h2', null, 'Events and meetings'));
-  if (!events.length) ev.append(h('p', { class: 'hint' }, 'Nothing coming up.'));
+  if (!events.length) ev.append(h('p', { class: 'hint' }, 'Nothing scheduled.'));
   for (const e of events) {
     ev.append(h('div', { class: 'pay' }, h('div', { class: 'top' }, h('span', null, e.name), h('span', null, day(e.date))),
       h('div', { class: 'sub' }, [e.kind === 'meeting' ? 'Meeting' : 'Event', e.venue].filter(Boolean).join(' · ')),
@@ -572,11 +579,11 @@ function directoryCard() {
 
 // ---------- chats ----------
 function viewChannels() {
-  const box = h('div', null, h('p', { class: 'hint' }, 'Loading chats...'));
+  const box = h('div', null, h('p', { class: 'hint' }, 'Loading...'));
   rpc('chat_channels', { token: session.token, as_name: null }).then((chans) => {
     box.replaceChildren(h('h2', null, 'Chats'), ...chans.map((c) =>
       h('button', { class: 'chan', onclick: () => openChat(c) }, h('b', null, c.name), h('div', { class: 'sub' }, c.last || 'No messages yet'))),
-      chans.length ? null : h('p', { class: 'hint' }, 'You are not in any chats yet.'));
+      chans.length ? null : h('p', { class: 'hint' }, 'No chats yet.'));
   }).catch((ex) => {
     if (ex.expired) return signOutLocal();
     box.replaceChildren(h('p', { class: 'error' }, ex.message));
@@ -810,7 +817,7 @@ async function openElections() {
       box.append(h('div', { class: 'notice' }, h('b', null, '📣 ' + n.title), h('div', null, n.body),
         h('div', { class: 'sub' }, `From the ${n.from || 'Electoral Commission'} · ` + new Date(n.at).toLocaleDateString('en-GB', { dateStyle: 'medium' }))));
     }
-    if (!r.elections.length) box.append(h('p', { class: 'hint' }, 'There are no elections yet.'));
+    if (!r.elections.length) box.append(h('p', { class: 'hint' }, 'No elections.'));
     for (const e of r.elections) {
       const state = e.status === 'open' ? (e.voted_all ? 'You have voted' : e.can_vote ? 'Vote now' : 'Open')
         : e.status === 'closed' ? 'See results' : 'View';
@@ -819,7 +826,7 @@ async function openElections() {
           : e.status === 'closed' ? 'Voting closed' : e.status === 'draft' ? 'Being prepared. Voting has not opened.' : 'Cancelled'),
         h('button', { class: 'small', onclick: () => openElection(e.id) }, state)));
     }
-    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'To set up, change, cancel or open an election, or to use the Commission office (tasks, minutes, notices, voter roll and chat), use the full app.'));
+    if (r.is_ec) box.append(h('p', { class: 'hint' }, 'Set up and manage elections in the full app.'));
   } catch (ex) { box.lastChild.replaceWith(h('p', { class: 'error' }, electionError(ex))); }
 }
 
@@ -882,7 +889,7 @@ async function showResults(e, back) {
   try {
     const r = await rpc('election_results', { token: session.token, eid: e.id });
     const out = h('div', null, back, h('h2', null, r.title),
-      h('p', { class: 'hint' }, r.log_ok ? 'Record checked: no step of this election was altered.' : 'Warning: the election record does not check out.'));
+      h('p', { class: 'hint' }, r.log_ok ? 'Record verified.' : 'Warning: record verification failed.'));
     for (const p of r.posts) {
       const card = h('div', { class: 'card' }, h('h2', null, p.title));
       const tie = p.candidates.length > p.seats && p.candidates[p.seats - 1].votes === p.candidates[p.seats].votes;
@@ -912,12 +919,9 @@ const FIELDS = [
 
 function viewMe() {
   const out = h('div');
-  out.append(h('div', { class: 'card' }, h('h2', null, home.member.name),
-    h('div', { class: 'row' }, h('span', null, 'Member ID'), h('span', null, home.member.member_no)),
-    chips(home.roles)));
   out.append(pictureForm());
   if (home.self_edit) out.append(profileForm());
-  else out.append(whatsappNameForm(), h('p', { class: 'hint' }, 'To correct your other details, speak to your Zone Secretary.'));
+  else out.append(whatsappNameForm(), h('p', { class: 'hint' }, 'For other details, contact your Zone Secretary.'));
   out.append(passwordForm());
   out.append(h('button', { class: 'link', onclick: async () => {
     try { await rpc('member_sign_out', { token: session.token }); } catch (_) { /* leave locally anyway */ }
@@ -941,12 +945,15 @@ function pictureForm() {
       show(u);
     } catch (ex) { alert(ex.message); }
   } });
-  return h('div', { class: 'card' }, h('h2', null, 'My picture'),
-    h('div', { class: 'c-pic' }, img, initials, h('span', null, 'Shows next to your messages in the chats')),
-    file, h('button', { type: 'button', onclick: () => file.click() }, 'Choose a picture'),
-    h('button', { type: 'button', class: 'link', onclick: async () => {
-      try { await rpc('avatar_set', { token: session.token, photo: null, as_name: null }); show(null); } catch (ex) { alert(ex.message); }
-    } }, 'Remove my picture'));
+  return h('div', { class: 'card' },
+    h('div', { class: 'c-pic' }, img, initials,
+      h('div', null, h('b', { class: 'c-nm' }, home.member.name), h('span', null, home.member.member_no))),
+    chips(home.roles), file,
+    h('div', { class: 'c-acts' },
+      h('button', { type: 'button', class: 'small', onclick: () => file.click() }, 'Change picture'),
+      h('button', { type: 'button', class: 'small secondary', onclick: async () => {
+        try { await rpc('avatar_set', { token: session.token, photo: null, as_name: null }); show(null); } catch (ex) { alert(ex.message); }
+      } }, 'Remove')));
 }
 
 function profileForm() {
@@ -963,10 +970,10 @@ function profileForm() {
     zoneBox.replaceChildren(h('h2', null, 'My zone'));
     if (locked) {
       zoneBox.append(h('p', null, options.filter((o) => chosen.has(o.id)).map((o) => o.name).join(', ') || 'Not chosen'),
-        h('p', { class: 'hint' }, 'You have already chosen your zone. To change it, speak to your Zone Secretary.'));
+        h('p', { class: 'hint' }, 'Zone chosen. To change it, contact your Zone Secretary.'));
       return;
     }
-    zoneBox.append(h('p', { class: 'hint' }, 'Choose one zone, or two at most. You can only do this once, so choose carefully.'));
+    zoneBox.append(h('p', { class: 'hint' }, 'Choose one zone, or two at most. This cannot be changed later.'));
     for (const o of options) {
       zoneBox.append(h('label', { class: 'zone' }, h('input', { type: 'checkbox', checked: chosen.has(o.id), onchange: (e) => {
         if (e.target.checked) {
@@ -999,7 +1006,7 @@ function profileForm() {
     }
   } },
     h('h2', null, 'My details'),
-    h('p', { class: 'hint' }, 'Please check your name, phone number and zone are right and correct anything that is not.'),
+    h('p', { class: 'hint' }, 'Check your details and correct anything that is wrong.'),
     ...FIELDS.map(([k, label, type]) => {
       inputs[k] = h('input', { type, value: p[k] || '', maxlength: 200 });
       return [h('label', null, label), inputs[k]];
@@ -1025,7 +1032,7 @@ function whatsappNameForm() {
       msg.textContent = ex.message; msg.className = 'error'; msg.hidden = false;
       btn.disabled = false;
     }
-  } }, h('h2', null, 'My WhatsApp name'), h('p', { class: 'hint' }, 'The name others see for you on WhatsApp.'), input, msg, btn);
+  } }, h('h2', null, 'My WhatsApp name'), h('p', { class: 'hint' }, 'Shown to others in chats.'), input, msg, btn);
 }
 
 function passwordForm() {

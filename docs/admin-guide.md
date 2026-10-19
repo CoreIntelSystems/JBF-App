@@ -383,3 +383,5 @@ In the app (More > Chats) and on the member site (Chats):
 - **Stickers.** Tap the smiley beside the message box and choose one.
 
 Only people allowed to post in a chat can send these; everyone in the chat can see and open them.
+
+**Zone chats.** Every zone has a chat ("Zone 3 chat") for all its members, in the app and on the member site. A member sees the chat of the zone they belong to, zone executives see their zones, and the Founder sees all of them. Members still in "Unassigned" get their zone chat once they choose their zone.

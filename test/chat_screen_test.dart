@@ -96,7 +96,18 @@ void main() {
     await open(tester);
     expect(find.text('Ama Mensah'), findsWidgets);
     expect(find.textContaining('~Ama JBF'), findsOneWidget);
-    expect(find.textContaining('Zone 2, Zone 4'), findsWidgets);
+    expect(find.text('Zone 2'), findsWidgets);
+    expect(find.text('Zone 4'), findsWidgets);
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Text &&
+            RegExp(
+              r'^(Today|Yesterday|\d{1,2} \w{3} \d{4})$',
+            ).hasMatch(w.data ?? ''),
+      ),
+      findsOneWidget,
+    ); // one day chip for the day
     expect(
       find.text('Good evening everyone'),
       findsNWidgets(2),

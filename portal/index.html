@@ -60,6 +60,23 @@
     transition: border-color .15s, box-shadow .15s;
   }
   input:focus, select:focus, textarea:focus { outline: 0; border-color: var(--green); box-shadow: 0 0 0 3px rgba(11,110,59,.16); }
+  /* Forms: compact fields in titled groups */
+  .form { padding: 6px 18px 18px; }
+  .grp { padding: 14px 0 4px; border-top: 1px solid var(--line); }
+  .grp:first-of-type { border-top: 0; padding-top: 10px; }
+  .grp > h3 { margin: 0 0 2px; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--green); }
+  .fld label { margin: 10px 0 4px; font-size: .78rem; font-weight: 600; color: var(--muted); }
+  .fld input, .fld select { padding: 10px 12px; border-radius: 10px; font-size: .95rem; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  @media (max-width: 340px) { .pair { grid-template-columns: 1fr; } }
+  .form button[type=submit] { margin-top: 20px; padding: 13px; }
+  details.fold { padding: 0; }
+  details.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; font-weight: 600; font-size: .95rem; }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
+  details.fold[open] > summary::after { transform: rotate(-135deg); }
+  details.fold > .inner { padding: 0 18px 18px; border-top: 1px solid var(--line); }
+  button.out { background: none; color: var(--muted); border: 1px solid var(--line); margin: 6px 0 14px; }
   button {
     font: inherit; font-weight: 600; width: 100%; margin-top: 18px; padding: 14px;
     border: 0; border-radius: 12px; background: var(--green); color: #fff; cursor: pointer;
@@ -183,6 +200,6 @@
 <main id="app"></main>
 <nav id="tabs" hidden></nav>
 <footer>Powered by CoreIntel Systems</footer>
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

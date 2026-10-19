@@ -918,11 +918,14 @@ async function showResults(e, back) {
 }
 
 // ---------- me ----------
+const group = (title, ...rows) => h('div', { class: 'grp' }, h('h3', null, title), ...rows);
+const pair = (a, b) => h('div', { class: 'pair' }, a, b);
+
 const FIELDS = [
-  ['full_name', 'Full name', 'text'], ['whatsapp_name', 'Username', 'text'], ['phone', 'Phone number', 'tel'], ['whatsapp', 'Second or WhatsApp number', 'tel'],
+  ['full_name', 'Full name', 'text'], ['whatsapp_name', 'Username', 'text'], ['phone', 'Phone number', 'tel'], ['whatsapp', 'Second number', 'tel'],
   ['email', 'Email', 'email'], ['occupation', 'Occupation', 'text'], ['location', 'Town or area', 'text'],
   ['address', 'Address', 'text'], ['gps_address', 'GPS address', 'text'],
-  ['emergency_name', 'Emergency contact name', 'text'], ['emergency_phone', 'Emergency contact phone', 'tel'],
+  ['emergency_name', 'Name', 'text'], ['emergency_phone', 'Phone', 'tel'],
 ];
 
 function viewMe() {
@@ -931,7 +934,7 @@ function viewMe() {
   if (home.self_edit) out.append(profileForm());
   else out.append(whatsappNameForm(), h('p', { class: 'hint' }, 'For other details, contact your Zone Secretary.'));
   out.append(passwordForm());
-  out.append(h('button', { class: 'link', onclick: async () => {
+  out.append(h('button', { class: 'out', onclick: async () => {
     try { await rpc('member_sign_out', { token: session.token }); } catch (_) { /* leave locally anyway */ }
     signOutLocal();
   } }, 'Sign out'));
@@ -994,7 +997,12 @@ function profileForm() {
   };
   drawZones();
   const btn = h('button', { type: 'submit' }, 'Save my details');
-  return h('form', { class: 'card', onsubmit: async (e) => {
+  const fld = (k) => {
+    const f = FIELDS.find((x) => x[0] === k);
+    inputs[k] = h('input', { type: f[2], value: p[k] || '', maxlength: 200 });
+    return h('div', { class: 'fld' }, h('label', null, f[1]), inputs[k]);
+  };
+  return h('form', { class: 'card form', onsubmit: async (e) => {
     e.preventDefault();
     err.hidden = true;
     if (!locked && chosen.size < 1) { err.textContent = 'Choose at least 1 zone.'; err.hidden = false; return; }
@@ -1013,14 +1021,13 @@ function profileForm() {
       btn.disabled = false;
     }
   } },
-    h('h2', null, 'My details'),
-    h('p', { class: 'hint' }, 'Check your details and correct anything that is wrong.'),
-    ...FIELDS.map(([k, label, type]) => {
-      inputs[k] = h('input', { type, value: p[k] || '', maxlength: 200 });
-      return [h('label', null, label), inputs[k]];
-    }),
-    h('label', null, 'Gender'), gender,
-    zoneBox, err, btn);
+    h('h2', { style: 'padding:14px 0 0;margin:0' }, 'My details'),
+    group('Personal', fld('full_name'), pair(fld('whatsapp_name'), h('div', { class: 'fld' }, h('label', null, 'Gender'), gender))),
+    group('Contact', pair(fld('phone'), fld('whatsapp')), fld('email')),
+    group('About me', pair(fld('occupation'), fld('location'))),
+    group('Address', fld('address'), fld('gps_address')),
+    group('Emergency contact', pair(fld('emergency_name'), fld('emergency_phone'))),
+    h('div', { class: 'grp' }, zoneBox), err, btn);
 }
 
 // Every member may set the username other members see in chats.
@@ -1028,7 +1035,7 @@ function whatsappNameForm() {
   const input = h('input', { type: 'text', value: home.whatsapp_name || '', maxlength: 200 });
   const msg = h('p', { class: 'hint', hidden: true });
   const btn = h('button', { type: 'submit' }, 'Save');
-  return h('form', { class: 'card', onsubmit: async (e) => {
+  return h('form', { class: 'card fld', onsubmit: async (e) => {
     e.preventDefault();
     btn.disabled = true; msg.hidden = true; msg.className = 'hint';
     try {
@@ -1048,7 +1055,7 @@ function passwordForm() {
   const next = h('input', { type: 'password', autocomplete: 'new-password', required: true, minlength: 6 });
   const msg = h('p', { class: 'hint', hidden: true });
   const btn = h('button', { type: 'submit' }, 'Change password');
-  return h('form', { class: 'card', onsubmit: async (e) => {
+  const form = h('form', { class: 'inner fld', onsubmit: async (e) => {
     e.preventDefault();
     btn.disabled = true; msg.hidden = true; msg.className = 'hint';
     try {
@@ -1057,7 +1064,8 @@ function passwordForm() {
       cur.value = ''; next.value = '';
     } catch (ex) { msg.textContent = ex.message; msg.className = 'error'; }
     msg.hidden = false; btn.disabled = false;
-  } }, h('h2', null, 'Change password'), h('label', null, 'Current password'), cur, h('label', null, 'New password'), next, msg, btn);
+  } }, h('label', null, 'Current password'), cur, h('label', null, 'New password'), next, msg, btn);
+  return h('details', { class: 'card fold' }, h('summary', null, 'Change password'), form);
 }
 
 // ---------- start ----------

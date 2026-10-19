@@ -566,6 +566,8 @@ void main() {
           return {'photo': null};
         case 'chat_avatars':
           return <String, Object?>{};
+        case 'chat_blocks_list':
+          return <Object?>[];
         case 'chat_post':
           sent.add(args['body']! as String);
           return {'ok': true};

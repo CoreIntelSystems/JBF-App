@@ -401,6 +401,42 @@ class SyncApi {
     'as_name': asName,
   });
 
+  /// Reports a message to the Founder and discipline officers.
+  Future<void> chatReport(
+    String token,
+    String messageId,
+    String reason, {
+    String? asName,
+  }) => _call('chat_report', {
+    'token': token,
+    'msg': messageId,
+    'reason': reason,
+    'as_name': asName,
+  });
+
+  /// Hides (or shows again) everything another member writes, for me only.
+  Future<void> chatBlock(
+    String token,
+    String memberKey,
+    bool blocked, {
+    String? asName,
+  }) => _call('chat_block', {
+    'token': token,
+    'target': memberKey,
+    'blocked': blocked,
+    'as_name': asName,
+  });
+
+  /// The keys of the members I have blocked.
+  Future<Set<String>> chatBlocked(String token, {String? asName}) async {
+    final r = await _call('chat_blocks_list', {
+      'token': token,
+      'as_name': asName,
+    });
+    if (r is! List) return {};
+    return {for (final b in r.cast<Map>()) b['key'] as String};
+  }
+
   /// The bytes of a picture or document in a chat.
   Future<Uint8List> chatFile(
     String token,

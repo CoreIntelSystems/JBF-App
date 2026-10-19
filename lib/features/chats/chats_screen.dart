@@ -403,11 +403,12 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _sending = false;
   String? _error;
   ChatMessage? _replyTo;
+  var _blocked = <String>{};
 
   @override
   void initState() {
     super.initState();
-    _poll();
+    _loadBlocked().then((_) => _poll());
     _timer = Timer.periodic(_every, (_) => _poll());
   }
 
@@ -416,6 +417,17 @@ class _ChatScreenState extends State<ChatScreen> {
     _timer?.cancel();
     _text.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadBlocked() async {
+    try {
+      _blocked = await _api.chatBlocked(
+        widget.access.token,
+        asName: widget.access.asName,
+      );
+    } on SyncException {
+      // Nobody is hidden if this fails; the next open tries again.
+    }
   }
 
   Future<void> _poll() async {
@@ -432,7 +444,13 @@ class _ChatScreenState extends State<ChatScreen> {
       );
       setState(() {
         final seen = {for (final m in _messages) m.id};
-        _messages.addAll(next.where((m) => !seen.contains(m.id)));
+        _messages.addAll(
+          next.where(
+            (m) =>
+                !seen.contains(m.id) &&
+                (m.mine || !_blocked.contains(m.authorKey)),
+          ),
+        );
         _error = null;
       });
       if (unknown || _avatarsLoaded == false) _loadAvatars();
@@ -729,6 +747,20 @@ class _ChatScreenState extends State<ChatScreen> {
                 title: const Text('Copy'),
                 onTap: () => Navigator.pop(context, 'copy'),
               ),
+            if (!m.mine)
+              ListTile(
+                key: const Key('menuReport'),
+                leading: const Icon(Icons.flag_outlined),
+                title: const Text('Report this message'),
+                onTap: () => Navigator.pop(context, 'report'),
+              ),
+            if (!m.mine && m.authorKey != null)
+              ListTile(
+                key: const Key('menuBlock'),
+                leading: const Icon(Icons.block),
+                title: Text('Block ${m.author}'),
+                onTap: () => Navigator.pop(context, 'block'),
+              ),
           ],
         ),
       ),
@@ -738,6 +770,93 @@ class _ChatScreenState extends State<ChatScreen> {
     } else if (choice == 'copy') {
       await Clipboard.setData(ClipboardData(text: m.body));
       if (mounted) _toast('Copied.');
+    } else if (choice == 'report') {
+      await _report(m);
+    } else if (choice == 'block') {
+      await _block(m);
+    }
+  }
+
+  Future<void> _report(ChatMessage m) async {
+    final reason = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Report this message'),
+        content: TextField(
+          key: const Key('reportReason'),
+          controller: reason,
+          maxLength: 300,
+          decoration: const InputDecoration(
+            labelText: 'What is wrong with it?',
+            helperText:
+                'The Founder and discipline officers will review it and may remove it.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Report'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _api.chatReport(
+        widget.access.token,
+        m.id,
+        reason.text.trim().isEmpty ? 'No reason given' : reason.text.trim(),
+        asName: widget.access.asName,
+      );
+      if (mounted) _toast('Thank you. It will be reviewed.');
+    } on SyncException catch (e) {
+      if (mounted) _toast(e.offline ? 'No internet connection.' : e.message);
+    }
+  }
+
+  Future<void> _block(ChatMessage m) async {
+    final key = m.authorKey;
+    if (key == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Block ${m.author}?'),
+        content: const Text(
+          'You will no longer see their messages. You can undo this later.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Block'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _api.chatBlock(
+        widget.access.token,
+        key,
+        true,
+        asName: widget.access.asName,
+      );
+      if (!mounted) return;
+      setState(() {
+        _blocked = {..._blocked, key};
+        _messages.removeWhere((x) => !x.mine && x.authorKey == key);
+      });
+      _toast('Blocked. Messages from ${m.author} are hidden.');
+    } on SyncException catch (e) {
+      if (mounted) _toast(e.offline ? 'No internet connection.' : e.message);
     }
   }
 
@@ -1158,7 +1277,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   Text(
                     widget.channel.canPost
-                        ? 'Swipe a message to reply'
+                        ? 'Be respectful. Hold a message to reply, report or block.'
                         : 'Read only',
                     style: const TextStyle(
                       fontSize: 12,

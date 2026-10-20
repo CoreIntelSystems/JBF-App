@@ -90,5 +90,9 @@ void main() {
     comeBack(tester);
     await pumpUntil(tester, find.text('Sign in'));
     expect(find.text('Hello, Ama Owusu'), findsNothing);
+
+    // Let the database's stream clean-up timers run before the test ends.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
   });
 }

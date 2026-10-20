@@ -7,6 +7,7 @@ import 'package:jbf_app/core/xlsx.dart';
 import 'package:jbf_app/data/backup_service.dart';
 import 'package:jbf_app/data/connection.dart';
 import 'package:jbf_app/data/database.dart';
+import 'package:jbf_app/data/repositories/actor.dart';
 import 'package:jbf_app/data/repositories/finance_repository.dart';
 import 'package:jbf_app/data/repositories/payment_repository.dart';
 import 'package:jbf_app/data/repositories/welfare_repository.dart';
@@ -106,7 +107,12 @@ void main() {
         ),
         by,
       );
-      await env.welfare.decideCase(c.id, by, approve: true);
+      const chairman = WelfareActor(
+        Actor(userId: 'chair', username: 'chair', deviceId: 'd1'),
+        name: 'Chair',
+        roleName: 'Welfare Chairman',
+      );
+      await env.welfare.decideCase(c.id, chairman, approve: true);
       await env.welfare.markPaid(
         c.id,
         by,

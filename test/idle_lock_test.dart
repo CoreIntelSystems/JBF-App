@@ -23,6 +23,28 @@ Future<void> pumpUntil(WidgetTester tester, Finder finder) async {
   throw TestFailure('Timed out waiting for $finder');
 }
 
+/// Moves the app out of view and back the way Android does, one legal step
+/// at a time.
+void goAway(WidgetTester tester) {
+  for (final s in [
+    AppLifecycleState.inactive,
+    AppLifecycleState.hidden,
+    AppLifecycleState.paused,
+  ]) {
+    tester.binding.handleAppLifecycleStateChanged(s);
+  }
+}
+
+void comeBack(WidgetTester tester) {
+  for (final s in [
+    AppLifecycleState.hidden,
+    AppLifecycleState.inactive,
+    AppLifecycleState.resumed,
+  ]) {
+    tester.binding.handleAppLifecycleStateChanged(s);
+  }
+}
+
 void main() {
   testWidgets('an officer is signed out after 5 minutes in the background', (
     tester,
@@ -56,16 +78,16 @@ void main() {
     await pumpUntil(tester, find.text('Hello, Ama Owusu'));
 
     // A short trip to another app keeps the session.
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    goAway(tester);
     now = now.add(const Duration(minutes: 2));
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    comeBack(tester);
     await tester.pump();
     expect(find.text('Hello, Ama Owusu'), findsOneWidget);
 
     // A long one asks for the password again.
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    goAway(tester);
     now = now.add(const Duration(minutes: 6));
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    comeBack(tester);
     await pumpUntil(tester, find.text('Sign in'));
     expect(find.text('Hello, Ama Owusu'), findsNothing);
   });

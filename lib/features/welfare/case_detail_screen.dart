@@ -10,6 +10,7 @@ import '../../data/repositories/welfare_repository.dart';
 import '../../domain/permissions.dart';
 import '../auth/auth_cubit.dart';
 import '../members/member_detail_screen.dart';
+import 'drive_section.dart';
 import 'welfare_common.dart';
 
 /// One welfare case: details, who did what, and the next action for the
@@ -246,6 +247,10 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 )
               else if (c.status == WelfareStatus.approved)
                 const _Note('Approved. Waiting for the Treasurer to pay out.'),
+              if (c.status != WelfareStatus.rejected) ...[
+                const SizedBox(height: 24),
+                DriveSection(view: v),
+              ],
             ],
           ),
         );

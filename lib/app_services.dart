@@ -12,6 +12,7 @@ import 'data/repositories/events_repository.dart';
 import 'data/repositories/finance_repository.dart';
 import 'data/repositories/member_repository.dart';
 import 'data/repositories/payment_repository.dart';
+import 'data/repositories/drive_repository.dart';
 import 'data/repositories/welfare_repository.dart';
 import 'data/secure_store.dart';
 import 'data/sync/sync_api.dart';
@@ -48,6 +49,7 @@ class AppServices {
     dashboard = DashboardRepository(db, scope: scope);
     payments = PaymentRepository(db, audit, scope: scope);
     welfare = WelfareRepository(db, audit, scope: scope);
+    drives = DriveRepository(db, audit);
     finance = FinanceRepository(db, audit);
     events = EventsRepository(db, audit, scope: scope);
     analytics = AnalyticsRepository(db, scope: scope);
@@ -69,6 +71,7 @@ class AppServices {
   late final DashboardRepository dashboard;
   late final PaymentRepository payments;
   late final WelfareRepository welfare;
+  late final DriveRepository drives;
   late final FinanceRepository finance;
   late final EventsRepository events;
   late final AnalyticsRepository analytics;

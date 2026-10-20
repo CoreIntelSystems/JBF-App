@@ -12,6 +12,36 @@ void main() {
 
   /// Rolls a fresh database back to the shape of an older release.
   Future<void> stripTo(AppDatabase db, int version) async {
+    // v14: collection drives.
+    for (final table in ['welfare_cases', 'welfare_drive_gifts']) {
+      for (final t in ['ins', 'upd', 'stamp']) {
+        await db.customStatement('DROP TRIGGER IF EXISTS sync_${table}_$t');
+      }
+    }
+    await db.customStatement('DROP TABLE welfare_drive_gifts');
+    for (final c in [
+      'drive_status',
+      'funeral_on',
+      'funeral_venue',
+      'family_contact',
+      'family_phone',
+      'drive_opened_by_name',
+      'drive_closed_on',
+      'drive_closed_by',
+      'drive_closed_by_name',
+      'handover_amount',
+      'handover_on',
+      'handover_method',
+      'handover_reference',
+      'handover_by',
+      'handover_by_name',
+    ]) {
+      await db.customStatement('ALTER TABLE welfare_cases DROP COLUMN $c');
+    }
+    if (version >= 13) {
+      await db.customStatement('PRAGMA user_version = $version');
+      return;
+    }
     // v13: welfare membership.
     for (final table in ['members', 'contribution_types']) {
       for (final t in ['ins', 'upd', 'stamp']) {
@@ -248,7 +278,7 @@ void main() {
           "OR name LIKE 'expenses_%')",
         )
         .get();
-    expect(triggers, hasLength(6));
+    expect(triggers, hasLength(7));
     final flow = await db
         .customSelect(
           "SELECT sql FROM sqlite_master WHERE name = 'welfare_cases_flow'",
@@ -261,9 +291,9 @@ void main() {
           "AND name LIKE 'sync_%'",
         )
         .get();
-    // Insert triggers on the 19 uploaded tables; update and stamp
-    // triggers on the 18 whose rows change.
-    expect(syncTriggers, hasLength(19 + 18 * 2));
+    // Insert triggers on the 20 uploaded tables; update and stamp
+    // triggers on the 19 whose rows change.
+    expect(syncTriggers, hasLength(20 + 19 * 2));
     expect(org.deviceSeries, isNull);
     expect(await db.select(db.expenseCategories).get(), hasLength(10));
     expect(await db.select(db.executivePositions).get(), hasLength(20));
@@ -325,7 +355,7 @@ void main() {
     );
   }
 
-  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+  for (final from in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) {
     test('a v$from database upgrades to the current schema', () async {
       final dir = await Directory.systemTemp.createTemp('jbf_mig');
       final file = File('${dir.path}/jbf.db');

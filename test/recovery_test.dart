@@ -35,7 +35,10 @@ void main() {
   testWidgets('recovery screen erases only after confirmation', (tester) async {
     var erased = 0;
     await tester.pumpWidget(
-      RecoveryApp(error: const DatabaseKeyLost(), onReset: () async => erased++),
+      RecoveryApp(
+        error: const DatabaseKeyLost(),
+        onReset: () async => erased++,
+      ),
     );
     expect(find.textContaining('cannot be opened'), findsOneWidget);
     await tester.tap(find.byKey(const Key('eraseAndRestart')));

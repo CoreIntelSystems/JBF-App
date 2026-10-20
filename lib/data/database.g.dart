@@ -10932,6 +10932,172 @@ class $WelfareCasesTable extends WelfareCases
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<DriveStatus, String> driveStatus =
+      GeneratedColumn<String>(
+        'drive_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(DriveStatus.none.name),
+      ).withConverter<DriveStatus>($WelfareCasesTable.$converterdriveStatus);
+  static const VerificationMeta _funeralOnMeta = const VerificationMeta(
+    'funeralOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> funeralOn = GeneratedColumn<DateTime>(
+    'funeral_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _funeralVenueMeta = const VerificationMeta(
+    'funeralVenue',
+  );
+  @override
+  late final GeneratedColumn<String> funeralVenue = GeneratedColumn<String>(
+    'funeral_venue',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _familyContactMeta = const VerificationMeta(
+    'familyContact',
+  );
+  @override
+  late final GeneratedColumn<String> familyContact = GeneratedColumn<String>(
+    'family_contact',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _familyPhoneMeta = const VerificationMeta(
+    'familyPhone',
+  );
+  @override
+  late final GeneratedColumn<String> familyPhone = GeneratedColumn<String>(
+    'family_phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _driveOpenedByNameMeta = const VerificationMeta(
+    'driveOpenedByName',
+  );
+  @override
+  late final GeneratedColumn<String> driveOpenedByName =
+      GeneratedColumn<String>(
+        'drive_opened_by_name',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _driveClosedOnMeta = const VerificationMeta(
+    'driveClosedOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> driveClosedOn =
+      GeneratedColumn<DateTime>(
+        'drive_closed_on',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _driveClosedByMeta = const VerificationMeta(
+    'driveClosedBy',
+  );
+  @override
+  late final GeneratedColumn<String> driveClosedBy = GeneratedColumn<String>(
+    'drive_closed_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _driveClosedByNameMeta = const VerificationMeta(
+    'driveClosedByName',
+  );
+  @override
+  late final GeneratedColumn<String> driveClosedByName =
+      GeneratedColumn<String>(
+        'drive_closed_by_name',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _handoverAmountMeta = const VerificationMeta(
+    'handoverAmount',
+  );
+  @override
+  late final GeneratedColumn<int> handoverAmount = GeneratedColumn<int>(
+    'handover_amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _handoverOnMeta = const VerificationMeta(
+    'handoverOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> handoverOn = GeneratedColumn<DateTime>(
+    'handover_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<PaymentMethod?, String>
+  handoverMethod = GeneratedColumn<String>(
+    'handover_method',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<PaymentMethod?>($WelfareCasesTable.$converterhandoverMethodn);
+  static const VerificationMeta _handoverReferenceMeta = const VerificationMeta(
+    'handoverReference',
+  );
+  @override
+  late final GeneratedColumn<String> handoverReference =
+      GeneratedColumn<String>(
+        'handover_reference',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _handoverByMeta = const VerificationMeta(
+    'handoverBy',
+  );
+  @override
+  late final GeneratedColumn<String> handoverBy = GeneratedColumn<String>(
+    'handover_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _handoverByNameMeta = const VerificationMeta(
+    'handoverByName',
+  );
+  @override
+  late final GeneratedColumn<String> handoverByName = GeneratedColumn<String>(
+    'handover_by_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     createdAt,
@@ -10959,6 +11125,21 @@ class $WelfareCasesTable extends WelfareCases
     payReference,
     paidBy,
     paidByName,
+    driveStatus,
+    funeralOn,
+    funeralVenue,
+    familyContact,
+    familyPhone,
+    driveOpenedByName,
+    driveClosedOn,
+    driveClosedBy,
+    driveClosedByName,
+    handoverAmount,
+    handoverOn,
+    handoverMethod,
+    handoverReference,
+    handoverBy,
+    handoverByName,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -11155,6 +11336,114 @@ class $WelfareCasesTable extends WelfareCases
         ),
       );
     }
+    if (data.containsKey('funeral_on')) {
+      context.handle(
+        _funeralOnMeta,
+        funeralOn.isAcceptableOrUnknown(data['funeral_on']!, _funeralOnMeta),
+      );
+    }
+    if (data.containsKey('funeral_venue')) {
+      context.handle(
+        _funeralVenueMeta,
+        funeralVenue.isAcceptableOrUnknown(
+          data['funeral_venue']!,
+          _funeralVenueMeta,
+        ),
+      );
+    }
+    if (data.containsKey('family_contact')) {
+      context.handle(
+        _familyContactMeta,
+        familyContact.isAcceptableOrUnknown(
+          data['family_contact']!,
+          _familyContactMeta,
+        ),
+      );
+    }
+    if (data.containsKey('family_phone')) {
+      context.handle(
+        _familyPhoneMeta,
+        familyPhone.isAcceptableOrUnknown(
+          data['family_phone']!,
+          _familyPhoneMeta,
+        ),
+      );
+    }
+    if (data.containsKey('drive_opened_by_name')) {
+      context.handle(
+        _driveOpenedByNameMeta,
+        driveOpenedByName.isAcceptableOrUnknown(
+          data['drive_opened_by_name']!,
+          _driveOpenedByNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('drive_closed_on')) {
+      context.handle(
+        _driveClosedOnMeta,
+        driveClosedOn.isAcceptableOrUnknown(
+          data['drive_closed_on']!,
+          _driveClosedOnMeta,
+        ),
+      );
+    }
+    if (data.containsKey('drive_closed_by')) {
+      context.handle(
+        _driveClosedByMeta,
+        driveClosedBy.isAcceptableOrUnknown(
+          data['drive_closed_by']!,
+          _driveClosedByMeta,
+        ),
+      );
+    }
+    if (data.containsKey('drive_closed_by_name')) {
+      context.handle(
+        _driveClosedByNameMeta,
+        driveClosedByName.isAcceptableOrUnknown(
+          data['drive_closed_by_name']!,
+          _driveClosedByNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('handover_amount')) {
+      context.handle(
+        _handoverAmountMeta,
+        handoverAmount.isAcceptableOrUnknown(
+          data['handover_amount']!,
+          _handoverAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('handover_on')) {
+      context.handle(
+        _handoverOnMeta,
+        handoverOn.isAcceptableOrUnknown(data['handover_on']!, _handoverOnMeta),
+      );
+    }
+    if (data.containsKey('handover_reference')) {
+      context.handle(
+        _handoverReferenceMeta,
+        handoverReference.isAcceptableOrUnknown(
+          data['handover_reference']!,
+          _handoverReferenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('handover_by')) {
+      context.handle(
+        _handoverByMeta,
+        handoverBy.isAcceptableOrUnknown(data['handover_by']!, _handoverByMeta),
+      );
+    }
+    if (data.containsKey('handover_by_name')) {
+      context.handle(
+        _handoverByNameMeta,
+        handoverByName.isAcceptableOrUnknown(
+          data['handover_by_name']!,
+          _handoverByNameMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -11272,6 +11561,70 @@ class $WelfareCasesTable extends WelfareCases
         DriftSqlType.string,
         data['${effectivePrefix}paid_by_name'],
       ),
+      driveStatus: $WelfareCasesTable.$converterdriveStatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}drive_status'],
+        )!,
+      ),
+      funeralOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}funeral_on'],
+      ),
+      funeralVenue: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}funeral_venue'],
+      ),
+      familyContact: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}family_contact'],
+      ),
+      familyPhone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}family_phone'],
+      ),
+      driveOpenedByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}drive_opened_by_name'],
+      ),
+      driveClosedOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}drive_closed_on'],
+      ),
+      driveClosedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}drive_closed_by'],
+      ),
+      driveClosedByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}drive_closed_by_name'],
+      ),
+      handoverAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}handover_amount'],
+      ),
+      handoverOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}handover_on'],
+      ),
+      handoverMethod: $WelfareCasesTable.$converterhandoverMethodn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}handover_method'],
+        ),
+      ),
+      handoverReference: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}handover_reference'],
+      ),
+      handoverBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}handover_by'],
+      ),
+      handoverByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}handover_by_name'],
+      ),
     );
   }
 
@@ -11286,6 +11639,16 @@ class $WelfareCasesTable extends WelfareCases
       const EnumNameConverter<PaymentMethod>(PaymentMethod.values);
   static JsonTypeConverter2<PaymentMethod?, String?, String?>
   $converterpayMethodn = JsonTypeConverter2.asNullable($converterpayMethod);
+  static JsonTypeConverter2<DriveStatus, String, String> $converterdriveStatus =
+      const EnumNameConverter<DriveStatus>(DriveStatus.values);
+  static JsonTypeConverter2<PaymentMethod, String, String>
+  $converterhandoverMethod = const EnumNameConverter<PaymentMethod>(
+    PaymentMethod.values,
+  );
+  static JsonTypeConverter2<PaymentMethod?, String?, String?>
+  $converterhandoverMethodn = JsonTypeConverter2.asNullable(
+    $converterhandoverMethod,
+  );
 }
 
 class WelfareCase extends DataClass implements Insertable<WelfareCase> {
@@ -11322,6 +11685,23 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
   final String? payReference;
   final String? paidBy;
   final String? paidByName;
+  final DriveStatus driveStatus;
+  final DateTime? funeralOn;
+  final String? funeralVenue;
+  final String? familyContact;
+  final String? familyPhone;
+  final String? driveOpenedByName;
+  final DateTime? driveClosedOn;
+  final String? driveClosedBy;
+  final String? driveClosedByName;
+
+  /// What was handed to the family: the gifts received when the drive closed.
+  final int? handoverAmount;
+  final DateTime? handoverOn;
+  final PaymentMethod? handoverMethod;
+  final String? handoverReference;
+  final String? handoverBy;
+  final String? handoverByName;
   const WelfareCase({
     required this.id,
     required this.createdAt,
@@ -11349,6 +11729,21 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
     this.payReference,
     this.paidBy,
     this.paidByName,
+    required this.driveStatus,
+    this.funeralOn,
+    this.funeralVenue,
+    this.familyContact,
+    this.familyPhone,
+    this.driveOpenedByName,
+    this.driveClosedOn,
+    this.driveClosedBy,
+    this.driveClosedByName,
+    this.handoverAmount,
+    this.handoverOn,
+    this.handoverMethod,
+    this.handoverReference,
+    this.handoverBy,
+    this.handoverByName,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -11415,6 +11810,55 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
     if (!nullToAbsent || paidByName != null) {
       map['paid_by_name'] = Variable<String>(paidByName);
     }
+    {
+      map['drive_status'] = Variable<String>(
+        $WelfareCasesTable.$converterdriveStatus.toSql(driveStatus),
+      );
+    }
+    if (!nullToAbsent || funeralOn != null) {
+      map['funeral_on'] = Variable<DateTime>(funeralOn);
+    }
+    if (!nullToAbsent || funeralVenue != null) {
+      map['funeral_venue'] = Variable<String>(funeralVenue);
+    }
+    if (!nullToAbsent || familyContact != null) {
+      map['family_contact'] = Variable<String>(familyContact);
+    }
+    if (!nullToAbsent || familyPhone != null) {
+      map['family_phone'] = Variable<String>(familyPhone);
+    }
+    if (!nullToAbsent || driveOpenedByName != null) {
+      map['drive_opened_by_name'] = Variable<String>(driveOpenedByName);
+    }
+    if (!nullToAbsent || driveClosedOn != null) {
+      map['drive_closed_on'] = Variable<DateTime>(driveClosedOn);
+    }
+    if (!nullToAbsent || driveClosedBy != null) {
+      map['drive_closed_by'] = Variable<String>(driveClosedBy);
+    }
+    if (!nullToAbsent || driveClosedByName != null) {
+      map['drive_closed_by_name'] = Variable<String>(driveClosedByName);
+    }
+    if (!nullToAbsent || handoverAmount != null) {
+      map['handover_amount'] = Variable<int>(handoverAmount);
+    }
+    if (!nullToAbsent || handoverOn != null) {
+      map['handover_on'] = Variable<DateTime>(handoverOn);
+    }
+    if (!nullToAbsent || handoverMethod != null) {
+      map['handover_method'] = Variable<String>(
+        $WelfareCasesTable.$converterhandoverMethodn.toSql(handoverMethod),
+      );
+    }
+    if (!nullToAbsent || handoverReference != null) {
+      map['handover_reference'] = Variable<String>(handoverReference);
+    }
+    if (!nullToAbsent || handoverBy != null) {
+      map['handover_by'] = Variable<String>(handoverBy);
+    }
+    if (!nullToAbsent || handoverByName != null) {
+      map['handover_by_name'] = Variable<String>(handoverByName);
+    }
     return map;
   }
 
@@ -11476,6 +11920,49 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
       paidByName: paidByName == null && nullToAbsent
           ? const Value.absent()
           : Value(paidByName),
+      driveStatus: Value(driveStatus),
+      funeralOn: funeralOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(funeralOn),
+      funeralVenue: funeralVenue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(funeralVenue),
+      familyContact: familyContact == null && nullToAbsent
+          ? const Value.absent()
+          : Value(familyContact),
+      familyPhone: familyPhone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(familyPhone),
+      driveOpenedByName: driveOpenedByName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driveOpenedByName),
+      driveClosedOn: driveClosedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driveClosedOn),
+      driveClosedBy: driveClosedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driveClosedBy),
+      driveClosedByName: driveClosedByName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driveClosedByName),
+      handoverAmount: handoverAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(handoverAmount),
+      handoverOn: handoverOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(handoverOn),
+      handoverMethod: handoverMethod == null && nullToAbsent
+          ? const Value.absent()
+          : Value(handoverMethod),
+      handoverReference: handoverReference == null && nullToAbsent
+          ? const Value.absent()
+          : Value(handoverReference),
+      handoverBy: handoverBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(handoverBy),
+      handoverByName: handoverByName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(handoverByName),
     );
   }
 
@@ -11515,6 +12002,31 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
       payReference: serializer.fromJson<String?>(json['payReference']),
       paidBy: serializer.fromJson<String?>(json['paidBy']),
       paidByName: serializer.fromJson<String?>(json['paidByName']),
+      driveStatus: $WelfareCasesTable.$converterdriveStatus.fromJson(
+        serializer.fromJson<String>(json['driveStatus']),
+      ),
+      funeralOn: serializer.fromJson<DateTime?>(json['funeralOn']),
+      funeralVenue: serializer.fromJson<String?>(json['funeralVenue']),
+      familyContact: serializer.fromJson<String?>(json['familyContact']),
+      familyPhone: serializer.fromJson<String?>(json['familyPhone']),
+      driveOpenedByName: serializer.fromJson<String?>(
+        json['driveOpenedByName'],
+      ),
+      driveClosedOn: serializer.fromJson<DateTime?>(json['driveClosedOn']),
+      driveClosedBy: serializer.fromJson<String?>(json['driveClosedBy']),
+      driveClosedByName: serializer.fromJson<String?>(
+        json['driveClosedByName'],
+      ),
+      handoverAmount: serializer.fromJson<int?>(json['handoverAmount']),
+      handoverOn: serializer.fromJson<DateTime?>(json['handoverOn']),
+      handoverMethod: $WelfareCasesTable.$converterhandoverMethodn.fromJson(
+        serializer.fromJson<String?>(json['handoverMethod']),
+      ),
+      handoverReference: serializer.fromJson<String?>(
+        json['handoverReference'],
+      ),
+      handoverBy: serializer.fromJson<String?>(json['handoverBy']),
+      handoverByName: serializer.fromJson<String?>(json['handoverByName']),
     );
   }
   @override
@@ -11551,6 +12063,25 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
       'payReference': serializer.toJson<String?>(payReference),
       'paidBy': serializer.toJson<String?>(paidBy),
       'paidByName': serializer.toJson<String?>(paidByName),
+      'driveStatus': serializer.toJson<String>(
+        $WelfareCasesTable.$converterdriveStatus.toJson(driveStatus),
+      ),
+      'funeralOn': serializer.toJson<DateTime?>(funeralOn),
+      'funeralVenue': serializer.toJson<String?>(funeralVenue),
+      'familyContact': serializer.toJson<String?>(familyContact),
+      'familyPhone': serializer.toJson<String?>(familyPhone),
+      'driveOpenedByName': serializer.toJson<String?>(driveOpenedByName),
+      'driveClosedOn': serializer.toJson<DateTime?>(driveClosedOn),
+      'driveClosedBy': serializer.toJson<String?>(driveClosedBy),
+      'driveClosedByName': serializer.toJson<String?>(driveClosedByName),
+      'handoverAmount': serializer.toJson<int?>(handoverAmount),
+      'handoverOn': serializer.toJson<DateTime?>(handoverOn),
+      'handoverMethod': serializer.toJson<String?>(
+        $WelfareCasesTable.$converterhandoverMethodn.toJson(handoverMethod),
+      ),
+      'handoverReference': serializer.toJson<String?>(handoverReference),
+      'handoverBy': serializer.toJson<String?>(handoverBy),
+      'handoverByName': serializer.toJson<String?>(handoverByName),
     };
   }
 
@@ -11581,6 +12112,21 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
     Value<String?> payReference = const Value.absent(),
     Value<String?> paidBy = const Value.absent(),
     Value<String?> paidByName = const Value.absent(),
+    DriveStatus? driveStatus,
+    Value<DateTime?> funeralOn = const Value.absent(),
+    Value<String?> funeralVenue = const Value.absent(),
+    Value<String?> familyContact = const Value.absent(),
+    Value<String?> familyPhone = const Value.absent(),
+    Value<String?> driveOpenedByName = const Value.absent(),
+    Value<DateTime?> driveClosedOn = const Value.absent(),
+    Value<String?> driveClosedBy = const Value.absent(),
+    Value<String?> driveClosedByName = const Value.absent(),
+    Value<int?> handoverAmount = const Value.absent(),
+    Value<DateTime?> handoverOn = const Value.absent(),
+    Value<PaymentMethod?> handoverMethod = const Value.absent(),
+    Value<String?> handoverReference = const Value.absent(),
+    Value<String?> handoverBy = const Value.absent(),
+    Value<String?> handoverByName = const Value.absent(),
   }) => WelfareCase(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -11612,6 +12158,39 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
     payReference: payReference.present ? payReference.value : this.payReference,
     paidBy: paidBy.present ? paidBy.value : this.paidBy,
     paidByName: paidByName.present ? paidByName.value : this.paidByName,
+    driveStatus: driveStatus ?? this.driveStatus,
+    funeralOn: funeralOn.present ? funeralOn.value : this.funeralOn,
+    funeralVenue: funeralVenue.present ? funeralVenue.value : this.funeralVenue,
+    familyContact: familyContact.present
+        ? familyContact.value
+        : this.familyContact,
+    familyPhone: familyPhone.present ? familyPhone.value : this.familyPhone,
+    driveOpenedByName: driveOpenedByName.present
+        ? driveOpenedByName.value
+        : this.driveOpenedByName,
+    driveClosedOn: driveClosedOn.present
+        ? driveClosedOn.value
+        : this.driveClosedOn,
+    driveClosedBy: driveClosedBy.present
+        ? driveClosedBy.value
+        : this.driveClosedBy,
+    driveClosedByName: driveClosedByName.present
+        ? driveClosedByName.value
+        : this.driveClosedByName,
+    handoverAmount: handoverAmount.present
+        ? handoverAmount.value
+        : this.handoverAmount,
+    handoverOn: handoverOn.present ? handoverOn.value : this.handoverOn,
+    handoverMethod: handoverMethod.present
+        ? handoverMethod.value
+        : this.handoverMethod,
+    handoverReference: handoverReference.present
+        ? handoverReference.value
+        : this.handoverReference,
+    handoverBy: handoverBy.present ? handoverBy.value : this.handoverBy,
+    handoverByName: handoverByName.present
+        ? handoverByName.value
+        : this.handoverByName,
   );
   WelfareCase copyWithCompanion(WelfareCasesCompanion data) {
     return WelfareCase(
@@ -11663,6 +12242,49 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
       paidByName: data.paidByName.present
           ? data.paidByName.value
           : this.paidByName,
+      driveStatus: data.driveStatus.present
+          ? data.driveStatus.value
+          : this.driveStatus,
+      funeralOn: data.funeralOn.present ? data.funeralOn.value : this.funeralOn,
+      funeralVenue: data.funeralVenue.present
+          ? data.funeralVenue.value
+          : this.funeralVenue,
+      familyContact: data.familyContact.present
+          ? data.familyContact.value
+          : this.familyContact,
+      familyPhone: data.familyPhone.present
+          ? data.familyPhone.value
+          : this.familyPhone,
+      driveOpenedByName: data.driveOpenedByName.present
+          ? data.driveOpenedByName.value
+          : this.driveOpenedByName,
+      driveClosedOn: data.driveClosedOn.present
+          ? data.driveClosedOn.value
+          : this.driveClosedOn,
+      driveClosedBy: data.driveClosedBy.present
+          ? data.driveClosedBy.value
+          : this.driveClosedBy,
+      driveClosedByName: data.driveClosedByName.present
+          ? data.driveClosedByName.value
+          : this.driveClosedByName,
+      handoverAmount: data.handoverAmount.present
+          ? data.handoverAmount.value
+          : this.handoverAmount,
+      handoverOn: data.handoverOn.present
+          ? data.handoverOn.value
+          : this.handoverOn,
+      handoverMethod: data.handoverMethod.present
+          ? data.handoverMethod.value
+          : this.handoverMethod,
+      handoverReference: data.handoverReference.present
+          ? data.handoverReference.value
+          : this.handoverReference,
+      handoverBy: data.handoverBy.present
+          ? data.handoverBy.value
+          : this.handoverBy,
+      handoverByName: data.handoverByName.present
+          ? data.handoverByName.value
+          : this.handoverByName,
     );
   }
 
@@ -11694,7 +12316,22 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
           ..write('payMethod: $payMethod, ')
           ..write('payReference: $payReference, ')
           ..write('paidBy: $paidBy, ')
-          ..write('paidByName: $paidByName')
+          ..write('paidByName: $paidByName, ')
+          ..write('driveStatus: $driveStatus, ')
+          ..write('funeralOn: $funeralOn, ')
+          ..write('funeralVenue: $funeralVenue, ')
+          ..write('familyContact: $familyContact, ')
+          ..write('familyPhone: $familyPhone, ')
+          ..write('driveOpenedByName: $driveOpenedByName, ')
+          ..write('driveClosedOn: $driveClosedOn, ')
+          ..write('driveClosedBy: $driveClosedBy, ')
+          ..write('driveClosedByName: $driveClosedByName, ')
+          ..write('handoverAmount: $handoverAmount, ')
+          ..write('handoverOn: $handoverOn, ')
+          ..write('handoverMethod: $handoverMethod, ')
+          ..write('handoverReference: $handoverReference, ')
+          ..write('handoverBy: $handoverBy, ')
+          ..write('handoverByName: $handoverByName')
           ..write(')'))
         .toString();
   }
@@ -11727,6 +12364,21 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
     payReference,
     paidBy,
     paidByName,
+    driveStatus,
+    funeralOn,
+    funeralVenue,
+    familyContact,
+    familyPhone,
+    driveOpenedByName,
+    driveClosedOn,
+    driveClosedBy,
+    driveClosedByName,
+    handoverAmount,
+    handoverOn,
+    handoverMethod,
+    handoverReference,
+    handoverBy,
+    handoverByName,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -11757,7 +12409,22 @@ class WelfareCase extends DataClass implements Insertable<WelfareCase> {
           other.payMethod == this.payMethod &&
           other.payReference == this.payReference &&
           other.paidBy == this.paidBy &&
-          other.paidByName == this.paidByName);
+          other.paidByName == this.paidByName &&
+          other.driveStatus == this.driveStatus &&
+          other.funeralOn == this.funeralOn &&
+          other.funeralVenue == this.funeralVenue &&
+          other.familyContact == this.familyContact &&
+          other.familyPhone == this.familyPhone &&
+          other.driveOpenedByName == this.driveOpenedByName &&
+          other.driveClosedOn == this.driveClosedOn &&
+          other.driveClosedBy == this.driveClosedBy &&
+          other.driveClosedByName == this.driveClosedByName &&
+          other.handoverAmount == this.handoverAmount &&
+          other.handoverOn == this.handoverOn &&
+          other.handoverMethod == this.handoverMethod &&
+          other.handoverReference == this.handoverReference &&
+          other.handoverBy == this.handoverBy &&
+          other.handoverByName == this.handoverByName);
 }
 
 class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
@@ -11787,6 +12454,21 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
   final Value<String?> payReference;
   final Value<String?> paidBy;
   final Value<String?> paidByName;
+  final Value<DriveStatus> driveStatus;
+  final Value<DateTime?> funeralOn;
+  final Value<String?> funeralVenue;
+  final Value<String?> familyContact;
+  final Value<String?> familyPhone;
+  final Value<String?> driveOpenedByName;
+  final Value<DateTime?> driveClosedOn;
+  final Value<String?> driveClosedBy;
+  final Value<String?> driveClosedByName;
+  final Value<int?> handoverAmount;
+  final Value<DateTime?> handoverOn;
+  final Value<PaymentMethod?> handoverMethod;
+  final Value<String?> handoverReference;
+  final Value<String?> handoverBy;
+  final Value<String?> handoverByName;
   final Value<int> rowid;
   const WelfareCasesCompanion({
     this.id = const Value.absent(),
@@ -11815,6 +12497,21 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
     this.payReference = const Value.absent(),
     this.paidBy = const Value.absent(),
     this.paidByName = const Value.absent(),
+    this.driveStatus = const Value.absent(),
+    this.funeralOn = const Value.absent(),
+    this.funeralVenue = const Value.absent(),
+    this.familyContact = const Value.absent(),
+    this.familyPhone = const Value.absent(),
+    this.driveOpenedByName = const Value.absent(),
+    this.driveClosedOn = const Value.absent(),
+    this.driveClosedBy = const Value.absent(),
+    this.driveClosedByName = const Value.absent(),
+    this.handoverAmount = const Value.absent(),
+    this.handoverOn = const Value.absent(),
+    this.handoverMethod = const Value.absent(),
+    this.handoverReference = const Value.absent(),
+    this.handoverBy = const Value.absent(),
+    this.handoverByName = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   WelfareCasesCompanion.insert({
@@ -11844,6 +12541,21 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
     this.payReference = const Value.absent(),
     this.paidBy = const Value.absent(),
     this.paidByName = const Value.absent(),
+    this.driveStatus = const Value.absent(),
+    this.funeralOn = const Value.absent(),
+    this.funeralVenue = const Value.absent(),
+    this.familyContact = const Value.absent(),
+    this.familyPhone = const Value.absent(),
+    this.driveOpenedByName = const Value.absent(),
+    this.driveClosedOn = const Value.absent(),
+    this.driveClosedBy = const Value.absent(),
+    this.driveClosedByName = const Value.absent(),
+    this.handoverAmount = const Value.absent(),
+    this.handoverOn = const Value.absent(),
+    this.handoverMethod = const Value.absent(),
+    this.handoverReference = const Value.absent(),
+    this.handoverBy = const Value.absent(),
+    this.handoverByName = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : caseNo = Value(caseNo),
        memberId = Value(memberId),
@@ -11878,6 +12590,21 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
     Expression<String>? payReference,
     Expression<String>? paidBy,
     Expression<String>? paidByName,
+    Expression<String>? driveStatus,
+    Expression<DateTime>? funeralOn,
+    Expression<String>? funeralVenue,
+    Expression<String>? familyContact,
+    Expression<String>? familyPhone,
+    Expression<String>? driveOpenedByName,
+    Expression<DateTime>? driveClosedOn,
+    Expression<String>? driveClosedBy,
+    Expression<String>? driveClosedByName,
+    Expression<int>? handoverAmount,
+    Expression<DateTime>? handoverOn,
+    Expression<String>? handoverMethod,
+    Expression<String>? handoverReference,
+    Expression<String>? handoverBy,
+    Expression<String>? handoverByName,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -11907,6 +12634,21 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
       if (payReference != null) 'pay_reference': payReference,
       if (paidBy != null) 'paid_by': paidBy,
       if (paidByName != null) 'paid_by_name': paidByName,
+      if (driveStatus != null) 'drive_status': driveStatus,
+      if (funeralOn != null) 'funeral_on': funeralOn,
+      if (funeralVenue != null) 'funeral_venue': funeralVenue,
+      if (familyContact != null) 'family_contact': familyContact,
+      if (familyPhone != null) 'family_phone': familyPhone,
+      if (driveOpenedByName != null) 'drive_opened_by_name': driveOpenedByName,
+      if (driveClosedOn != null) 'drive_closed_on': driveClosedOn,
+      if (driveClosedBy != null) 'drive_closed_by': driveClosedBy,
+      if (driveClosedByName != null) 'drive_closed_by_name': driveClosedByName,
+      if (handoverAmount != null) 'handover_amount': handoverAmount,
+      if (handoverOn != null) 'handover_on': handoverOn,
+      if (handoverMethod != null) 'handover_method': handoverMethod,
+      if (handoverReference != null) 'handover_reference': handoverReference,
+      if (handoverBy != null) 'handover_by': handoverBy,
+      if (handoverByName != null) 'handover_by_name': handoverByName,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -11938,6 +12680,21 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
     Value<String?>? payReference,
     Value<String?>? paidBy,
     Value<String?>? paidByName,
+    Value<DriveStatus>? driveStatus,
+    Value<DateTime?>? funeralOn,
+    Value<String?>? funeralVenue,
+    Value<String?>? familyContact,
+    Value<String?>? familyPhone,
+    Value<String?>? driveOpenedByName,
+    Value<DateTime?>? driveClosedOn,
+    Value<String?>? driveClosedBy,
+    Value<String?>? driveClosedByName,
+    Value<int?>? handoverAmount,
+    Value<DateTime?>? handoverOn,
+    Value<PaymentMethod?>? handoverMethod,
+    Value<String?>? handoverReference,
+    Value<String?>? handoverBy,
+    Value<String?>? handoverByName,
     Value<int>? rowid,
   }) {
     return WelfareCasesCompanion(
@@ -11967,6 +12724,21 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
       payReference: payReference ?? this.payReference,
       paidBy: paidBy ?? this.paidBy,
       paidByName: paidByName ?? this.paidByName,
+      driveStatus: driveStatus ?? this.driveStatus,
+      funeralOn: funeralOn ?? this.funeralOn,
+      funeralVenue: funeralVenue ?? this.funeralVenue,
+      familyContact: familyContact ?? this.familyContact,
+      familyPhone: familyPhone ?? this.familyPhone,
+      driveOpenedByName: driveOpenedByName ?? this.driveOpenedByName,
+      driveClosedOn: driveClosedOn ?? this.driveClosedOn,
+      driveClosedBy: driveClosedBy ?? this.driveClosedBy,
+      driveClosedByName: driveClosedByName ?? this.driveClosedByName,
+      handoverAmount: handoverAmount ?? this.handoverAmount,
+      handoverOn: handoverOn ?? this.handoverOn,
+      handoverMethod: handoverMethod ?? this.handoverMethod,
+      handoverReference: handoverReference ?? this.handoverReference,
+      handoverBy: handoverBy ?? this.handoverBy,
+      handoverByName: handoverByName ?? this.handoverByName,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -12056,6 +12828,57 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
     if (paidByName.present) {
       map['paid_by_name'] = Variable<String>(paidByName.value);
     }
+    if (driveStatus.present) {
+      map['drive_status'] = Variable<String>(
+        $WelfareCasesTable.$converterdriveStatus.toSql(driveStatus.value),
+      );
+    }
+    if (funeralOn.present) {
+      map['funeral_on'] = Variable<DateTime>(funeralOn.value);
+    }
+    if (funeralVenue.present) {
+      map['funeral_venue'] = Variable<String>(funeralVenue.value);
+    }
+    if (familyContact.present) {
+      map['family_contact'] = Variable<String>(familyContact.value);
+    }
+    if (familyPhone.present) {
+      map['family_phone'] = Variable<String>(familyPhone.value);
+    }
+    if (driveOpenedByName.present) {
+      map['drive_opened_by_name'] = Variable<String>(driveOpenedByName.value);
+    }
+    if (driveClosedOn.present) {
+      map['drive_closed_on'] = Variable<DateTime>(driveClosedOn.value);
+    }
+    if (driveClosedBy.present) {
+      map['drive_closed_by'] = Variable<String>(driveClosedBy.value);
+    }
+    if (driveClosedByName.present) {
+      map['drive_closed_by_name'] = Variable<String>(driveClosedByName.value);
+    }
+    if (handoverAmount.present) {
+      map['handover_amount'] = Variable<int>(handoverAmount.value);
+    }
+    if (handoverOn.present) {
+      map['handover_on'] = Variable<DateTime>(handoverOn.value);
+    }
+    if (handoverMethod.present) {
+      map['handover_method'] = Variable<String>(
+        $WelfareCasesTable.$converterhandoverMethodn.toSql(
+          handoverMethod.value,
+        ),
+      );
+    }
+    if (handoverReference.present) {
+      map['handover_reference'] = Variable<String>(handoverReference.value);
+    }
+    if (handoverBy.present) {
+      map['handover_by'] = Variable<String>(handoverBy.value);
+    }
+    if (handoverByName.present) {
+      map['handover_by_name'] = Variable<String>(handoverByName.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -12091,6 +12914,1146 @@ class WelfareCasesCompanion extends UpdateCompanion<WelfareCase> {
           ..write('payReference: $payReference, ')
           ..write('paidBy: $paidBy, ')
           ..write('paidByName: $paidByName, ')
+          ..write('driveStatus: $driveStatus, ')
+          ..write('funeralOn: $funeralOn, ')
+          ..write('funeralVenue: $funeralVenue, ')
+          ..write('familyContact: $familyContact, ')
+          ..write('familyPhone: $familyPhone, ')
+          ..write('driveOpenedByName: $driveOpenedByName, ')
+          ..write('driveClosedOn: $driveClosedOn, ')
+          ..write('driveClosedBy: $driveClosedBy, ')
+          ..write('driveClosedByName: $driveClosedByName, ')
+          ..write('handoverAmount: $handoverAmount, ')
+          ..write('handoverOn: $handoverOn, ')
+          ..write('handoverMethod: $handoverMethod, ')
+          ..write('handoverReference: $handoverReference, ')
+          ..write('handoverBy: $handoverBy, ')
+          ..write('handoverByName: $handoverByName, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WelfareDriveGiftsTable extends WelfareDriveGifts
+    with TableInfo<$WelfareDriveGiftsTable, WelfareDriveGift> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WelfareDriveGiftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: newId,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _caseIdMeta = const VerificationMeta('caseId');
+  @override
+  late final GeneratedColumn<String> caseId = GeneratedColumn<String>(
+    'case_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES welfare_cases (id)',
+    ),
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES members (id)',
+    ),
+  );
+  static const VerificationMeta _giverNameMeta = const VerificationMeta(
+    'giverName',
+  );
+  @override
+  late final GeneratedColumn<String> giverName = GeneratedColumn<String>(
+    'giver_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _anonymousMeta = const VerificationMeta(
+    'anonymous',
+  );
+  @override
+  late final GeneratedColumn<bool> anonymous = GeneratedColumn<bool>(
+    'anonymous',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("anonymous" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<GiftStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(GiftStatus.pledged.name),
+      ).withConverter<GiftStatus>($WelfareDriveGiftsTable.$converterstatus);
+  static const VerificationMeta _pledgedOnMeta = const VerificationMeta(
+    'pledgedOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> pledgedOn = GeneratedColumn<DateTime>(
+    'pledged_on',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _receivedOnMeta = const VerificationMeta(
+    'receivedOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> receivedOn = GeneratedColumn<DateTime>(
+    'received_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<PaymentMethod?, String> method =
+      GeneratedColumn<String>(
+        'method',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<PaymentMethod?>(
+        $WelfareDriveGiftsTable.$convertermethodn,
+      );
+  static const VerificationMeta _referenceMeta = const VerificationMeta(
+    'reference',
+  );
+  @override
+  late final GeneratedColumn<String> reference = GeneratedColumn<String>(
+    'reference',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _recordedByNameMeta = const VerificationMeta(
+    'recordedByName',
+  );
+  @override
+  late final GeneratedColumn<String> recordedByName = GeneratedColumn<String>(
+    'recorded_by_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _receivedByNameMeta = const VerificationMeta(
+    'receivedByName',
+  );
+  @override
+  late final GeneratedColumn<String> receivedByName = GeneratedColumn<String>(
+    'received_by_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _voidReasonMeta = const VerificationMeta(
+    'voidReason',
+  );
+  @override
+  late final GeneratedColumn<String> voidReason = GeneratedColumn<String>(
+    'void_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    updatedAt,
+    createdBy,
+    deviceId,
+    deletedAt,
+    caseId,
+    memberId,
+    giverName,
+    amount,
+    anonymous,
+    status,
+    pledgedOn,
+    receivedOn,
+    method,
+    reference,
+    note,
+    recordedByName,
+    receivedByName,
+    voidReason,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'welfare_drive_gifts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WelfareDriveGift> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('case_id')) {
+      context.handle(
+        _caseIdMeta,
+        caseId.isAcceptableOrUnknown(data['case_id']!, _caseIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_caseIdMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    }
+    if (data.containsKey('giver_name')) {
+      context.handle(
+        _giverNameMeta,
+        giverName.isAcceptableOrUnknown(data['giver_name']!, _giverNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_giverNameMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('anonymous')) {
+      context.handle(
+        _anonymousMeta,
+        anonymous.isAcceptableOrUnknown(data['anonymous']!, _anonymousMeta),
+      );
+    }
+    if (data.containsKey('pledged_on')) {
+      context.handle(
+        _pledgedOnMeta,
+        pledgedOn.isAcceptableOrUnknown(data['pledged_on']!, _pledgedOnMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pledgedOnMeta);
+    }
+    if (data.containsKey('received_on')) {
+      context.handle(
+        _receivedOnMeta,
+        receivedOn.isAcceptableOrUnknown(data['received_on']!, _receivedOnMeta),
+      );
+    }
+    if (data.containsKey('reference')) {
+      context.handle(
+        _referenceMeta,
+        reference.isAcceptableOrUnknown(data['reference']!, _referenceMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('recorded_by_name')) {
+      context.handle(
+        _recordedByNameMeta,
+        recordedByName.isAcceptableOrUnknown(
+          data['recorded_by_name']!,
+          _recordedByNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedByNameMeta);
+    }
+    if (data.containsKey('received_by_name')) {
+      context.handle(
+        _receivedByNameMeta,
+        receivedByName.isAcceptableOrUnknown(
+          data['received_by_name']!,
+          _receivedByNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('void_reason')) {
+      context.handle(
+        _voidReasonMeta,
+        voidReason.isAcceptableOrUnknown(data['void_reason']!, _voidReasonMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WelfareDriveGift map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WelfareDriveGift(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      ),
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      caseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}case_id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      ),
+      giverName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}giver_name'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      )!,
+      anonymous: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}anonymous'],
+      )!,
+      status: $WelfareDriveGiftsTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      pledgedOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}pledged_on'],
+      )!,
+      receivedOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}received_on'],
+      ),
+      method: $WelfareDriveGiftsTable.$convertermethodn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}method'],
+        ),
+      ),
+      reference: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reference'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      recordedByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recorded_by_name'],
+      )!,
+      receivedByName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}received_by_name'],
+      ),
+      voidReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}void_reason'],
+      ),
+    );
+  }
+
+  @override
+  $WelfareDriveGiftsTable createAlias(String alias) {
+    return $WelfareDriveGiftsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<GiftStatus, String, String> $converterstatus =
+      const EnumNameConverter<GiftStatus>(GiftStatus.values);
+  static JsonTypeConverter2<PaymentMethod, String, String> $convertermethod =
+      const EnumNameConverter<PaymentMethod>(PaymentMethod.values);
+  static JsonTypeConverter2<PaymentMethod?, String?, String?>
+  $convertermethodn = JsonTypeConverter2.asNullable($convertermethod);
+}
+
+class WelfareDriveGift extends DataClass
+    implements Insertable<WelfareDriveGift> {
+  final String id;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? createdBy;
+  final String? deviceId;
+  final DateTime? deletedAt;
+  final String caseId;
+
+  /// Set when the giver is a member; null for friends and well-wishers.
+  final String? memberId;
+  final String giverName;
+  final int amount;
+
+  /// Hidden from the summary shared with members.
+  final bool anonymous;
+  final GiftStatus status;
+  final DateTime pledgedOn;
+  final DateTime? receivedOn;
+  final PaymentMethod? method;
+  final String? reference;
+  final String? note;
+  final String recordedByName;
+  final String? receivedByName;
+  final String? voidReason;
+  const WelfareDriveGift({
+    required this.id,
+    required this.createdAt,
+    required this.updatedAt,
+    this.createdBy,
+    this.deviceId,
+    this.deletedAt,
+    required this.caseId,
+    this.memberId,
+    required this.giverName,
+    required this.amount,
+    required this.anonymous,
+    required this.status,
+    required this.pledgedOn,
+    this.receivedOn,
+    this.method,
+    this.reference,
+    this.note,
+    required this.recordedByName,
+    this.receivedByName,
+    this.voidReason,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
+    if (!nullToAbsent || deviceId != null) {
+      map['device_id'] = Variable<String>(deviceId);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['case_id'] = Variable<String>(caseId);
+    if (!nullToAbsent || memberId != null) {
+      map['member_id'] = Variable<String>(memberId);
+    }
+    map['giver_name'] = Variable<String>(giverName);
+    map['amount'] = Variable<int>(amount);
+    map['anonymous'] = Variable<bool>(anonymous);
+    {
+      map['status'] = Variable<String>(
+        $WelfareDriveGiftsTable.$converterstatus.toSql(status),
+      );
+    }
+    map['pledged_on'] = Variable<DateTime>(pledgedOn);
+    if (!nullToAbsent || receivedOn != null) {
+      map['received_on'] = Variable<DateTime>(receivedOn);
+    }
+    if (!nullToAbsent || method != null) {
+      map['method'] = Variable<String>(
+        $WelfareDriveGiftsTable.$convertermethodn.toSql(method),
+      );
+    }
+    if (!nullToAbsent || reference != null) {
+      map['reference'] = Variable<String>(reference);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['recorded_by_name'] = Variable<String>(recordedByName);
+    if (!nullToAbsent || receivedByName != null) {
+      map['received_by_name'] = Variable<String>(receivedByName);
+    }
+    if (!nullToAbsent || voidReason != null) {
+      map['void_reason'] = Variable<String>(voidReason);
+    }
+    return map;
+  }
+
+  WelfareDriveGiftsCompanion toCompanion(bool nullToAbsent) {
+    return WelfareDriveGiftsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
+      deviceId: deviceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deviceId),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      caseId: Value(caseId),
+      memberId: memberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memberId),
+      giverName: Value(giverName),
+      amount: Value(amount),
+      anonymous: Value(anonymous),
+      status: Value(status),
+      pledgedOn: Value(pledgedOn),
+      receivedOn: receivedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receivedOn),
+      method: method == null && nullToAbsent
+          ? const Value.absent()
+          : Value(method),
+      reference: reference == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reference),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      recordedByName: Value(recordedByName),
+      receivedByName: receivedByName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receivedByName),
+      voidReason: voidReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(voidReason),
+    );
+  }
+
+  factory WelfareDriveGift.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WelfareDriveGift(
+      id: serializer.fromJson<String>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
+      deviceId: serializer.fromJson<String?>(json['deviceId']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      caseId: serializer.fromJson<String>(json['caseId']),
+      memberId: serializer.fromJson<String?>(json['memberId']),
+      giverName: serializer.fromJson<String>(json['giverName']),
+      amount: serializer.fromJson<int>(json['amount']),
+      anonymous: serializer.fromJson<bool>(json['anonymous']),
+      status: $WelfareDriveGiftsTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      pledgedOn: serializer.fromJson<DateTime>(json['pledgedOn']),
+      receivedOn: serializer.fromJson<DateTime?>(json['receivedOn']),
+      method: $WelfareDriveGiftsTable.$convertermethodn.fromJson(
+        serializer.fromJson<String?>(json['method']),
+      ),
+      reference: serializer.fromJson<String?>(json['reference']),
+      note: serializer.fromJson<String?>(json['note']),
+      recordedByName: serializer.fromJson<String>(json['recordedByName']),
+      receivedByName: serializer.fromJson<String?>(json['receivedByName']),
+      voidReason: serializer.fromJson<String?>(json['voidReason']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'createdBy': serializer.toJson<String?>(createdBy),
+      'deviceId': serializer.toJson<String?>(deviceId),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'caseId': serializer.toJson<String>(caseId),
+      'memberId': serializer.toJson<String?>(memberId),
+      'giverName': serializer.toJson<String>(giverName),
+      'amount': serializer.toJson<int>(amount),
+      'anonymous': serializer.toJson<bool>(anonymous),
+      'status': serializer.toJson<String>(
+        $WelfareDriveGiftsTable.$converterstatus.toJson(status),
+      ),
+      'pledgedOn': serializer.toJson<DateTime>(pledgedOn),
+      'receivedOn': serializer.toJson<DateTime?>(receivedOn),
+      'method': serializer.toJson<String?>(
+        $WelfareDriveGiftsTable.$convertermethodn.toJson(method),
+      ),
+      'reference': serializer.toJson<String?>(reference),
+      'note': serializer.toJson<String?>(note),
+      'recordedByName': serializer.toJson<String>(recordedByName),
+      'receivedByName': serializer.toJson<String?>(receivedByName),
+      'voidReason': serializer.toJson<String?>(voidReason),
+    };
+  }
+
+  WelfareDriveGift copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<String?> createdBy = const Value.absent(),
+    Value<String?> deviceId = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? caseId,
+    Value<String?> memberId = const Value.absent(),
+    String? giverName,
+    int? amount,
+    bool? anonymous,
+    GiftStatus? status,
+    DateTime? pledgedOn,
+    Value<DateTime?> receivedOn = const Value.absent(),
+    Value<PaymentMethod?> method = const Value.absent(),
+    Value<String?> reference = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+    String? recordedByName,
+    Value<String?> receivedByName = const Value.absent(),
+    Value<String?> voidReason = const Value.absent(),
+  }) => WelfareDriveGift(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    createdBy: createdBy.present ? createdBy.value : this.createdBy,
+    deviceId: deviceId.present ? deviceId.value : this.deviceId,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    caseId: caseId ?? this.caseId,
+    memberId: memberId.present ? memberId.value : this.memberId,
+    giverName: giverName ?? this.giverName,
+    amount: amount ?? this.amount,
+    anonymous: anonymous ?? this.anonymous,
+    status: status ?? this.status,
+    pledgedOn: pledgedOn ?? this.pledgedOn,
+    receivedOn: receivedOn.present ? receivedOn.value : this.receivedOn,
+    method: method.present ? method.value : this.method,
+    reference: reference.present ? reference.value : this.reference,
+    note: note.present ? note.value : this.note,
+    recordedByName: recordedByName ?? this.recordedByName,
+    receivedByName: receivedByName.present
+        ? receivedByName.value
+        : this.receivedByName,
+    voidReason: voidReason.present ? voidReason.value : this.voidReason,
+  );
+  WelfareDriveGift copyWithCompanion(WelfareDriveGiftsCompanion data) {
+    return WelfareDriveGift(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      caseId: data.caseId.present ? data.caseId.value : this.caseId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      giverName: data.giverName.present ? data.giverName.value : this.giverName,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      anonymous: data.anonymous.present ? data.anonymous.value : this.anonymous,
+      status: data.status.present ? data.status.value : this.status,
+      pledgedOn: data.pledgedOn.present ? data.pledgedOn.value : this.pledgedOn,
+      receivedOn: data.receivedOn.present
+          ? data.receivedOn.value
+          : this.receivedOn,
+      method: data.method.present ? data.method.value : this.method,
+      reference: data.reference.present ? data.reference.value : this.reference,
+      note: data.note.present ? data.note.value : this.note,
+      recordedByName: data.recordedByName.present
+          ? data.recordedByName.value
+          : this.recordedByName,
+      receivedByName: data.receivedByName.present
+          ? data.receivedByName.value
+          : this.receivedByName,
+      voidReason: data.voidReason.present
+          ? data.voidReason.value
+          : this.voidReason,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WelfareDriveGift(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('caseId: $caseId, ')
+          ..write('memberId: $memberId, ')
+          ..write('giverName: $giverName, ')
+          ..write('amount: $amount, ')
+          ..write('anonymous: $anonymous, ')
+          ..write('status: $status, ')
+          ..write('pledgedOn: $pledgedOn, ')
+          ..write('receivedOn: $receivedOn, ')
+          ..write('method: $method, ')
+          ..write('reference: $reference, ')
+          ..write('note: $note, ')
+          ..write('recordedByName: $recordedByName, ')
+          ..write('receivedByName: $receivedByName, ')
+          ..write('voidReason: $voidReason')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    createdAt,
+    updatedAt,
+    createdBy,
+    deviceId,
+    deletedAt,
+    caseId,
+    memberId,
+    giverName,
+    amount,
+    anonymous,
+    status,
+    pledgedOn,
+    receivedOn,
+    method,
+    reference,
+    note,
+    recordedByName,
+    receivedByName,
+    voidReason,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WelfareDriveGift &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.createdBy == this.createdBy &&
+          other.deviceId == this.deviceId &&
+          other.deletedAt == this.deletedAt &&
+          other.caseId == this.caseId &&
+          other.memberId == this.memberId &&
+          other.giverName == this.giverName &&
+          other.amount == this.amount &&
+          other.anonymous == this.anonymous &&
+          other.status == this.status &&
+          other.pledgedOn == this.pledgedOn &&
+          other.receivedOn == this.receivedOn &&
+          other.method == this.method &&
+          other.reference == this.reference &&
+          other.note == this.note &&
+          other.recordedByName == this.recordedByName &&
+          other.receivedByName == this.receivedByName &&
+          other.voidReason == this.voidReason);
+}
+
+class WelfareDriveGiftsCompanion extends UpdateCompanion<WelfareDriveGift> {
+  final Value<String> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<String?> createdBy;
+  final Value<String?> deviceId;
+  final Value<DateTime?> deletedAt;
+  final Value<String> caseId;
+  final Value<String?> memberId;
+  final Value<String> giverName;
+  final Value<int> amount;
+  final Value<bool> anonymous;
+  final Value<GiftStatus> status;
+  final Value<DateTime> pledgedOn;
+  final Value<DateTime?> receivedOn;
+  final Value<PaymentMethod?> method;
+  final Value<String?> reference;
+  final Value<String?> note;
+  final Value<String> recordedByName;
+  final Value<String?> receivedByName;
+  final Value<String?> voidReason;
+  final Value<int> rowid;
+  const WelfareDriveGiftsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.caseId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.giverName = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.anonymous = const Value.absent(),
+    this.status = const Value.absent(),
+    this.pledgedOn = const Value.absent(),
+    this.receivedOn = const Value.absent(),
+    this.method = const Value.absent(),
+    this.reference = const Value.absent(),
+    this.note = const Value.absent(),
+    this.recordedByName = const Value.absent(),
+    this.receivedByName = const Value.absent(),
+    this.voidReason = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WelfareDriveGiftsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    required String caseId,
+    this.memberId = const Value.absent(),
+    required String giverName,
+    required int amount,
+    this.anonymous = const Value.absent(),
+    this.status = const Value.absent(),
+    required DateTime pledgedOn,
+    this.receivedOn = const Value.absent(),
+    this.method = const Value.absent(),
+    this.reference = const Value.absent(),
+    this.note = const Value.absent(),
+    required String recordedByName,
+    this.receivedByName = const Value.absent(),
+    this.voidReason = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : caseId = Value(caseId),
+       giverName = Value(giverName),
+       amount = Value(amount),
+       pledgedOn = Value(pledgedOn),
+       recordedByName = Value(recordedByName);
+  static Insertable<WelfareDriveGift> custom({
+    Expression<String>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? createdBy,
+    Expression<String>? deviceId,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? caseId,
+    Expression<String>? memberId,
+    Expression<String>? giverName,
+    Expression<int>? amount,
+    Expression<bool>? anonymous,
+    Expression<String>? status,
+    Expression<DateTime>? pledgedOn,
+    Expression<DateTime>? receivedOn,
+    Expression<String>? method,
+    Expression<String>? reference,
+    Expression<String>? note,
+    Expression<String>? recordedByName,
+    Expression<String>? receivedByName,
+    Expression<String>? voidReason,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdBy != null) 'created_by': createdBy,
+      if (deviceId != null) 'device_id': deviceId,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (caseId != null) 'case_id': caseId,
+      if (memberId != null) 'member_id': memberId,
+      if (giverName != null) 'giver_name': giverName,
+      if (amount != null) 'amount': amount,
+      if (anonymous != null) 'anonymous': anonymous,
+      if (status != null) 'status': status,
+      if (pledgedOn != null) 'pledged_on': pledgedOn,
+      if (receivedOn != null) 'received_on': receivedOn,
+      if (method != null) 'method': method,
+      if (reference != null) 'reference': reference,
+      if (note != null) 'note': note,
+      if (recordedByName != null) 'recorded_by_name': recordedByName,
+      if (receivedByName != null) 'received_by_name': receivedByName,
+      if (voidReason != null) 'void_reason': voidReason,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WelfareDriveGiftsCompanion copyWith({
+    Value<String>? id,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<String?>? createdBy,
+    Value<String?>? deviceId,
+    Value<DateTime?>? deletedAt,
+    Value<String>? caseId,
+    Value<String?>? memberId,
+    Value<String>? giverName,
+    Value<int>? amount,
+    Value<bool>? anonymous,
+    Value<GiftStatus>? status,
+    Value<DateTime>? pledgedOn,
+    Value<DateTime?>? receivedOn,
+    Value<PaymentMethod?>? method,
+    Value<String?>? reference,
+    Value<String?>? note,
+    Value<String>? recordedByName,
+    Value<String?>? receivedByName,
+    Value<String?>? voidReason,
+    Value<int>? rowid,
+  }) {
+    return WelfareDriveGiftsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdBy: createdBy ?? this.createdBy,
+      deviceId: deviceId ?? this.deviceId,
+      deletedAt: deletedAt ?? this.deletedAt,
+      caseId: caseId ?? this.caseId,
+      memberId: memberId ?? this.memberId,
+      giverName: giverName ?? this.giverName,
+      amount: amount ?? this.amount,
+      anonymous: anonymous ?? this.anonymous,
+      status: status ?? this.status,
+      pledgedOn: pledgedOn ?? this.pledgedOn,
+      receivedOn: receivedOn ?? this.receivedOn,
+      method: method ?? this.method,
+      reference: reference ?? this.reference,
+      note: note ?? this.note,
+      recordedByName: recordedByName ?? this.recordedByName,
+      receivedByName: receivedByName ?? this.receivedByName,
+      voidReason: voidReason ?? this.voidReason,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (caseId.present) {
+      map['case_id'] = Variable<String>(caseId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (giverName.present) {
+      map['giver_name'] = Variable<String>(giverName.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (anonymous.present) {
+      map['anonymous'] = Variable<bool>(anonymous.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $WelfareDriveGiftsTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (pledgedOn.present) {
+      map['pledged_on'] = Variable<DateTime>(pledgedOn.value);
+    }
+    if (receivedOn.present) {
+      map['received_on'] = Variable<DateTime>(receivedOn.value);
+    }
+    if (method.present) {
+      map['method'] = Variable<String>(
+        $WelfareDriveGiftsTable.$convertermethodn.toSql(method.value),
+      );
+    }
+    if (reference.present) {
+      map['reference'] = Variable<String>(reference.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (recordedByName.present) {
+      map['recorded_by_name'] = Variable<String>(recordedByName.value);
+    }
+    if (receivedByName.present) {
+      map['received_by_name'] = Variable<String>(receivedByName.value);
+    }
+    if (voidReason.present) {
+      map['void_reason'] = Variable<String>(voidReason.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WelfareDriveGiftsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('caseId: $caseId, ')
+          ..write('memberId: $memberId, ')
+          ..write('giverName: $giverName, ')
+          ..write('amount: $amount, ')
+          ..write('anonymous: $anonymous, ')
+          ..write('status: $status, ')
+          ..write('pledgedOn: $pledgedOn, ')
+          ..write('receivedOn: $receivedOn, ')
+          ..write('method: $method, ')
+          ..write('reference: $reference, ')
+          ..write('note: $note, ')
+          ..write('recordedByName: $recordedByName, ')
+          ..write('receivedByName: $receivedByName, ')
+          ..write('voidReason: $voidReason, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -17583,6 +19546,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $WelfareCasesTable welfareCases = $WelfareCasesTable(this);
+  late final $WelfareDriveGiftsTable welfareDriveGifts =
+      $WelfareDriveGiftsTable(this);
   late final $ExpenseCategoriesTable expenseCategories =
       $ExpenseCategoriesTable(this);
   late final $ExpensesTable expenses = $ExpensesTable(this);
@@ -17629,6 +19594,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'welfare_cases_status',
     'CREATE INDEX welfare_cases_status ON welfare_cases (status)',
   );
+  late final Index welfareDriveGiftsCase = Index(
+    'welfare_drive_gifts_case',
+    'CREATE INDEX welfare_drive_gifts_case ON welfare_drive_gifts (case_id)',
+  );
   late final Index expensesPaidOn = Index(
     'expenses_paid_on',
     'CREATE INDEX expenses_paid_on ON expenses (paid_on)',
@@ -17671,6 +19640,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     payments,
     welfareCaseTypes,
     welfareCases,
+    welfareDriveGifts,
     expenseCategories,
     expenses,
     events,
@@ -17687,6 +19657,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     paymentsPaidOn,
     welfareCasesMember,
     welfareCasesStatus,
+    welfareDriveGiftsCase,
     expensesPaidOn,
     eventsStartsOn,
     meetingsHeldOn,
@@ -18902,6 +20873,27 @@ final class $$MembersTableReferences
     );
   }
 
+  static MultiTypedResultKey<$WelfareDriveGiftsTable, List<WelfareDriveGift>>
+  _welfareDriveGiftsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.welfareDriveGifts,
+        aliasName: 'members__id__welfare_drive_gifts__member_id',
+      );
+
+  $$WelfareDriveGiftsTableProcessedTableManager get welfareDriveGiftsRefs {
+    final manager = $$WelfareDriveGiftsTableTableManager(
+      $_db,
+      $_db.welfareDriveGifts,
+    ).filter((f) => f.memberId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _welfareDriveGiftsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$AttendanceRecordsTable, List<AttendanceRecord>>
   _attendanceRecordsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
@@ -19224,6 +21216,31 @@ class $$MembersTableFilterComposer
           }) => $$WelfareCasesTableFilterComposer(
             $db: $db,
             $table: $db.welfareCases,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> welfareDriveGiftsRefs(
+    Expression<bool> Function($$WelfareDriveGiftsTableFilterComposer f) f,
+  ) {
+    final $$WelfareDriveGiftsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.welfareDriveGifts,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareDriveGiftsTableFilterComposer(
+            $db: $db,
+            $table: $db.welfareDriveGifts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -19705,6 +21722,32 @@ class $$MembersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> welfareDriveGiftsRefs<T extends Object>(
+    Expression<T> Function($$WelfareDriveGiftsTableAnnotationComposer a) f,
+  ) {
+    final $$WelfareDriveGiftsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.welfareDriveGifts,
+          getReferencedColumn: (t) => t.memberId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WelfareDriveGiftsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.welfareDriveGifts,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> attendanceRecordsRefs<T extends Object>(
     Expression<T> Function($$AttendanceRecordsTableAnnotationComposer a) f,
   ) {
@@ -19776,6 +21819,7 @@ class $$MembersTableTableManager
             bool roleAssignmentsRefs,
             bool paymentsRefs,
             bool welfareCasesRefs,
+            bool welfareDriveGiftsRefs,
             bool attendanceRecordsRefs,
             bool executivesRefs,
           })
@@ -19944,6 +21988,7 @@ class $$MembersTableTableManager
                 roleAssignmentsRefs = false,
                 paymentsRefs = false,
                 welfareCasesRefs = false,
+                welfareDriveGiftsRefs = false,
                 attendanceRecordsRefs = false,
                 executivesRefs = false,
               }) {
@@ -19955,6 +22000,7 @@ class $$MembersTableTableManager
                     if (roleAssignmentsRefs) db.roleAssignments,
                     if (paymentsRefs) db.payments,
                     if (welfareCasesRefs) db.welfareCases,
+                    if (welfareDriveGiftsRefs) db.welfareDriveGifts,
                     if (attendanceRecordsRefs) db.attendanceRecords,
                     if (executivesRefs) db.executives,
                   ],
@@ -20058,6 +22104,27 @@ class $$MembersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (welfareDriveGiftsRefs)
+                        await $_getPrefetchedData<
+                          Member,
+                          $MembersTable,
+                          WelfareDriveGift
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MembersTableReferences
+                              ._welfareDriveGiftsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MembersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).welfareDriveGiftsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.memberId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (attendanceRecordsRefs)
                         await $_getPrefetchedData<
                           Member,
@@ -20126,6 +22193,7 @@ typedef $$MembersTableProcessedTableManager =
         bool roleAssignmentsRefs,
         bool paymentsRefs,
         bool welfareCasesRefs,
+        bool welfareDriveGiftsRefs,
         bool attendanceRecordsRefs,
         bool executivesRefs,
       })
@@ -25006,6 +27074,21 @@ typedef $$WelfareCasesTableCreateCompanionBuilder =
       Value<String?> payReference,
       Value<String?> paidBy,
       Value<String?> paidByName,
+      Value<DriveStatus> driveStatus,
+      Value<DateTime?> funeralOn,
+      Value<String?> funeralVenue,
+      Value<String?> familyContact,
+      Value<String?> familyPhone,
+      Value<String?> driveOpenedByName,
+      Value<DateTime?> driveClosedOn,
+      Value<String?> driveClosedBy,
+      Value<String?> driveClosedByName,
+      Value<int?> handoverAmount,
+      Value<DateTime?> handoverOn,
+      Value<PaymentMethod?> handoverMethod,
+      Value<String?> handoverReference,
+      Value<String?> handoverBy,
+      Value<String?> handoverByName,
       Value<int> rowid,
     });
 typedef $$WelfareCasesTableUpdateCompanionBuilder =
@@ -25036,6 +27119,21 @@ typedef $$WelfareCasesTableUpdateCompanionBuilder =
       Value<String?> payReference,
       Value<String?> paidBy,
       Value<String?> paidByName,
+      Value<DriveStatus> driveStatus,
+      Value<DateTime?> funeralOn,
+      Value<String?> funeralVenue,
+      Value<String?> familyContact,
+      Value<String?> familyPhone,
+      Value<String?> driveOpenedByName,
+      Value<DateTime?> driveClosedOn,
+      Value<String?> driveClosedBy,
+      Value<String?> driveClosedByName,
+      Value<int?> handoverAmount,
+      Value<DateTime?> handoverOn,
+      Value<PaymentMethod?> handoverMethod,
+      Value<String?> handoverReference,
+      Value<String?> handoverBy,
+      Value<String?> handoverByName,
       Value<int> rowid,
     });
 
@@ -25075,6 +27173,27 @@ final class $$WelfareCasesTableReferences
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$WelfareDriveGiftsTable, List<WelfareDriveGift>>
+  _welfareDriveGiftsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.welfareDriveGifts,
+        aliasName: 'welfare_cases__id__welfare_drive_gifts__case_id',
+      );
+
+  $$WelfareDriveGiftsTableProcessedTableManager get welfareDriveGiftsRefs {
+    final manager = $$WelfareDriveGiftsTableTableManager(
+      $_db,
+      $_db.welfareDriveGifts,
+    ).filter((f) => f.caseId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _welfareDriveGiftsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 }
@@ -25210,6 +27329,83 @@ class $$WelfareCasesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnWithTypeConverterFilters<DriveStatus, DriveStatus, String>
+  get driveStatus => $composableBuilder(
+    column: $table.driveStatus,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get funeralOn => $composableBuilder(
+    column: $table.funeralOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get funeralVenue => $composableBuilder(
+    column: $table.funeralVenue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get familyContact => $composableBuilder(
+    column: $table.familyContact,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get familyPhone => $composableBuilder(
+    column: $table.familyPhone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get driveOpenedByName => $composableBuilder(
+    column: $table.driveOpenedByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get driveClosedOn => $composableBuilder(
+    column: $table.driveClosedOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get driveClosedBy => $composableBuilder(
+    column: $table.driveClosedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get driveClosedByName => $composableBuilder(
+    column: $table.driveClosedByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get handoverAmount => $composableBuilder(
+    column: $table.handoverAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get handoverOn => $composableBuilder(
+    column: $table.handoverOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<PaymentMethod?, PaymentMethod, String>
+  get handoverMethod => $composableBuilder(
+    column: $table.handoverMethod,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get handoverReference => $composableBuilder(
+    column: $table.handoverReference,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get handoverBy => $composableBuilder(
+    column: $table.handoverBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get handoverByName => $composableBuilder(
+    column: $table.handoverByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$MembersTableFilterComposer get memberId {
     final $$MembersTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -25254,6 +27450,31 @@ class $$WelfareCasesTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> welfareDriveGiftsRefs(
+    Expression<bool> Function($$WelfareDriveGiftsTableFilterComposer f) f,
+  ) {
+    final $$WelfareDriveGiftsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.welfareDriveGifts,
+      getReferencedColumn: (t) => t.caseId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareDriveGiftsTableFilterComposer(
+            $db: $db,
+            $table: $db.welfareDriveGifts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 }
 
@@ -25383,6 +27604,81 @@ class $$WelfareCasesTableOrderingComposer
 
   ColumnOrderings<String> get paidByName => $composableBuilder(
     column: $table.paidByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get driveStatus => $composableBuilder(
+    column: $table.driveStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get funeralOn => $composableBuilder(
+    column: $table.funeralOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get funeralVenue => $composableBuilder(
+    column: $table.funeralVenue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get familyContact => $composableBuilder(
+    column: $table.familyContact,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get familyPhone => $composableBuilder(
+    column: $table.familyPhone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get driveOpenedByName => $composableBuilder(
+    column: $table.driveOpenedByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get driveClosedOn => $composableBuilder(
+    column: $table.driveClosedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get driveClosedBy => $composableBuilder(
+    column: $table.driveClosedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get driveClosedByName => $composableBuilder(
+    column: $table.driveClosedByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get handoverAmount => $composableBuilder(
+    column: $table.handoverAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get handoverOn => $composableBuilder(
+    column: $table.handoverOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get handoverMethod => $composableBuilder(
+    column: $table.handoverMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get handoverReference => $composableBuilder(
+    column: $table.handoverReference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get handoverBy => $composableBuilder(
+    column: $table.handoverBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get handoverByName => $composableBuilder(
+    column: $table.handoverByName,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -25534,6 +27830,81 @@ class $$WelfareCasesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumnWithTypeConverter<DriveStatus, String> get driveStatus =>
+      $composableBuilder(
+        column: $table.driveStatus,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get funeralOn =>
+      $composableBuilder(column: $table.funeralOn, builder: (column) => column);
+
+  GeneratedColumn<String> get funeralVenue => $composableBuilder(
+    column: $table.funeralVenue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get familyContact => $composableBuilder(
+    column: $table.familyContact,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get familyPhone => $composableBuilder(
+    column: $table.familyPhone,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get driveOpenedByName => $composableBuilder(
+    column: $table.driveOpenedByName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get driveClosedOn => $composableBuilder(
+    column: $table.driveClosedOn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get driveClosedBy => $composableBuilder(
+    column: $table.driveClosedBy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get driveClosedByName => $composableBuilder(
+    column: $table.driveClosedByName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get handoverAmount => $composableBuilder(
+    column: $table.handoverAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get handoverOn => $composableBuilder(
+    column: $table.handoverOn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<PaymentMethod?, String> get handoverMethod =>
+      $composableBuilder(
+        column: $table.handoverMethod,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get handoverReference => $composableBuilder(
+    column: $table.handoverReference,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get handoverBy => $composableBuilder(
+    column: $table.handoverBy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get handoverByName => $composableBuilder(
+    column: $table.handoverByName,
+    builder: (column) => column,
+  );
+
   $$MembersTableAnnotationComposer get memberId {
     final $$MembersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -25579,6 +27950,32 @@ class $$WelfareCasesTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> welfareDriveGiftsRefs<T extends Object>(
+    Expression<T> Function($$WelfareDriveGiftsTableAnnotationComposer a) f,
+  ) {
+    final $$WelfareDriveGiftsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.welfareDriveGifts,
+          getReferencedColumn: (t) => t.caseId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WelfareDriveGiftsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.welfareDriveGifts,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$WelfareCasesTableTableManager
@@ -25594,7 +27991,11 @@ class $$WelfareCasesTableTableManager
           $$WelfareCasesTableUpdateCompanionBuilder,
           (WelfareCase, $$WelfareCasesTableReferences),
           WelfareCase,
-          PrefetchHooks Function({bool memberId, bool caseTypeId})
+          PrefetchHooks Function({
+            bool memberId,
+            bool caseTypeId,
+            bool welfareDriveGiftsRefs,
+          })
         > {
   $$WelfareCasesTableTableManager(_$AppDatabase db, $WelfareCasesTable table)
     : super(
@@ -25635,6 +28036,21 @@ class $$WelfareCasesTableTableManager
                 Value<String?> payReference = const Value.absent(),
                 Value<String?> paidBy = const Value.absent(),
                 Value<String?> paidByName = const Value.absent(),
+                Value<DriveStatus> driveStatus = const Value.absent(),
+                Value<DateTime?> funeralOn = const Value.absent(),
+                Value<String?> funeralVenue = const Value.absent(),
+                Value<String?> familyContact = const Value.absent(),
+                Value<String?> familyPhone = const Value.absent(),
+                Value<String?> driveOpenedByName = const Value.absent(),
+                Value<DateTime?> driveClosedOn = const Value.absent(),
+                Value<String?> driveClosedBy = const Value.absent(),
+                Value<String?> driveClosedByName = const Value.absent(),
+                Value<int?> handoverAmount = const Value.absent(),
+                Value<DateTime?> handoverOn = const Value.absent(),
+                Value<PaymentMethod?> handoverMethod = const Value.absent(),
+                Value<String?> handoverReference = const Value.absent(),
+                Value<String?> handoverBy = const Value.absent(),
+                Value<String?> handoverByName = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WelfareCasesCompanion(
                 id: id,
@@ -25663,6 +28079,21 @@ class $$WelfareCasesTableTableManager
                 payReference: payReference,
                 paidBy: paidBy,
                 paidByName: paidByName,
+                driveStatus: driveStatus,
+                funeralOn: funeralOn,
+                funeralVenue: funeralVenue,
+                familyContact: familyContact,
+                familyPhone: familyPhone,
+                driveOpenedByName: driveOpenedByName,
+                driveClosedOn: driveClosedOn,
+                driveClosedBy: driveClosedBy,
+                driveClosedByName: driveClosedByName,
+                handoverAmount: handoverAmount,
+                handoverOn: handoverOn,
+                handoverMethod: handoverMethod,
+                handoverReference: handoverReference,
+                handoverBy: handoverBy,
+                handoverByName: handoverByName,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -25693,6 +28124,21 @@ class $$WelfareCasesTableTableManager
                 Value<String?> payReference = const Value.absent(),
                 Value<String?> paidBy = const Value.absent(),
                 Value<String?> paidByName = const Value.absent(),
+                Value<DriveStatus> driveStatus = const Value.absent(),
+                Value<DateTime?> funeralOn = const Value.absent(),
+                Value<String?> funeralVenue = const Value.absent(),
+                Value<String?> familyContact = const Value.absent(),
+                Value<String?> familyPhone = const Value.absent(),
+                Value<String?> driveOpenedByName = const Value.absent(),
+                Value<DateTime?> driveClosedOn = const Value.absent(),
+                Value<String?> driveClosedBy = const Value.absent(),
+                Value<String?> driveClosedByName = const Value.absent(),
+                Value<int?> handoverAmount = const Value.absent(),
+                Value<DateTime?> handoverOn = const Value.absent(),
+                Value<PaymentMethod?> handoverMethod = const Value.absent(),
+                Value<String?> handoverReference = const Value.absent(),
+                Value<String?> handoverBy = const Value.absent(),
+                Value<String?> handoverByName = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WelfareCasesCompanion.insert(
                 id: id,
@@ -25721,6 +28167,21 @@ class $$WelfareCasesTableTableManager
                 payReference: payReference,
                 paidBy: paidBy,
                 paidByName: paidByName,
+                driveStatus: driveStatus,
+                funeralOn: funeralOn,
+                funeralVenue: funeralVenue,
+                familyContact: familyContact,
+                familyPhone: familyPhone,
+                driveOpenedByName: driveOpenedByName,
+                driveClosedOn: driveClosedOn,
+                driveClosedBy: driveClosedBy,
+                driveClosedByName: driveClosedByName,
+                handoverAmount: handoverAmount,
+                handoverOn: handoverOn,
+                handoverMethod: handoverMethod,
+                handoverReference: handoverReference,
+                handoverBy: handoverBy,
+                handoverByName: handoverByName,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -25731,7 +28192,756 @@ class $$WelfareCasesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({memberId = false, caseTypeId = false}) {
+          prefetchHooksCallback:
+              ({
+                memberId = false,
+                caseTypeId = false,
+                welfareDriveGiftsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (welfareDriveGiftsRefs) db.welfareDriveGifts,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (memberId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.memberId,
+                                    referencedTable:
+                                        $$WelfareCasesTableReferences
+                                            ._memberIdTable(db),
+                                    referencedColumn:
+                                        $$WelfareCasesTableReferences
+                                            ._memberIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (caseTypeId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.caseTypeId,
+                                    referencedTable:
+                                        $$WelfareCasesTableReferences
+                                            ._caseTypeIdTable(db),
+                                    referencedColumn:
+                                        $$WelfareCasesTableReferences
+                                            ._caseTypeIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (welfareDriveGiftsRefs)
+                        await $_getPrefetchedData<
+                          WelfareCase,
+                          $WelfareCasesTable,
+                          WelfareDriveGift
+                        >(
+                          currentTable: table,
+                          referencedTable: $$WelfareCasesTableReferences
+                              ._welfareDriveGiftsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$WelfareCasesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).welfareDriveGiftsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.caseId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$WelfareCasesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WelfareCasesTable,
+      WelfareCase,
+      $$WelfareCasesTableFilterComposer,
+      $$WelfareCasesTableOrderingComposer,
+      $$WelfareCasesTableAnnotationComposer,
+      $$WelfareCasesTableCreateCompanionBuilder,
+      $$WelfareCasesTableUpdateCompanionBuilder,
+      (WelfareCase, $$WelfareCasesTableReferences),
+      WelfareCase,
+      PrefetchHooks Function({
+        bool memberId,
+        bool caseTypeId,
+        bool welfareDriveGiftsRefs,
+      })
+    >;
+typedef $$WelfareDriveGiftsTableCreateCompanionBuilder =
+    WelfareDriveGiftsCompanion Function({
+      Value<String> id,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String?> createdBy,
+      Value<String?> deviceId,
+      Value<DateTime?> deletedAt,
+      required String caseId,
+      Value<String?> memberId,
+      required String giverName,
+      required int amount,
+      Value<bool> anonymous,
+      Value<GiftStatus> status,
+      required DateTime pledgedOn,
+      Value<DateTime?> receivedOn,
+      Value<PaymentMethod?> method,
+      Value<String?> reference,
+      Value<String?> note,
+      required String recordedByName,
+      Value<String?> receivedByName,
+      Value<String?> voidReason,
+      Value<int> rowid,
+    });
+typedef $$WelfareDriveGiftsTableUpdateCompanionBuilder =
+    WelfareDriveGiftsCompanion Function({
+      Value<String> id,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String?> createdBy,
+      Value<String?> deviceId,
+      Value<DateTime?> deletedAt,
+      Value<String> caseId,
+      Value<String?> memberId,
+      Value<String> giverName,
+      Value<int> amount,
+      Value<bool> anonymous,
+      Value<GiftStatus> status,
+      Value<DateTime> pledgedOn,
+      Value<DateTime?> receivedOn,
+      Value<PaymentMethod?> method,
+      Value<String?> reference,
+      Value<String?> note,
+      Value<String> recordedByName,
+      Value<String?> receivedByName,
+      Value<String?> voidReason,
+      Value<int> rowid,
+    });
+
+final class $$WelfareDriveGiftsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $WelfareDriveGiftsTable,
+          WelfareDriveGift
+        > {
+  $$WelfareDriveGiftsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $WelfareCasesTable _caseIdTable(_$AppDatabase db) => db.welfareCases
+      .createAlias('welfare_drive_gifts__case_id__welfare_cases__id');
+
+  $$WelfareCasesTableProcessedTableManager get caseId {
+    final $_column = $_itemColumn<String>('case_id')!;
+
+    final manager = $$WelfareCasesTableTableManager(
+      $_db,
+      $_db.welfareCases,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_caseIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $MembersTable _memberIdTable(_$AppDatabase db) =>
+      db.members.createAlias('welfare_drive_gifts__member_id__members__id');
+
+  $$MembersTableProcessedTableManager? get memberId {
+    final $_column = $_itemColumn<String>('member_id');
+    if ($_column == null) return null;
+    final manager = $$MembersTableTableManager(
+      $_db,
+      $_db.members,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_memberIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$WelfareDriveGiftsTableFilterComposer
+    extends Composer<_$AppDatabase, $WelfareDriveGiftsTable> {
+  $$WelfareDriveGiftsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get giverName => $composableBuilder(
+    column: $table.giverName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get anonymous => $composableBuilder(
+    column: $table.anonymous,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<GiftStatus, GiftStatus, String> get status =>
+      $composableBuilder(
+        column: $table.status,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get pledgedOn => $composableBuilder(
+    column: $table.pledgedOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get receivedOn => $composableBuilder(
+    column: $table.receivedOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<PaymentMethod?, PaymentMethod, String>
+  get method => $composableBuilder(
+    column: $table.method,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get reference => $composableBuilder(
+    column: $table.reference,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recordedByName => $composableBuilder(
+    column: $table.recordedByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get receivedByName => $composableBuilder(
+    column: $table.receivedByName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get voidReason => $composableBuilder(
+    column: $table.voidReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$WelfareCasesTableFilterComposer get caseId {
+    final $$WelfareCasesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.caseId,
+      referencedTable: $db.welfareCases,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCasesTableFilterComposer(
+            $db: $db,
+            $table: $db.welfareCases,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MembersTableFilterComposer get memberId {
+    final $$MembersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MembersTableFilterComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WelfareDriveGiftsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WelfareDriveGiftsTable> {
+  $$WelfareDriveGiftsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get giverName => $composableBuilder(
+    column: $table.giverName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get anonymous => $composableBuilder(
+    column: $table.anonymous,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get pledgedOn => $composableBuilder(
+    column: $table.pledgedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get receivedOn => $composableBuilder(
+    column: $table.receivedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get method => $composableBuilder(
+    column: $table.method,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reference => $composableBuilder(
+    column: $table.reference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recordedByName => $composableBuilder(
+    column: $table.recordedByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get receivedByName => $composableBuilder(
+    column: $table.receivedByName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get voidReason => $composableBuilder(
+    column: $table.voidReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$WelfareCasesTableOrderingComposer get caseId {
+    final $$WelfareCasesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.caseId,
+      referencedTable: $db.welfareCases,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCasesTableOrderingComposer(
+            $db: $db,
+            $table: $db.welfareCases,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MembersTableOrderingComposer get memberId {
+    final $$MembersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MembersTableOrderingComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WelfareDriveGiftsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WelfareDriveGiftsTable> {
+  $$WelfareDriveGiftsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get giverName =>
+      $composableBuilder(column: $table.giverName, builder: (column) => column);
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<bool> get anonymous =>
+      $composableBuilder(column: $table.anonymous, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<GiftStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get pledgedOn =>
+      $composableBuilder(column: $table.pledgedOn, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get receivedOn => $composableBuilder(
+    column: $table.receivedOn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<PaymentMethod?, String> get method =>
+      $composableBuilder(column: $table.method, builder: (column) => column);
+
+  GeneratedColumn<String> get reference =>
+      $composableBuilder(column: $table.reference, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get recordedByName => $composableBuilder(
+    column: $table.recordedByName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get receivedByName => $composableBuilder(
+    column: $table.receivedByName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get voidReason => $composableBuilder(
+    column: $table.voidReason,
+    builder: (column) => column,
+  );
+
+  $$WelfareCasesTableAnnotationComposer get caseId {
+    final $$WelfareCasesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.caseId,
+      referencedTable: $db.welfareCases,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WelfareCasesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.welfareCases,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MembersTableAnnotationComposer get memberId {
+    final $$MembersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MembersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WelfareDriveGiftsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WelfareDriveGiftsTable,
+          WelfareDriveGift,
+          $$WelfareDriveGiftsTableFilterComposer,
+          $$WelfareDriveGiftsTableOrderingComposer,
+          $$WelfareDriveGiftsTableAnnotationComposer,
+          $$WelfareDriveGiftsTableCreateCompanionBuilder,
+          $$WelfareDriveGiftsTableUpdateCompanionBuilder,
+          (WelfareDriveGift, $$WelfareDriveGiftsTableReferences),
+          WelfareDriveGift,
+          PrefetchHooks Function({bool caseId, bool memberId})
+        > {
+  $$WelfareDriveGiftsTableTableManager(
+    _$AppDatabase db,
+    $WelfareDriveGiftsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WelfareDriveGiftsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WelfareDriveGiftsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WelfareDriveGiftsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String?> deviceId = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> caseId = const Value.absent(),
+                Value<String?> memberId = const Value.absent(),
+                Value<String> giverName = const Value.absent(),
+                Value<int> amount = const Value.absent(),
+                Value<bool> anonymous = const Value.absent(),
+                Value<GiftStatus> status = const Value.absent(),
+                Value<DateTime> pledgedOn = const Value.absent(),
+                Value<DateTime?> receivedOn = const Value.absent(),
+                Value<PaymentMethod?> method = const Value.absent(),
+                Value<String?> reference = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<String> recordedByName = const Value.absent(),
+                Value<String?> receivedByName = const Value.absent(),
+                Value<String?> voidReason = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WelfareDriveGiftsCompanion(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                createdBy: createdBy,
+                deviceId: deviceId,
+                deletedAt: deletedAt,
+                caseId: caseId,
+                memberId: memberId,
+                giverName: giverName,
+                amount: amount,
+                anonymous: anonymous,
+                status: status,
+                pledgedOn: pledgedOn,
+                receivedOn: receivedOn,
+                method: method,
+                reference: reference,
+                note: note,
+                recordedByName: recordedByName,
+                receivedByName: receivedByName,
+                voidReason: voidReason,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String?> deviceId = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String caseId,
+                Value<String?> memberId = const Value.absent(),
+                required String giverName,
+                required int amount,
+                Value<bool> anonymous = const Value.absent(),
+                Value<GiftStatus> status = const Value.absent(),
+                required DateTime pledgedOn,
+                Value<DateTime?> receivedOn = const Value.absent(),
+                Value<PaymentMethod?> method = const Value.absent(),
+                Value<String?> reference = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                required String recordedByName,
+                Value<String?> receivedByName = const Value.absent(),
+                Value<String?> voidReason = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WelfareDriveGiftsCompanion.insert(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                createdBy: createdBy,
+                deviceId: deviceId,
+                deletedAt: deletedAt,
+                caseId: caseId,
+                memberId: memberId,
+                giverName: giverName,
+                amount: amount,
+                anonymous: anonymous,
+                status: status,
+                pledgedOn: pledgedOn,
+                receivedOn: receivedOn,
+                method: method,
+                reference: reference,
+                note: note,
+                recordedByName: recordedByName,
+                receivedByName: receivedByName,
+                voidReason: voidReason,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$WelfareDriveGiftsTable, WelfareDriveGift>(table),
+                  $$WelfareDriveGiftsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({caseId = false, memberId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -25751,29 +28961,33 @@ class $$WelfareCasesTableTableManager
                       dynamic
                     >
                   >(state) {
+                    if (caseId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.caseId,
+                                referencedTable:
+                                    $$WelfareDriveGiftsTableReferences
+                                        ._caseIdTable(db),
+                                referencedColumn:
+                                    $$WelfareDriveGiftsTableReferences
+                                        ._caseIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
                     if (memberId) {
                       state =
                           state.withJoin(
                                 currentTable: table,
                                 currentColumn: table.memberId,
-                                referencedTable: $$WelfareCasesTableReferences
-                                    ._memberIdTable(db),
-                                referencedColumn: $$WelfareCasesTableReferences
-                                    ._memberIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
-                    if (caseTypeId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.caseTypeId,
-                                referencedTable: $$WelfareCasesTableReferences
-                                    ._caseTypeIdTable(db),
-                                referencedColumn: $$WelfareCasesTableReferences
-                                    ._caseTypeIdTable(db)
-                                    .id,
+                                referencedTable:
+                                    $$WelfareDriveGiftsTableReferences
+                                        ._memberIdTable(db),
+                                referencedColumn:
+                                    $$WelfareDriveGiftsTableReferences
+                                        ._memberIdTable(db)
+                                        .id,
                               )
                               as T;
                     }
@@ -25789,19 +29003,19 @@ class $$WelfareCasesTableTableManager
       );
 }
 
-typedef $$WelfareCasesTableProcessedTableManager =
+typedef $$WelfareDriveGiftsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $WelfareCasesTable,
-      WelfareCase,
-      $$WelfareCasesTableFilterComposer,
-      $$WelfareCasesTableOrderingComposer,
-      $$WelfareCasesTableAnnotationComposer,
-      $$WelfareCasesTableCreateCompanionBuilder,
-      $$WelfareCasesTableUpdateCompanionBuilder,
-      (WelfareCase, $$WelfareCasesTableReferences),
-      WelfareCase,
-      PrefetchHooks Function({bool memberId, bool caseTypeId})
+      $WelfareDriveGiftsTable,
+      WelfareDriveGift,
+      $$WelfareDriveGiftsTableFilterComposer,
+      $$WelfareDriveGiftsTableOrderingComposer,
+      $$WelfareDriveGiftsTableAnnotationComposer,
+      $$WelfareDriveGiftsTableCreateCompanionBuilder,
+      $$WelfareDriveGiftsTableUpdateCompanionBuilder,
+      (WelfareDriveGift, $$WelfareDriveGiftsTableReferences),
+      WelfareDriveGift,
+      PrefetchHooks Function({bool caseId, bool memberId})
     >;
 typedef $$ExpenseCategoriesTableCreateCompanionBuilder =
     ExpenseCategoriesCompanion Function({
@@ -29265,6 +32479,8 @@ class $AppDatabaseManager {
       $$WelfareCaseTypesTableTableManager(_db, _db.welfareCaseTypes);
   $$WelfareCasesTableTableManager get welfareCases =>
       $$WelfareCasesTableTableManager(_db, _db.welfareCases);
+  $$WelfareDriveGiftsTableTableManager get welfareDriveGifts =>
+      $$WelfareDriveGiftsTableTableManager(_db, _db.welfareDriveGifts);
   $$ExpenseCategoriesTableTableManager get expenseCategories =>
       $$ExpenseCategoriesTableTableManager(_db, _db.expenseCategories);
   $$ExpensesTableTableManager get expenses =>

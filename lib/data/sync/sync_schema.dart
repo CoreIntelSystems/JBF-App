@@ -91,6 +91,7 @@ const syncTables = <SyncTable>[
   SyncTable('payments'),
   SyncTable('welfare_case_types'),
   SyncTable('welfare_cases'),
+  SyncTable('welfare_drive_gifts'),
   SyncTable('expense_categories'),
   SyncTable('expenses'),
   SyncTable('events'),
@@ -153,6 +154,9 @@ Future<void> createSyncTriggers(
   Future<List<String>> Function(String table) columnsOf,
 ) async {
   for (final t in syncTables) {
+    // A table added by a later upgrade step does not exist yet; that step
+    // creates its triggers.
+    if ((await columnsOf(t.name)).isEmpty) continue;
     final enqueue =
         "INSERT INTO sync_outbox (tbl, row_key, ver) "
         "VALUES ('${t.name}', ${t.keyExpr()}, 1) "

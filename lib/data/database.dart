@@ -402,6 +402,72 @@ class WelfareCases extends Table with SyncColumns {
   TextColumn get payReference => text().nullable()();
   TextColumn get paidBy => text().nullable()();
   TextColumn get paidByName => text().nullable()();
+
+  // ---- Collection drive (funeral and similar) ----------------------------
+  TextColumn get driveStatus =>
+      textEnum<DriveStatus>().withDefault(Constant(DriveStatus.none.name))();
+  DateTimeColumn get funeralOn => dateTime().nullable()();
+  TextColumn get funeralVenue => text().nullable()();
+  TextColumn get familyContact => text().nullable()();
+  TextColumn get familyPhone => text().nullable()();
+  TextColumn get driveOpenedByName => text().nullable()();
+  DateTimeColumn get driveClosedOn => dateTime().nullable()();
+  TextColumn get driveClosedBy => text().nullable()();
+  TextColumn get driveClosedByName => text().nullable()();
+
+  /// What was handed to the family: the gifts received when the drive closed.
+  IntColumn get handoverAmount => integer().nullable()();
+  DateTimeColumn get handoverOn => dateTime().nullable()();
+  TextColumn get handoverMethod => textEnum<PaymentMethod>().nullable()();
+  TextColumn get handoverReference => text().nullable()();
+  TextColumn get handoverBy => text().nullable()();
+  TextColumn get handoverByName => text().nullable()();
+}
+
+/// Where a collection drive for a welfare case stands.
+enum DriveStatus {
+  none('No drive'),
+  open('Collecting'),
+  closed('Closed, awaiting hand-over'),
+  handedOver('Handed over');
+
+  const DriveStatus(this.label);
+  final String label;
+}
+
+enum GiftStatus {
+  pledged('Pledged'),
+  received('Received'),
+  voided('Voided');
+
+  const GiftStatus(this.label);
+  final String label;
+}
+
+/// One pledge or gift to a welfare case's collection drive. The Treasurer
+/// marks a pledge received; a wrong entry is voided with a reason, never
+/// deleted.
+@TableIndex(name: 'welfare_drive_gifts_case', columns: {#caseId})
+class WelfareDriveGifts extends Table with SyncColumns {
+  TextColumn get caseId => text().references(WelfareCases, #id)();
+
+  /// Set when the giver is a member; null for friends and well-wishers.
+  TextColumn get memberId => text().nullable().references(Members, #id)();
+  TextColumn get giverName => text()();
+  IntColumn get amount => integer()();
+
+  /// Hidden from the summary shared with members.
+  BoolColumn get anonymous => boolean().withDefault(const Constant(false))();
+  TextColumn get status =>
+      textEnum<GiftStatus>().withDefault(Constant(GiftStatus.pledged.name))();
+  DateTimeColumn get pledgedOn => dateTime()();
+  DateTimeColumn get receivedOn => dateTime().nullable()();
+  TextColumn get method => textEnum<PaymentMethod>().nullable()();
+  TextColumn get reference => text().nullable()();
+  TextColumn get note => text().nullable()();
+  TextColumn get recordedByName => text()();
+  TextColumn get receivedByName => text().nullable()();
+  TextColumn get voidReason => text().nullable()();
 }
 
 /// What money is spent on. Configurable per organisation.
@@ -583,6 +649,7 @@ const maxZonesTriggerMessage = 'A member cannot belong to more than 2 zones';
     Payments,
     WelfareCaseTypes,
     WelfareCases,
+    WelfareDriveGifts,
     ExpenseCategories,
     Expenses,
     Events,
@@ -596,7 +663,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -610,6 +677,7 @@ class AppDatabase extends _$AppDatabase {
       await _seedContributionTypes();
       await _tieDuesToWelfare();
       await _createWelfareGuards();
+      await _createDriveGuards();
       await _seedWelfareCaseTypes();
       await _createExpenseGuards();
       await _seedExpenseCategories();
@@ -754,6 +822,34 @@ class AppDatabase extends _$AppDatabase {
         await createSyncTriggers(customStatement, _columnsOf);
         await _tieDuesToWelfare();
       }
+      if (from < 14) {
+        // Created with these already when coming from v1 or v2.
+        if (from >= 3) {
+          for (final GeneratedColumn c in [
+            welfareCases.driveStatus,
+            welfareCases.funeralOn,
+            welfareCases.funeralVenue,
+            welfareCases.familyContact,
+            welfareCases.familyPhone,
+            welfareCases.driveOpenedByName,
+            welfareCases.driveClosedOn,
+            welfareCases.driveClosedBy,
+            welfareCases.driveClosedByName,
+            welfareCases.handoverAmount,
+            welfareCases.handoverOn,
+            welfareCases.handoverMethod,
+            welfareCases.handoverReference,
+            welfareCases.handoverBy,
+            welfareCases.handoverByName,
+          ]) {
+            await m.addColumn(welfareCases, c);
+          }
+        }
+        await m.createTable(welfareDriveGifts);
+        await m.createIndex(welfareDriveGiftsCase);
+        await _createDriveGuards();
+        await createSyncTriggers(customStatement, _columnsOf);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -868,6 +964,15 @@ class AppDatabase extends _$AppDatabase {
         ))
         AND (SELECT applying FROM sync_flags WHERE id = 1) = 0
       BEGIN SELECT RAISE(ABORT, 'This welfare case can no longer be changed'); END
+    ''');
+  }
+
+  /// Gifts to a drive are never deleted; a wrong one is voided.
+  Future<void> _createDriveGuards() async {
+    await customStatement('''
+      CREATE TRIGGER welfare_drive_gifts_no_delete
+      BEFORE DELETE ON welfare_drive_gifts
+      BEGIN SELECT RAISE(ABORT, 'Gifts cannot be deleted; void them'); END
     ''');
   }
 

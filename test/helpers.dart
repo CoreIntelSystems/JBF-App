@@ -10,6 +10,7 @@ import 'package:jbf_app/data/repositories/events_repository.dart';
 import 'package:jbf_app/data/repositories/member_repository.dart';
 import 'package:jbf_app/data/repositories/finance_repository.dart';
 import 'package:jbf_app/data/repositories/payment_repository.dart';
+import 'package:jbf_app/data/repositories/drive_repository.dart';
 import 'package:jbf_app/data/repositories/welfare_repository.dart';
 import 'package:jbf_app/domain/password_hasher.dart';
 
@@ -27,6 +28,7 @@ class TestEnv {
     members = MemberRepository(db, audit, clock: clock, scope: this.scope);
     payments = PaymentRepository(db, audit, clock: clock, scope: this.scope);
     welfare = WelfareRepository(db, audit, clock: clock, scope: this.scope);
+    drives = DriveRepository(db, audit, clock: clock);
     finance = FinanceRepository(db, audit, clock: clock);
     events = EventsRepository(db, audit, clock: clock, scope: this.scope);
     dashboard = DashboardRepository(db, scope: this.scope);
@@ -40,6 +42,7 @@ class TestEnv {
   late final MemberRepository members;
   late final PaymentRepository payments;
   late final WelfareRepository welfare;
+  late final DriveRepository drives;
   late final FinanceRepository finance;
   late final EventsRepository events;
 

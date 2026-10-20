@@ -210,50 +210,52 @@ void main() {
     expect(s.fundBalance, 10000);
   });
 
-  test('an officer cannot decide their own case or proposal, the Founder can',
-      () async {
-    final hosp = type('Hospitalisation');
-    await env.welfare.proposeBenefit(hosp.id, 50000, treasurer);
-    await expectLater(
-      env.welfare.decideBenefit(hosp.id, treasurer, approve: true),
-      throwsA(isA<WelfareException>()),
-    );
-    const founder = WelfareActor(
-      Actor(userId: 'f1', username: 'founder', deviceId: 'd1'),
-      name: 'Founder',
-      roleName: 'Founder / President',
-      mayApproveOwn: true,
-    );
-    await env.welfare.proposeBenefit(hosp.id, 60000, founder);
-    await env.welfare.decideBenefit(hosp.id, founder, approve: true);
+  test(
+    'an officer cannot decide their own case or proposal, the Founder can',
+    () async {
+      final hosp = type('Hospitalisation');
+      await env.welfare.proposeBenefit(hosp.id, 50000, treasurer);
+      await expectLater(
+        env.welfare.decideBenefit(hosp.id, treasurer, approve: true),
+        throwsA(isA<WelfareException>()),
+      );
+      const founder = WelfareActor(
+        Actor(userId: 'f1', username: 'founder', deviceId: 'd1'),
+        name: 'Founder',
+        roleName: 'Founder / President',
+        mayApproveOwn: true,
+      );
+      await env.welfare.proposeBenefit(hosp.id, 60000, founder);
+      await env.welfare.decideBenefit(hosp.id, founder, approve: true);
 
-    final c = await env.welfare.createCase(
-      WelfareCaseDraft(
-        memberId: member.id,
-        caseTypeId: hosp.id,
-        occurredOn: DateTime(2026, 10, 10),
-      ),
-      treasurer,
-    );
-    await expectLater(
-      env.welfare.decideCase(c.id, treasurer, approve: true),
-      throwsA(isA<WelfareException>()),
-    );
-    await env.welfare.decideCase(c.id, chairman, approve: true);
+      final c = await env.welfare.createCase(
+        WelfareCaseDraft(
+          memberId: member.id,
+          caseTypeId: hosp.id,
+          occurredOn: DateTime(2026, 10, 10),
+        ),
+        treasurer,
+      );
+      await expectLater(
+        env.welfare.decideCase(c.id, treasurer, approve: true),
+        throwsA(isA<WelfareException>()),
+      );
+      await env.welfare.decideCase(c.id, chairman, approve: true);
 
-    final own = await env.welfare.createCase(
-      WelfareCaseDraft(
-        memberId: member.id,
-        caseTypeId: hosp.id,
-        occurredOn: DateTime(2026, 10, 11),
-      ),
-      founder,
-    );
-    await env.welfare.decideCase(own.id, founder, approve: true);
-    final logs = await env.db.select(env.db.auditLogs).get();
-    expect(
-      logs.any((l) => (l.newValue ?? '').contains('decidedOwnCase')),
-      isTrue,
-    );
-  });
+      final own = await env.welfare.createCase(
+        WelfareCaseDraft(
+          memberId: member.id,
+          caseTypeId: hosp.id,
+          occurredOn: DateTime(2026, 10, 11),
+        ),
+        founder,
+      );
+      await env.welfare.decideCase(own.id, founder, approve: true);
+      final logs = await env.db.select(env.db.auditLogs).get();
+      expect(
+        logs.any((l) => (l.newValue ?? '').contains('decidedOwnCase')),
+        isTrue,
+      );
+    },
+  );
 }

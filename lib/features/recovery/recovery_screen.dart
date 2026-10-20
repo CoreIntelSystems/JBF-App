@@ -95,7 +95,9 @@ class _RecoveryAppState extends State<RecoveryApp> {
                 if (_failed != null) ...[
                   Text(
                     'That did not work: $_failed',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ],

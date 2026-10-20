@@ -60,11 +60,7 @@ void main() {
       deviceId: 'test',
     );
     await tester.pumpWidget(
-      JbfApp(
-        services: services,
-        biometrics: _NoBiometrics(),
-        clock: () => now,
-      ),
+      JbfApp(services: services, biometrics: _NoBiometrics(), clock: () => now),
     );
     await pumpUntil(tester, find.text('Create account'));
     final fields = find.byType(TextFormField);

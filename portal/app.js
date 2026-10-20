@@ -270,6 +270,7 @@ function duesCard(d) {
     h('span', { class: 'pill' + (owes ? ' w' : '') }, owes ? `${d.months_behind} month${d.months_behind === 1 ? '' : 's'} behind` : 'Up to date')));
   card.append(h('div', { class: 'big ' + (owes ? 'owed' : 'clear') }, owes ? money(d.outstanding) : 'All clear'));
   if (owes) card.append(h('div', { class: 'sub' }, 'Owed since ' + monthName(d.next_unpaid)));
+  if (owes && !offline) card.append(h('button', { type: 'button', style: 'margin-top:10px', onclick: () => show('pay') }, 'Pay now'));
   const pct = d.expected > 0 ? Math.max(0, Math.min(100, Math.round((d.paid / d.expected) * 100))) : 100;
   card.append(h('div', { class: 'bar' }, h('i', { style: 'width:' + pct + '%' })),
     h('div', { class: 'two' }, h('span', null, 'Paid ', h('b', null, money(d.paid))), h('span', null, 'Expected ', h('b', null, money(d.expected)))));
@@ -549,12 +550,48 @@ function viewPay() {
   const pays = home.payments || [];
   if (!pays.length) card.append(h('p', { class: 'hint' }, 'No payments yet.'));
   for (const p of pays) {
-    card.append(h('div', { class: 'pay' },
+    card.append(h('div', { class: 'pay', role: 'button', tabindex: '0', style: 'cursor:pointer', onclick: () => receiptSheet(p),
+      onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); receiptSheet(p); } } },
       h('div', { class: 'top' }, h('span', null, p.type || 'Payment'), h('span', null, money(p.amount))),
-      h('div', { class: 'sub' }, [day(p.paid_on), p.period ? 'for ' + monthName(p.period) : '', methods[p.method] || p.method, p.receipt_no].filter(Boolean).join(' · '))));
+      h('div', { class: 'sub' }, [day(p.paid_on), p.period ? 'for ' + monthName(p.period) : '', methods[p.method] || p.method, p.receipt_no].filter(Boolean).join(' · '),
+        p.receipt_no ? ' · Tap for receipt' : '')));
   }
   return out;
 }
+
+// A member copy of a receipt, to share on WhatsApp or print / save as PDF.
+function receiptLines(p) {
+  const org = session.org_name || 'June Borns Family';
+  return [
+    ['Receipt', p.receipt_no || '-'],
+    ['Member', (home.member.name || '') + (home.member.member_no ? ' (' + home.member.member_no + ')' : '')],
+    ['Payment for', p.type || 'Payment'],
+    p.period ? ['Period', monthName(p.period)] : null,
+    ['Amount', money(p.amount)],
+    ['Date', day(p.paid_on)],
+    ['Method', methods[p.method] || p.method || '-'],
+  ].filter(Boolean).map((r) => r).concat([['Issued by', org]]);
+}
+
+function receiptSheet(p) {
+  const rows = receiptLines(p);
+  const text = (session.org_name || 'June Borns Family') + ' receipt\n' + rows.map((r) => r[0] + ': ' + r[1]).join('\n');
+  const box = h('div', { class: 'rc-wrap', role: 'dialog', 'aria-label': 'Receipt', onclick: (e) => { if (e.target === box) box.remove(); } },
+    h('div', { class: 'rc' },
+      h('h2', null, (session.org_name || 'June Borns Family')),
+      h('div', { class: 'cap' }, 'Receipt (member copy)'),
+      ...rows.map((r) => h('div', { class: 'rc-row' }, h('span', null, r[0]), h('b', null, r[1]))),
+      h('div', { class: 'rc-act' },
+        h('button', { type: 'button', onclick: async () => {
+          if (navigator.share) { try { await navigator.share({ text }); return; } catch (_) { /* fall through */ } }
+          window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+        } }, 'Share'),
+        h('button', { type: 'button', onclick: () => { document.body.classList.add('printing-receipt'); window.print(); } }, 'Print or save PDF'),
+        h('button', { type: 'button', class: 'small', onclick: () => box.remove() }, 'Close')),
+      h('p', { class: 'hint' }, 'The official record is kept by the Treasury.')));
+  document.body.append(box);
+}
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-receipt'));
 
 function viewCommunity() {
   const out = h('div');

@@ -212,6 +212,12 @@
   .zone input { width: auto; }
   [hidden] { display: none !important; }
   footer { text-align: center; color: var(--muted); font-size: .78rem; padding: 8px 16px 24px; }
+  .rc-wrap { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; }
+  .rc { background: var(--card, #fff); width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); }
+  .rc h2 { margin: 0 0 2px; }
+  .rc-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid rgba(0,0,0,.08); font-size: .95rem; }
+  .rc-act { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  @media print { body.printing-receipt > *:not(.rc-wrap) { display: none !important; } body.printing-receipt .rc-wrap { position: static; background: none; display: block; } .rc-act, .rc .hint { display: none; } .rc { max-width: none; border-radius: 0; } }
 </style>
 </head>
 <body>
@@ -222,6 +228,6 @@
 <main id="app"></main>
 <nav id="tabs" hidden></nav>
 <footer>Powered by CoreIntel Systems · <a href="privacy.html">Privacy</a> · <a href="delete-account.html">Delete account</a></footer>
-<script src="app.js?v=22"></script>
+<script src="app.js?v=23"></script>
 </body>
 </html>

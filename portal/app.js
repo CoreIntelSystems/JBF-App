@@ -148,7 +148,7 @@ function renderAuth(mode, message) {
     h('h2', null, activating ? 'Activate your account' : 'Sign in'),
     h('p', { class: 'hint' }, activating
       ? 'Enter your member ID and registered phone number, then choose a password.'
-      : null),
+      : 'Forgot your password? Ask your Zone Secretary or the General Secretary to reset it, then tap "First time?" below to choose a new one.'),
     h('label', { for: 'memberNo' }, 'Member ID'), idInput,
     activating ? [h('label', { for: 'phone' }, 'Phone number'), phone] : null,
     h('label', { for: 'pass' }, activating ? 'Choose a password (6 or more characters)' : 'Password'), pass,

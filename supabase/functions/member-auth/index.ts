@@ -117,6 +117,13 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     { auth: { persistSession: false } },
   );
+  // Wrong attempts are also counted per network address, so one address
+  // cannot try a common password against many member IDs.
+  const ip = (req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0] ?? "").trim() || "unknown";
+  const gate = await db.rpc("auth_ip_gate", { ip });
+  // Only a real refusal blocks; a missing guard must never lock everyone out.
+  if (gate.error?.code === "P0001") return refuse(gate.error.message);
   const lookup = await db.rpc("member_auth_lookup", {
     org,
     member_no: memberNo,
@@ -169,7 +176,10 @@ Deno.serve(async (req) => {
     check_only: checkOnly || action === "change_password" || action === "delete_account",
   });
   if (done.error) return refuse(done.error.message);
-  if (!ok) return refuse(message);
+  if (!ok) {
+    await db.rpc("auth_ip_failed", { ip });
+    return refuse(message);
+  }
   if (action === "delete_account") {
     const gone = await db.rpc("member_erase", { org: m.org_id, member_no: memberNo });
     if (gone.error) return refuse(gone.error.message);

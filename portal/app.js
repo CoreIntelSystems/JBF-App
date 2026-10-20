@@ -605,6 +605,7 @@ function viewCommunity() {
   }
   out.append(ev);
   out.append(welfareStandingCard());
+  out.append(drivesCard());
   const welfare = home.welfare || [];
   if (welfare.length) {
     const w = h('div', { class: 'card' }, h('h2', null, 'My welfare cases'));
@@ -621,6 +622,30 @@ function viewCommunity() {
   out.append(ex);
   out.append(directoryCard());
   return out;
+}
+
+// Collections for bereaved families: what has come in and who gave. Anonymous
+// givers arrive already hidden from the server.
+function drivesCard() {
+  const card = h('div', { class: 'card', hidden: true }, h('h2', null, 'Collections for families'));
+  if (offline) return card;
+  rpc('member_drives', { token: session.token }).then((drives) => {
+    if (!drives.length) return;
+    const label = { open: 'Collecting', closed: 'Closed', handedOver: 'Handed to the family' };
+    for (const d of drives) {
+      const box = h('div', { class: 'pay' }, h('div', { class: 'top' }, h('span', null, d.member + (d.for ? ' (' + d.for + ')' : '')), h('span', null, money(d.received))),
+        h('div', { class: 'sub' }, [label[d.status], d.pledged ? money(d.pledged) + ' pledged' : null, d.funeral_on ? 'Funeral ' + day(d.funeral_on) : null, d.venue].filter(Boolean).join(' · ')));
+      if (d.contact) box.append(h('div', { class: 'sub' }, 'Family contact: ' + d.contact + (d.phone ? ' ' + d.phone : '')));
+      if (d.handed_amount) box.append(h('div', { class: 'sub' }, 'Handed to the family: ' + money(d.handed_amount) + ' on ' + day(d.handed_on)));
+      if ((d.gifts || []).length) {
+        const list = h('div', { class: 'sub' }, d.gifts.map((g) => g.name + ' ' + money(g.amount) + (g.pledged ? ' (pledged)' : '')).join(' · '));
+        box.append(list);
+      }
+      card.append(box);
+    }
+    card.hidden = false;
+  }).catch(() => {});
+  return card;
 }
 
 // Welfare is by choice: join or leave here, or by paying welfare dues or a

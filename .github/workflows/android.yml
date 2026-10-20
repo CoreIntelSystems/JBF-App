@@ -2,6 +2,12 @@ name: Android build
 
 on:
   push:
+    # Website-only, database-only and notes-only changes do not change the APK.
+    paths-ignore:
+      - 'portal/**'
+      - 'supabase/**'
+      - 'docs/**'
+      - '**.md'
   workflow_dispatch:
 
 permissions:

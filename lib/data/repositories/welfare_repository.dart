@@ -17,10 +17,24 @@ class WelfareException implements Exception {
 
 /// Who is acting, with the names shown on cases.
 class WelfareActor {
-  const WelfareActor(this.actor, {required this.name, required this.roleName});
+  const WelfareActor(
+    this.actor, {
+    required this.name,
+    required this.roleName,
+    this.mayApproveOwn = false,
+  });
   final Actor actor;
   final String name;
   final String roleName;
+
+  /// The Founder (and CoreIntel support) may approve what they prepared
+  /// themselves, for associations run from one phone. It is written to the
+  /// audit log each time.
+  final bool mayApproveOwn;
+
+  /// True when [other] is this same signed-in person.
+  bool isSamePerson(String? other) =>
+      other != null && actor.userId != null && other == actor.userId;
 }
 
 class WelfareCaseDraft {
@@ -177,6 +191,12 @@ class WelfareRepository {
     if (proposed == null) {
       throw WelfareException('There is no amount waiting for approval.');
     }
+    final own = by.isSamePerson(t.proposedBy);
+    if (own && !by.mayApproveOwn) {
+      throw WelfareException(
+        'A different officer must decide a change you proposed.',
+      );
+    }
     await _db.transaction(() async {
       await (_db.update(
         _db.welfareCaseTypes,
@@ -208,6 +228,7 @@ class WelfareRepository {
           'proposedBy': t.proposedByName,
           'decidedBy': by.name,
           'role': by.roleName,
+          if (own) 'approvedOwnProposal': true,
         },
       );
     });
@@ -431,6 +452,12 @@ class WelfareRepository {
     if (!approve && (note == null || note.trim().length < 3)) {
       throw WelfareException('Give a reason for rejecting.');
     }
+    final own = by.isSamePerson(c.createdBy);
+    if (own && !by.mayApproveOwn) {
+      throw WelfareException(
+        'A different officer must decide a case you prepared.',
+      );
+    }
     final status = approve ? WelfareStatus.approved : WelfareStatus.rejected;
     await _db.transaction(() async {
       await (_db.update(_db.welfareCases)..where((r) => r.id.equals(id))).write(
@@ -454,6 +481,7 @@ class WelfareRepository {
           'status': status.name,
           'role': by.roleName,
           'note': _clean(note),
+          if (own) 'decidedOwnCase': true,
         },
       );
     });

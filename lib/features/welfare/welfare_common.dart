@@ -7,7 +7,12 @@ import '../../domain/permissions.dart';
 
 extension WelfareUser on AppUser {
   WelfareActor welfareActor(String deviceId) =>
-      WelfareActor(actor(deviceId), name: displayName, roleName: roleName);
+      WelfareActor(
+        actor(deviceId),
+        name: displayName,
+        roleName: roleName,
+        mayApproveOwn: roleKey == 'founder' || roleKey == 'super_admin',
+      );
 
   bool get canViewWelfare =>
       can(Perm.welfarePrepare) ||

@@ -69,12 +69,14 @@ class JbfApp extends StatelessWidget {
     this.initialThemeMode = ThemeMode.system,
     this.palette = const BrandPalette(),
     this.biometrics,
+    this.clock = DateTime.now,
   });
 
   final AppServices services;
   final ThemeMode initialThemeMode;
   final BrandPalette palette;
   final Biometrics? biometrics;
+  final DateTime Function() clock;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +94,7 @@ class JbfApp extends StatelessWidget {
           BlocProvider.value(value: services.sync),
         ],
         child: _IdleSignOut(
+          clock: clock,
           child: _CloudSync(
             child: BlocBuilder<ThemeModeCubit, ThemeMode>(
               builder: (context, mode) => MaterialApp(
@@ -129,24 +132,56 @@ class JbfApp extends StatelessWidget {
 /// In a browser, signs out after a quiet spell so an unattended computer
 /// does not stay signed in.
 class _IdleSignOut extends StatefulWidget {
-  const _IdleSignOut({required this.child});
+  const _IdleSignOut({required this.child, required this.clock});
   final Widget child;
+  final DateTime Function() clock;
 
+  /// Browser: signs out after this long without a touch or key press.
   static const limit = Duration(minutes: 15);
+
+  /// Phone: signs out after the app has been in the background this long.
+  /// Officers handle money and welfare, so they get the shorter limit.
+  static const officerAway = Duration(minutes: 5);
+  static const memberAway = Duration(minutes: 30);
 
   @override
   State<_IdleSignOut> createState() => _IdleSignOutState();
 }
 
-class _IdleSignOutState extends State<_IdleSignOut> {
+class _IdleSignOutState extends State<_IdleSignOut>
+    with WidgetsBindingObserver {
   Timer? _timer;
+  DateTime? _wentAway;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (kIsWeb) {
       HardwareKeyboard.instance.addHandler(_key);
       _touch();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (kIsWeb) return;
+    if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused) {
+      _wentAway ??= widget.clock();
+    } else if (state == AppLifecycleState.resumed) {
+      final left = _wentAway;
+      _wentAway = null;
+      if (left == null || !mounted) return;
+      final away = widget.clock().difference(left);
+      final auth = context.read<AuthCubit>();
+      switch (auth.state) {
+        case AuthSignedIn() when away >= _IdleSignOut.officerAway:
+          auth.logout();
+        case AuthMemberSession() when away >= _IdleSignOut.memberAway:
+          auth.memberSignOut();
+        default:
+      }
     }
   }
 
@@ -175,6 +210,7 @@ class _IdleSignOutState extends State<_IdleSignOut> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (kIsWeb) HardwareKeyboard.instance.removeHandler(_key);
     _timer?.cancel();
     super.dispose();
